@@ -13,6 +13,7 @@ Legend:
 (*) - task done
 
 Tasks:
+( ) Makefile
 ( ) uart
 ( ) debugging
 ( ) spi
