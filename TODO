@@ -1,0 +1,28 @@
+/*
+ * Copyright (c) 2012 by Paweł Lebioda <pawel.lebioda89@gmail.com>
+ *
+ * This file is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ */
+
+This document describes the scheduled tasks to be done
+
+Legend:
+( ) - task scheduled but not done yet
+(*) - task done
+
+Tasks:
+( ) uart
+( ) debugging
+( ) spi
+( ) external memory
+( ) enc28j60 procedures
+( ) ip layer - all procedures
+	( ) handling packets
+	( ) sending packets 
+	( ) test all layers up to ip layer inclusive
+( ) timer structure and procedures
+( ) arp layer - all procedures
+( ) icmp layer - all procedures
+( ) udp layer - all procedures
