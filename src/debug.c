@@ -6,9 +6,7 @@
  * published by the Free Software Foundation.
  */
 
-#ifndef _UART_CONFIG_H
-#define _UART_CONFIG_H
+#include "debug.h"
 
-#define UART_BAUD_INDEX_DEFAULT 2
-
-#endif //_UART_CONFIG_H
+fcheat_file debug_file_fcheat = FCHEAT_STATIC_FDEVOPENWR(uart_putc,uart_getc);
+FILE * df = (FILE*)&debug_file_fcheat;

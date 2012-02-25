@@ -6,9 +6,9 @@
  * published by the Free Software Foundation.
  */
 
-#ifndef _UART_CONFIG_H
-#define _UART_CONFIG_H
+#ifndef _ARP_CONFIG_H
+#define _ARP_CONFIG_H
 
-#define UART_BAUD_INDEX_DEFAULT 2
+#define ARP_TABLE_SIZE		4
 
-#endif //_UART_CONFIG_H
+#endif //_ARP_CONFIG_H

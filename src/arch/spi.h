@@ -9,6 +9,11 @@
 #ifndef _SPI_H
 #define _SPI_H
 
+#include <stdint.h>
+#include <avr/io.h>
+
+#include "spi_config.h"
+
 #define SPI_WAIT()              while(!(SPSR & (1<<SPIF)))
 #define SPI_DATA                SPDR
 #define SPI_ENABLE()            SPCR |= (1<<SPE)

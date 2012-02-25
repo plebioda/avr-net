@@ -18,7 +18,7 @@ UART_BAUD_DATA g_prog_uart_baud[5] PROGMEM =
         {38400, 12}  // +0.2%
 };
 
-void            uart_init(uint8_t baud_index)
+void            uart_init_baud(uint8_t baud_index)
 {
     UCSR0B = 0;
     uint16_t ubrr = pgm_read_word(&g_prog_uart_baud[baud_index].ubrr);

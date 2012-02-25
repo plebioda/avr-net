@@ -15,7 +15,7 @@
 
 #define hal_send_packet(buff,len) enc28j60_send_packet((buff),(len))
 
-#define hal_receive_packet(buff,max_len) enc28j60_receive_packet((buff),(len))
+#define hal_receive_packet(buff,max_len) enc28j60_receive_packet((buff),(max_len))
 
 #define hal_link_up()	
 

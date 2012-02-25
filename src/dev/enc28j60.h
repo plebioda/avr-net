@@ -10,7 +10,7 @@
 
 #include <stdint.h>
 #include <avr/io.h>
-#include <avr/delay.h>
+#include <util/delay.h>
 
 #include "../arch/spi.h"
 
@@ -33,7 +33,7 @@ void             enc28j60_set_bank       (uint8_t addr);
 uint8_t          enc28j60_read           (uint8_t addr);
 void             enc28j60_write          (uint8_t addr,uint8_t data);
 void             enc28j60_phy_write      (uint8_t addr,uint16_t data);
-void             enc28j60_send_packet    (uint8_t * buff,uint16_t len);
+uint8_t         enc28j60_send_packet    (uint8_t * buff,uint16_t len);
 uint16_t         enc28j60_receive_packet (uint8_t * buff,uint16_t max_len);
 uint8_t          enc28j60_get_revision   (void);
 

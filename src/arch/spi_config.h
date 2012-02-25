@@ -6,9 +6,13 @@
  * published by the Free Software Foundation.
  */
 
-#ifndef _UART_CONFIG_H
-#define _UART_CONFIG_H
+#ifndef _SPI_CONFIG_H
+#define _SPI_CONFIG_H
 
-#define UART_BAUD_INDEX_DEFAULT 2
+#define SPI_PORT		PORTB
+#define SPI_DDR			DDRB
+#define SPI_MOSI		5
+#define SPI_MISO		6
+#define SPI_SCK			7
 
-#endif //_UART_CONFIG_H
+#endif //_SPI_CONFIG_H

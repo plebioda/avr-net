@@ -9,7 +9,9 @@
 #ifndef _NET_H
 #define _NET_H
 
-#define NET_HEADER_SIZE_ETHERNET
+#include <stdint.h>
+
+#define NET_HEADER_SIZE_ETHERNET	14
 
 
 #if BIG_ENDIAN

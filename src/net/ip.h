@@ -9,6 +9,7 @@
 #ifndef _IP_H
 #define _IP_H
 
+#include <stdint.h>
 
 typedef uint8_t ip_address[4];
 
@@ -16,7 +17,7 @@ struct ip_header;
 
 
 void ip_init(ip_address * addr);
-const ip_address * ip_get_addr();
+const ip_address * ip_get_addr(void);
 
 uint8_t ip_send_packet(const ip_address * ip_dst,uint8_t protocol,uint16_t length);
 uint8_t ip_handle_packet(struct ip_header * header, uint16_t packet_len);

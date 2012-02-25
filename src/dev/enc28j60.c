@@ -8,6 +8,9 @@
 
 #include "enc28j60.h"
 
+#define DEBUG_MODE
+#include "../debug.h"
+
 static uint8_t  enc28j60_bank;
 static uint16_t enc28j60_next_packet_ptr;
 
@@ -128,12 +131,12 @@ void            enc28j60_phy_write       (uint8_t addr,uint16_t data)
 }
 
 void enc28j60_init(uint8_t * macaddr)
-{
-    ENC28J60_DDR |= (1<<ENC28J60_CS)|(1<<ENC28J60_MOSI)|(1<<ENC28J60_SCK);      //CS, MOSI, SCK outputs
-    ENC28J60_DDR &= ~(1<<ENC28J60_MISO);        //MISO input
+{    
+    DEBUG_PRINT_COLOR(U_RED,"enc28j60t init:");
+    DEBUG_PRINT("%c:%c:%c:%c:%c:%c",(macaddr)[0],(macaddr)[1],(macaddr)[2],(macaddr)[3],(macaddr)[4],(macaddr)[5]);
+    DEBUG_PRINT("\n");
     
-    ENC28J60_PORT &= ~(1<<ENC28J60_MOSI) & ~(1<<ENC28J60_SCK);  //MOSI, SCK low
-    
+    ENC28J60_DDR |= (1<<ENC28J60_CS);
     ENC28J60_CS_INACTIVE();
     enc28j60_write_op(ENC28J60_OPC_RES,0,ENC28J60_OPC_RES);
     _delay_ms(50);
@@ -182,7 +185,7 @@ void enc28j60_init(uint8_t * macaddr)
     // bring MAC out of reset
     enc28j60_write(MACON2, 0x00);
     // enable automatic padding to 60bytes and CRC operations
-    enc28j60_writeOp(ENC28J60_OPC_BFS, MACON3, MACON3_PADCFG0|MACON3_TXCRCEN|MACON3_FRMLNEN);
+    enc28j60_write_op(ENC28J60_OPC_BFS, MACON3, MACON3_PADCFG0|MACON3_TXCRCEN|MACON3_FRMLNEN);
     // set inter-frame gap (non-back-to-back)
     enc28j60_write(MAIPGL, 0x12);
     enc28j60_write(MAIPGH, 0x0C);
@@ -217,7 +220,7 @@ uint8_t                 enc28j60_get_revision    (void)
     return enc28j60_read(EREVID);
 }
 
-void            enc28j60_send_packet     (uint8_t * packet,uint16_t len)
+uint8_t         enc28j60_send_packet    (uint8_t * packet,uint16_t len)
 {
       // Set the write pointer to start of transmit buffer area
       enc28j60_write(EWRPTL,ENC28J60_TXSTART_INIT&0xff);
@@ -235,6 +238,7 @@ void            enc28j60_send_packet     (uint8_t * packet,uint16_t len)
       if( (enc28j60_read(EIR) & EIR_TXERIF) ){
         enc28j60_write_op(ENC28J60_OPC_BFC, ECON1, ECON1_TXRTS);
       }
+      return 1;
 }
 
 uint16_t        enc28j60_receive_packet  (uint8_t * packet,uint16_t maxlen)
@@ -247,7 +251,6 @@ uint16_t        enc28j60_receive_packet  (uint8_t * packet,uint16_t maxlen)
     // The above does not work. See Rev. B4 Silicon Errata point 6.
     if( enc28j60_read(EPKTCNT) == 0 )
       return 0;
-    
     
     // Set the read pointer to the start of the received packet
     enc28j60_write(ERDPTL,enc28j60_next_packet_ptr&0xff);

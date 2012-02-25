@@ -10,6 +10,7 @@
 #define _EXMEM_H
 
 #include "exmem_config.h"
+#include <avr/io.h>
 
 #if EXMEM_USE_ATTR
 	#define EXMEM __attribute__ ((section(".exram")))
