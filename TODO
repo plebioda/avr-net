@@ -16,6 +16,7 @@ Tasks:
 ( ) uart
 ( ) debugging
 ( ) spi
+	( ) choosing baud rate during initiation 
 ( ) external memory
 ( ) enc28j60 procedures
 ( ) ip layer - all procedures
