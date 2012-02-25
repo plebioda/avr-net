@@ -6,17 +6,11 @@
  * published by the Free Software Foundation.
  */
 
-#ifndef _EXMEM_H
-#define _EXMEM_H
+#ifndef _EXMEM_CONFIG_H
+#define _EXMEM_CONFIG_H
 
-#include "exmem_config.h"
+#define EXMEM_USE_ATTR	1
 
-#if EXMEM_USE_ATTR
-	#define EXMEM __attribute__ ((section(".exram")))
-#else
-	#define EXMEM
-#endif
 
-void before_main(void) __attribute__((naked)) __attribute__((section(".init3")));
 
 #endif //_EXMEM_H

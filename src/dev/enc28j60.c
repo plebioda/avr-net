@@ -6,6 +6,8 @@
  * published by the Free Software Foundation.
  */
 
+#include "enc28j60.h"
+
 static uint8_t  enc28j60_bank;
 static uint16_t enc28j60_next_packet_ptr;
 
