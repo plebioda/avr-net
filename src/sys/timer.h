@@ -5,3 +5,24 @@
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
+
+#ifndef _TIMER_H
+#define _TIMER_H
+
+#include <stdint.h>
+
+#include "timer_config.h"
+
+typedef int8_t timer_t;
+typedef void (*timer_callback)(timer_t timer);
+
+void timer_tick(void);
+uint8_t timer_set(timer_t timer,uint32_t ms);
+uint8_t timer_stop(timer_t timer);
+
+timer_t timer_alloc(timer_callback callback);
+void timer_free(timer_t);
+
+
+
+#endif //_TIMER_H

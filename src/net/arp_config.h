@@ -9,6 +9,10 @@
 #ifndef _ARP_CONFIG_H
 #define _ARP_CONFIG_H
 
-#define ARP_TABLE_SIZE		4
+#include "../sys/timer_config.h"
+
+#define ARP_TABLE_SIZE			4
+#define ARP_TIMER_TICK_MS		10*TIMER_MS_PER_TICK
+#define ARP_TABLE_ENTRY_TIMEOUT		0xff
 
 #endif //_ARP_CONFIG_H

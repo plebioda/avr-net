@@ -23,7 +23,7 @@ struct arp_header;
 #define ARP_OPERATION_REQUEST		0x0001
 #define ARP_OPERATION_REPLY		0x0001
 
-
+uint8_t arp_init(void);
 uint8_t arp_handle_packet(struct arp_header * header,uint16_t packet_length);
 uint8_t arp_get_mac(ip_address * ip_addr,ethernet_address * ethernet_addr);
 

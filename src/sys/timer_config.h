@@ -5,3 +5,12 @@
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
+
+#ifndef _TIMER_CONFIG_H
+#define _TIMER_CONFIG_H
+
+
+#define TIMER_MAX		4
+#define TIMER_MS_PER_TICK	10
+
+#endif //_TIMER_CONFIG_H

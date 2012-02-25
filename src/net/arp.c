@@ -8,7 +8,7 @@
 
 #include "arp.h"
 #include "../arch/exmem.h"
-
+#include "../sys/timer.h"
 
 #define DEBUG_MODE
 #include "../debug.h"
@@ -28,6 +28,7 @@ struct arp_header
     ip_address 		target_protocol_addr;
 };
 
+
 struct arp_table_entry
 {
     ip_address 		ip_addr;
@@ -36,11 +37,25 @@ struct arp_table_entry
 };
 
 static struct arp_table_entry 	arp_table[ARP_TABLE_SIZE] EXMEM;
+static timer_t arp_timer;
 
 void arp_table_insert(const ip_address * ip_addr,const ethernet_address * ethernet_addr);
 uint8_t arp_send_reply(const struct arp_header * header);
+void arp_timer_tick(timer_t timer);
 
-
+uint8_t arp_init(void)
+{
+    /* Clear arp table */
+    memset(arp_table, 0 ,sizeof(arp_table));
+    /* get system timer */
+    arp_timer = timer_alloc((timer_callback)arp_timer_tick);
+    /* Check timer */
+    if(arp_timer < 0)
+      return 0;
+    /* Set timer */
+    timer_set(arp_timer,ARP_TIMER_TICK_MS);
+    return 1;
+}
 
 uint8_t arp_handle_packet(struct arp_header * header,uint16_t packet_length)
 {
@@ -95,4 +110,16 @@ void arp_table_insert(const ip_address * ip_addr,const ethernet_address * ethern
     
 }
 
-
+void arp_timer_tick(timer_t timer)
+{
+    if(timer != arp_timer)
+      return;
+    DEBUG_PRINT_COLOR(B_IMAGENTA,"ARP Timer tick\n");
+    struct arp_table_entry * entry;
+    for(entry = &arp_table[0] ; entry < &arp_table[ARP_TABLE_SIZE] ; entry++)
+    {
+	if(entry->timeout > 0)
+	  entry->timeout--;
+    }
+    timer_set(arp_timer,ARP_TIMER_TICK_MS);
+}
