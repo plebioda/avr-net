@@ -93,7 +93,6 @@ timer_t timer_alloc(timer_callback_t callback)
 	    timer->flags = TIMER_FLAG_ACTIVE;
 	    timer->ms_left = 0;
 	    return timer_number(timer);
-	    
 	}
     }
     return -1;

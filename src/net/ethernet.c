@@ -66,13 +66,10 @@ uint8_t ethernet_handle_packet()
   switch(header->type)
   {
     case HTON16(ETHERNET_TYPE_IP):
-      DEBUG_PRINT("IP packet\n");
-      ip_handle_packet((struct ip_header*)data,packet_size);
+      ip_handle_packet((struct ip_header*)data,packet_size,(const ethernet_address*)&header->src);
       break;
     case HTON16(ETHERNET_TYPE_ARP):
-      
       retval = arp_handle_packet((struct arp_header*)data,packet_size);
-//       DEBUG_PRINT("ARP packet ret = %d\n",retval);
       break;
     default:
       return 0;

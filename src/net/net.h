@@ -11,8 +11,10 @@
 
 #include <stdint.h>
 
-#define NET_HEADER_SIZE_ETHERNET	14
 
+
+#define NET_HEADER_SIZE_ETHERNET	14
+#define NET_HEADER_SIZE_IP		20
 
 #if BIG_ENDIAN
 #define HTON16(val) (val)
@@ -38,6 +40,9 @@ uint32_t 	hton32(uint16_t h);
 
 #define ntoh16(n)	hton16((n))
 #define ntoh32(n)	hton32((n))
+
+#define MAKEUINT16(x,y) 	(((x)<<8)|(y)) 
+uint16_t net_get_checksum(uint16_t checksum,const uint8_t * data,uint16_t len,uint8_t skip);
 
 
 #endif //_NET_H

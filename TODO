@@ -34,6 +34,9 @@ Tasks:
 		(*) arp table entry timeout 
 		(*) arp table entry waiting for reply timeout 		
 ( ) icmp layer - all procedures
+	( ) icmp handle request
+	( ) icmp handle reply
+	( ) icmp handle destination unreachable
 ( ) udp layer - all procedures
 
 
