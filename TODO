@@ -6,13 +6,16 @@
  * published by the Free Software Foundation.
  */
 
-This document describes the scheduled tasks to be done
-
+This document describes the scheduled tasks to be done.
+------------------------------------------------------------
 Legend:
+------------------------------------------------------------
 ( ) - task scheduled but not done yet
 (*) - task done
 
+------------------------------------------------------------
 Tasks:
+------------------------------------------------------------
 ( ) own Makefile
 (*) uart
 (*) debugging
@@ -23,8 +26,8 @@ Tasks:
 (*) enc28j60 procedures
 (*) ethernet layer - all procedures
 ( ) ip layer - all procedures
-	( ) handling packets
-	( ) sending packets 
+	(*) handling packets
+	(*) sending packets 
 	( ) test all layers up to ip layer inclusive
 (*) timer structure and procedures
 ( ) arp layer - all procedures
@@ -33,10 +36,17 @@ Tasks:
 	( ) arp table
 		(*) arp table entry timeout 
 		(*) arp table entry waiting for reply timeout 		
+		( ) arp table test
 ( ) icmp layer - all procedures
-	( ) icmp handle request
+	(*) icmp handle request
 	( ) icmp handle reply
 	( ) icmp handle destination unreachable
-( ) udp layer - all procedures
-
-
+( ) udp layer
+	(*) checksum
+	(*) handling packets
+	( ) sending packets	
+	(*) socket alloc and free
+	( ) socket getting packet
+	( ) socket binding unused local port
+	( ) socket binding remote port and addr
+------------------------------------------------------------

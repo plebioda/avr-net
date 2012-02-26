@@ -13,6 +13,7 @@
 #include "net.h"
 #include "arp.h"
 #include "icmp.h"
+#include "udp.h"
 
 #define DEBUG_MODE
 #include "../debug.h"
@@ -150,10 +151,6 @@ uint8_t ip_handle_packet(struct ip_header * header, uint16_t packet_len,const et
     return 0;
 
   /* check destination ip address */
-  const ip_address * ipaddr = &header->dst;
-
-  ipaddr = ip_get_addr();
-
   if(memcmp(&header->dst,ip_get_addr(),sizeof(ip_address)))
   {
       /* check if this is broadcast packet */
@@ -180,6 +177,7 @@ uint8_t ip_handle_packet(struct ip_header * header, uint16_t packet_len,const et
       break;
     case IP_PROTOCOL_UDP:
       DEBUG_PRINT("ip_handle_packet: UDP\n");
+      udp_handle_packet((const ip_address*)&header->src,(const struct udp_header*)((const uint8_t*)header + header_length),packet_length-header_length);
       break;
     default:
       return 0;
