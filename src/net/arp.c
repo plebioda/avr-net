@@ -28,27 +28,34 @@ struct arp_header
     ip_address 		target_protocol_addr;
 };
 
+#define ARP_TABLE_ENTRY_STATUS_EMPTY	0 
+#define ARP_TABLE_ENTRY_STATUS_REQUEST	1
+#define ARP_TABLE_ENTRY_STATUS_TIMEOUT	2
 
 struct arp_table_entry
 {
+    uint8_t		status;
     ip_address 		ip_addr;
     ethernet_address 	ethernet_addr;
-    uint8_t		timeout;
+    uint16_t		timeout;
 };
 
 static struct arp_table_entry 	arp_table[ARP_TABLE_SIZE] EXMEM;
 static timer_t arp_timer;
 
+#define FOREACH_ARP_ENTRY(entry) for(entry = &arp_table[0] ; entry < &arp_table[ARP_TABLE_SIZE] ; entry++)
+
 void arp_table_insert(const ip_address * ip_addr,const ethernet_address * ethernet_addr);
 uint8_t arp_send_reply(const struct arp_header * header);
 void arp_timer_tick(timer_t timer);
+uint8_t arp_send_request(ip_address * ip_addr);
 
 uint8_t arp_init(void)
 {
     /* Clear arp table */
     memset(arp_table, 0 ,sizeof(arp_table));
     /* get system timer */
-    arp_timer = timer_alloc((timer_callback)arp_timer_tick);
+    arp_timer = timer_alloc((timer_callback_t)arp_timer_tick);
     /* Check timer */
     if(arp_timer < 0)
       return 0;
@@ -59,7 +66,6 @@ uint8_t arp_init(void)
 
 uint8_t arp_handle_packet(struct arp_header * header,uint16_t packet_length)
 {
-    DEBUG_PRINT_COLOR(U_CYAN,"arp_handle_packet: packet_len = %d\n",packet_length);
     /* Check packet length */
     if(packet_length < sizeof(struct arp_header))
       return 0;
@@ -81,7 +87,6 @@ uint8_t arp_handle_packet(struct arp_header * header,uint16_t packet_length)
     /* Parse operation code of packet */
     if(header->operation_code != HTON16(ARP_OPERATION_REQUEST) && header->operation_code != HTON16(ARP_OPERATION_REPLY))
       return 0;
-    DEBUG_PRINT_COLOR(B_CYAN,"arp_handle_packet: op = %x\n",NTOH16(header->operation_code));
     arp_table_insert((const ip_address*)&header->sender_protocol_addr,(const ethernet_address*)&header->sender_hardware_addr);
     if(header->operation_code == HTON16(ARP_OPERATION_REQUEST))
       return arp_send_reply(header);
@@ -105,21 +110,116 @@ uint8_t arp_send_reply(const struct arp_header * header)
     return ethernet_send_packet(&arp_reply->target_hardware_addr,ETHERNET_TYPE_ARP,sizeof(struct arp_header));
 }
 
+void arp_table_entry_cpy(struct arp_table_entry * entry,const ip_address * ip_addr,const ethernet_address * ethernet_addr)
+{
+  entry->timeout = ARP_TABLE_ENTRY_TIMEOUT;
+  entry->status = ARP_TABLE_ENTRY_STATUS_TIMEOUT;  
+  memcpy(&entry->ip_addr,ip_addr,sizeof(ip_address));
+  memcpy(&entry->ethernet_addr,ethernet_addr,sizeof(ethernet_address));
+  
+}
+
 void arp_table_insert(const ip_address * ip_addr,const ethernet_address * ethernet_addr)
 {
-    
+  uint16_t min_timeout = ARP_TABLE_ENTRY_TIMEOUT;
+  struct arp_table_entry * entry;
+  struct arp_table_entry * min_entry = 0;
+  FOREACH_ARP_ENTRY(entry)
+  {
+      /* There is already arp table entry with ip_addr which is waiting for reply */
+      if(entry->status == ARP_TABLE_ENTRY_STATUS_REQUEST && !memcmp(ip_addr,&entry->ip_addr,sizeof(ip_address)))
+      {
+	    arp_table_entry_cpy(min_entry,ip_addr,ethernet_addr);
+	    return;
+      }
+      if(entry->timeout < min_timeout)
+      {
+	  min_timeout = entry->timeout;
+	  min_entry = entry;
+      }
+  }
+  if(min_entry == 0)
+  {
+      DEBUG_PRINT_COLOR(B_IRED,"error: arp_table_insert: min_entry == 0\n");
+      return;
+  }
+  arp_table_entry_cpy(min_entry,ip_addr,ethernet_addr);
 }
 
 void arp_timer_tick(timer_t timer)
 {
     if(timer != arp_timer)
       return;
-    DEBUG_PRINT_COLOR(B_IMAGENTA,"ARP Timer tick\n");
     struct arp_table_entry * entry;
-    for(entry = &arp_table[0] ; entry < &arp_table[ARP_TABLE_SIZE] ; entry++)
+    FOREACH_ARP_ENTRY(entry)
     {
-	if(entry->timeout > 0)
-	  entry->timeout--;
+	if(entry->status != ARP_TABLE_ENTRY_STATUS_EMPTY)
+	{
+	  if(entry->timeout > 0)
+	    entry->timeout--;
+	  else
+	    entry->status = ARP_TABLE_ENTRY_STATUS_EMPTY;
+	}
     }
     timer_set(arp_timer,ARP_TIMER_TICK_MS);
+}
+
+uint8_t arp_get_mac(ip_address * ip_addr,ethernet_address * ethernet_addr)
+{
+    struct arp_table_entry * entry;
+    struct arp_table_entry * empty;
+    FOREACH_ARP_ENTRY(entry)
+    {
+	if(entry->status == ARP_TABLE_ENTRY_STATUS_EMPTY)
+	{
+	  empty = entry;
+	  continue;
+	}
+	if(!memcmp(&entry->ip_addr,ip_addr,sizeof(ip_address)))
+	{
+	    switch(entry->status)
+	    {
+	      /* There is ethernet address in arp table */
+	      case ARP_TABLE_ENTRY_STATUS_TIMEOUT:
+		entry->timeout = ARP_TABLE_ENTRY_TIMEOUT;
+		memcpy(ethernet_addr,&entry->ethernet_addr,sizeof(ethernet_address));
+		return 1;
+	      /* There is ip address but waiting for reply*/
+	      case ARP_TABLE_ENTRY_STATUS_REQUEST:
+		return 0;
+	      default:
+		continue;
+	    }
+	}
+    }
+    if(empty != 0)
+    {
+      memcpy(&empty->ip_addr,ip_addr,sizeof(ip_address));
+      empty->status = ARP_TABLE_ENTRY_STATUS_REQUEST;
+      empty->timeout = ARP_TABLE_ENTRY_REQ_TIME;
+    }
+    arp_send_request(ip_addr);
+    return 0;
+}
+
+uint8_t arp_send_request(ip_address * ip_addr)
+{
+  struct arp_header * arp_request = (struct arp_header*)ethernet_get_buffer();
+  
+  /* Set protocol and hardware addresses type and length */
+  arp_request->hardware_addr_len = ARP_HW_ADDR_SIZE_ETHERNET;
+  arp_request->protocol_addr_len = ARP_PROTO_ADDR_SIZE_IP;
+  arp_request->hardware_type = HTON16(ARP_HW_ADDR_TYPE_ETHERNET);
+  arp_request->protocol_type = HTON16(ARP_PROTO_ADDR_TYPE_IP);
+  
+  /* Set sedner and target hardware and protocol addresses */
+  memset(&arp_request->target_hardware_addr,0,sizeof(ethernet_address));
+  memcpy(&arp_request->target_protocol_addr,ip_addr,sizeof(ip_address));
+  memcpy(&arp_request->sender_hardware_addr,ethernet_get_mac(),sizeof(ethernet_address));
+  memcpy(&arp_request->sender_protocol_addr,ip_get_addr(),sizeof(ip_address));
+  
+  /* Set operation code */
+  arp_request->operation_code = HTON16(ARP_OPERATION_REQUEST);
+  /* Send packet */
+  return ethernet_send_packet(ETHERNET_ADDR_BROADCAST,ETHERNET_TYPE_ARP,sizeof(struct arp_header));
 }

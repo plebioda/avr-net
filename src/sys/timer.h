@@ -14,13 +14,14 @@
 #include "timer_config.h"
 
 typedef int8_t timer_t;
-typedef void (*timer_callback)(timer_t timer);
+typedef void (*timer_callback_t)(timer_t timer);
 
+void timer_init(void);
 void timer_tick(void);
-uint8_t timer_set(timer_t timer,uint32_t ms);
+uint8_t timer_set(timer_t timer,int32_t ms);
 uint8_t timer_stop(timer_t timer);
 
-timer_t timer_alloc(timer_callback callback);
+timer_t timer_alloc(timer_callback_t callback);
 void timer_free(timer_t);
 
 

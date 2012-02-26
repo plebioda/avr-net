@@ -12,7 +12,8 @@
 #include "../sys/timer_config.h"
 
 #define ARP_TABLE_SIZE			4
-#define ARP_TIMER_TICK_MS		10*TIMER_MS_PER_TICK
+#define ARP_TIMER_TICK_MS		1000
 #define ARP_TABLE_ENTRY_TIMEOUT		0xff
+#define ARP_TABLE_ENTRY_REQ_TIME	0xff
 
 #endif //_ARP_CONFIG_H

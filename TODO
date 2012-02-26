@@ -13,18 +13,27 @@ Legend:
 (*) - task done
 
 Tasks:
-( ) Makefile
-( ) uart
-( ) debugging
+( ) own Makefile
+(*) uart
+(*) debugging
 ( ) spi
+	(*) init 	
 	( ) choosing baud rate during initiation 
-( ) external memory
-( ) enc28j60 procedures
+(*) external memory
+(*) enc28j60 procedures
+(*) ethernet layer - all procedures
 ( ) ip layer - all procedures
 	( ) handling packets
 	( ) sending packets 
 	( ) test all layers up to ip layer inclusive
-( ) timer structure and procedures
+(*) timer structure and procedures
 ( ) arp layer - all procedures
+	(*) arp sending reply
+	(*) arp sending request
+	( ) arp table
+		(*) arp table entry timeout 
+		(*) arp table entry waiting for reply timeout 		
 ( ) icmp layer - all procedures
 ( ) udp layer - all procedures
+
+

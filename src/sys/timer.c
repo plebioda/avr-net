@@ -6,10 +6,14 @@
  * published by the Free Software Foundation.
  */
 
+#include <string.h>
+
 #include "timer.h"
 
 #include "../arch/exmem.h"
 
+#define DEBUG_MODE
+#include "../debug.h"
 
 #define TIMER_FLAG_STOPPED 	0
 #define TIMER_FLAG_ACTIVE 	1
@@ -17,9 +21,8 @@
 
 struct timer_core
 {
-  timer_t timer;
-  timer_callback callback;
-  uint32_t ms_left;
+  timer_callback_t callback;
+  int32_t ms_left;
   uint8_t flags;
 };
 
@@ -27,12 +30,21 @@ static struct timer_core timer_cores[TIMER_MAX] EXMEM;
 static timer_t timer_number(const struct timer_core * timer);
 static uint8_t timer_valid(const timer_t timer);
 
-#define FOREACH(timer) for(timer = &timer_cores[0];timer < &timer_cores[TIMER_MAX] ; ++(timer))
+#define FOREACH_TIMER(timer) for(timer = &timer_cores[0];timer < &timer_cores[TIMER_MAX] ; ++(timer))
+
+void timer_init(void)
+{
+    struct timer_core * timer;
+    FOREACH_TIMER(timer)
+    {
+	memset(timer,0,sizeof(*timer));
+    }
+}
 
 void timer_tick()
 {
     struct timer_core * timer;
-    FOREACH(timer)
+    FOREACH_TIMER(timer)
     {
 	/* Skip unused timers (without callback) */
 	if(!timer->callback)
@@ -43,7 +55,7 @@ void timer_tick()
 
 	timer->ms_left -= TIMER_MS_PER_TICK;
 	if(timer->ms_left < 0)
-	  timer->callback(timer->timer);
+	  timer->callback(timer_number(timer));
 	
     }
 }
@@ -51,7 +63,7 @@ static uint8_t timer_valid(const timer_t timer)
 {
     return (timer >= 0 && timer < TIMER_MAX && timer_cores[timer].callback!= 0);
 }
-uint8_t timer_set(timer_t timer,uint32_t ms)
+uint8_t timer_set(timer_t timer,int32_t ms)
 {
     if(!timer_valid(timer))
       return 0;
@@ -68,12 +80,12 @@ uint8_t timer_stop(timer_t timer)
     return 1;
 }
 
-timer_t timer_alloc(timer_callback callback)
+timer_t timer_alloc(timer_callback_t callback)
 {
     struct timer_core * timer;
     if(callback == 0)
       return -1;
-    FOREACH(timer)
+    FOREACH_TIMER(timer)
     {
 	if(timer->callback == 0)
 	{
@@ -81,6 +93,7 @@ timer_t timer_alloc(timer_callback callback)
 	    timer->flags = TIMER_FLAG_ACTIVE;
 	    timer->ms_left = 0;
 	    return timer_number(timer);
+	    
 	}
     }
     return -1;
@@ -99,7 +112,6 @@ static timer_t timer_number(const struct timer_core * timer)
 {
     if(!timer)
       return -1;
-    
     timer_t ret = (timer_t)(((uint16_t)timer - (uint16_t)&timer_cores[0])/sizeof(struct timer_core));
     if (timer_valid(ret))
       return ret;
