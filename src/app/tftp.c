@@ -5,10 +5,13 @@
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
-#include <string.h>
-#include <ctype.h>
 
 #include "tftp.h"
+
+#if APP_TFTP
+
+#include <string.h>
+#include <ctype.h>
 
 #include "../arch/exmem.h"
 
@@ -83,8 +86,10 @@ uint8_t tftpd_send_ack(uint16_t block_num);
 
 uint8_t tftpd_init(void)
 {
-    tftpd.socket = udp_socket_alloc(69,tftpd_callback);
+    /* get socket */
+    tftpd.socket = udp_socket_alloc(TFTP_UDP_PORT,tftpd_callback);
     tftpd_reset();
+    return 1;
 }
 
 void tftpd_reset(void)
@@ -213,6 +218,13 @@ uint8_t tftpd_handle_error(uint8_t * data,uint16_t length)
       case tftpd_state_receive:
 	tftpd_reset();
 	break;
+      case tftpd_state_listen:
+      case tftpd_state_send:
+      case tftpd_state_ack_waiting:
+	break;
       
     }
+    return 1;
 }
+
+#endif //APP_TFTP

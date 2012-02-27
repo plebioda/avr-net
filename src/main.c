@@ -8,7 +8,6 @@
 
 #include <avr/io.h>
 #include <avr/iom162.h>
-#include <avr/signal.h>
 #include <avr/interrupt.h>
 
 #define DEBUG_MODE
@@ -66,9 +65,9 @@ int main(void)
   udp_init();
   DEBUG_PRINT_COLOR(B_IRED,"Initialized...\n");  
   /* (clk = 8Mhz) / 256 = 31.25 kHz -> 32 us */
-  TCNT0 = 0xffff;
-  TCCR0 |= (1<<CS02) | (0<<CS01) | (0<<CS00);
-  TIMSK = (1<<TOIE0);
+  TCNT1 = 0xffff;
+  TCCR1B |= (1<<CS12) | (0<<CS11) | (0<<CS10);
+  TIMSK = (1<<TOIE1);
 // 
   sei();
 //   timer_t timer = timer_alloc(timer_c);
@@ -95,10 +94,10 @@ int main(void)
   return 0;
 }
 
-SIGNAL(SIG_OVERFLOW0)
+SIGNAL(SIG_OVERFLOW1)
 {
     /* 10 ms / 32 us = 312.5 */
-    TCNT0 = 312;
+    TCNT1 = 312;
     timer_tick();    
 }
 // SIGNAL(SIG_OVERFLOW0)

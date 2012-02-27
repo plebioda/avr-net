@@ -38,11 +38,12 @@ uint16_t 	udp_get_checksum(const ip_address * ip_addr,const struct udp_header * 
 uint8_t 	udp_is_free_port(uint16_t port);
 socket_t 	udp_socket_num(struct udp_socket * socket);
 uint8_t 	udp_socket_is_valid(socket_t socket);
-uint16_t 	udp_get_free_local_port();
+uint16_t 	udp_get_free_local_port(void);
 
 uint8_t udp_init(void)
 {
     memset(udp_sockets,0,sizeof(udp_sockets));
+    return 1;
 }
 uint8_t udp_socket_is_valid(socket_t socket)
 {
@@ -179,7 +180,7 @@ uint8_t udp_bind_local(socket_t socket,uint16_t local_port)
     return 1;
 }
 
-uint16_t udp_get_free_local_port()
+uint16_t udp_get_free_local_port(void)
 {
     uint16_t port = 1024;
     do
@@ -205,7 +206,7 @@ uint8_t udp_send(socket_t socket_num,uint16_t length)
     udp->length = hton16(length);
     udp->port_destination = hton16(socket->port_remote);
     udp->port_source = hton16(socket->port_local);
-    udp->checksum = hton16(udp_get_checksum(&socket->ip_remote,udp,length));
+    udp->checksum = hton16(udp_get_checksum((const ip_address*)&socket->ip_remote,udp,length));
     
-    return ip_send_packet(&socket->ip_remote,IP_PROTOCOL_UDP,length);
+    return ip_send_packet((const ip_address*)&socket->ip_remote,IP_PROTOCOL_UDP,length);
 }

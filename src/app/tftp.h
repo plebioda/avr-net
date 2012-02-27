@@ -16,6 +16,7 @@
 
 #include "../net/udp.h"
 
+#define TFTP_UDP_PORT 	69
 
 uint8_t tftpd_init(void);
 void tftpd_reset(void);

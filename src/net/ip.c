@@ -178,7 +178,8 @@ uint8_t ip_handle_packet(struct ip_header * header, uint16_t packet_len,const et
       udp_handle_packet((const ip_address*)&header->src,(const struct udp_header*)((const uint8_t*)header + header_length),packet_length-header_length);
       break;
     default:
-      return 0;
+      break;
   }
+  return 0;
 }
 
