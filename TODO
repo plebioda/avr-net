@@ -50,4 +50,10 @@ Tasks:
 	(?) socket getting packet
 	( ) socket binding unused local port
 	(?) socket binding remote port and addr
+( ) tftp
+	( ) tftp WRQ handling
+	( ) tftp RRQ handling
+	( ) tftp ERROR handling
+	( ) tftp ACK handling	
+	( ) tftp DATA handling	
 ------------------------------------------------------------
