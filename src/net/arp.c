@@ -266,6 +266,7 @@ uint8_t arp_get_mac(const ip_address * ip_addr,ethernet_address * ethernet_addr)
       DEBUG_PRINT("arp_get_mac: print_arp_table:\n");
       DEBUG(print_arp_table());
     }
+    DEBUG_PRINT("arp_get_mac: sending request\n");
     arp_send_request(ip_addr);
     return 0;
 }

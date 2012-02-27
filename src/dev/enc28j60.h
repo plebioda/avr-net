@@ -60,8 +60,8 @@ uint8_t          enc28j60_get_revision   (void);
 #define ENC28J60_TXSTOP_INIT      0x1FFF
 //
 // max frame length which the conroller will accept:
-//#define        MAX_FRAMELEN        1518        // maximum ethernet frame length
-#define ENC28J60_MAX_FRAMELEN     500
+#define        MAX_FRAMELEN       1518        // maximum ethernet frame length
+#define ENC28J60_MAX_FRAMELEN     MAX_FRAMELEN
 
 
 #define ENC28J60_ADDR_MASK      0x1F

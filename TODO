@@ -23,7 +23,8 @@ Tasks:
 	(*) init 	
 	( ) choosing baud rate during initiation 
 (*) external memory
-(*) enc28j60 procedures
+( ) enc28j60 procedures
+	( ) init procedure: max pakcet len, full duplex and so on	
 (*) ethernet layer - all procedures
 ( ) ip layer - all procedures
 	(*) handling packets

@@ -195,7 +195,7 @@ void enc28j60_init(uint8_t * macaddr)
     // Do not send packets longer than MAX_FRAMELEN:
     enc28j60_write(MAMXFLL, ENC28J60_MAX_FRAMELEN&0xFF);        
     enc28j60_write(MAMXFLH, ENC28J60_MAX_FRAMELEN>>8);
-    
+
     // BANK 3 STUFF
     // write MAC address
     // NOTE: MAC address in ENC28J60 is byte-backward

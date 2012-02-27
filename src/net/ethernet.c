@@ -61,16 +61,13 @@ uint8_t ethernet_handle_packet()
   packet_size -= sizeof(*header);
   uint8_t * data = (uint8_t*)(header+1);
   
-  uint8_t retval;
   /* redirect packet to the proper upper layer */
   switch(header->type)
   {
     case HTON16(ETHERNET_TYPE_IP):
-      ip_handle_packet((struct ip_header*)data,packet_size,(const ethernet_address*)&header->src);
-      break;
+      return ip_handle_packet((struct ip_header*)data,packet_size,(const ethernet_address*)&header->src);
     case HTON16(ETHERNET_TYPE_ARP):
-      retval = arp_handle_packet((struct arp_header*)data,packet_size);
-      break;
+      return arp_handle_packet((struct arp_header*)data,packet_size);
     default:
       return 0;
   }
@@ -90,5 +87,3 @@ uint8_t ethernet_send_packet(ethernet_address * dst,uint16_t type,uint16_t len)
   header->type = hton16(type);
   return hal_send_packet(ethernet_tx_buffer,(len + NET_HEADER_SIZE_ETHERNET));			
 }
-
-

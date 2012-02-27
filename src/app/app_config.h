@@ -5,15 +5,10 @@
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
+#ifndef _APP_CONFIG_H
+#define _APP_CONFIG_H
 
-#ifndef _ARP_CONFIG_H
-#define _ARP_CONFIG_H
+#define APP_TFTP	1
 
-#include "../sys/timer_config.h"
 
-#define ARP_TABLE_SIZE			2
-#define ARP_TIMER_TICK_MS		1000
-#define ARP_TABLE_ENTRY_TIMEOUT		0xff
-#define ARP_TABLE_ENTRY_REQ_TIME	0xff
-
-#endif //_ARP_CONFIG_H
+#endif //_APP_CONFIG_H

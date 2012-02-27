@@ -26,6 +26,9 @@
 #include "net/arp.h"
 #include "net/udp.h"
 
+#include "app/app_config.h"
+#include "app/tftp.h"
+
 void timer_c(timer_t timer)
 {
     DEBUG_PRINT("Timer %d\n",timer);
@@ -77,6 +80,9 @@ int main(void)
   socket_t socket = udp_socket_alloc(12348,udp_callback);
 //   udp_bind_remote(socket,12341,&ip);
   DEBUG_PRINT("socket = %d\n",socket);
+#if APP_TFTP
+  tftpd_init();
+#endif
   for(;;)
   {
 	ethernet_handle_packet();
