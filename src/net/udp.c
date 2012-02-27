@@ -36,8 +36,8 @@ static struct udp_socket udp_sockets[UDP_SOCKET_MAX] EXMEM;
 
 uint16_t 	udp_get_checksum(const ip_address * ip_addr,const struct udp_header * udp,uint16_t packet_len);
 uint8_t 	udp_is_free_port(uint16_t port);
-socket_t 	udp_socket_num(struct udp_socket * socket);
-uint8_t 	udp_socket_is_valid(socket_t socket);
+udp_socket_t 	udp_socket_num(struct udp_socket * socket);
+uint8_t 	udp_socket_is_valid(udp_socket_t socket);
 uint16_t 	udp_get_free_local_port(void);
 
 uint8_t udp_init(void)
@@ -45,28 +45,28 @@ uint8_t udp_init(void)
     memset(udp_sockets,0,sizeof(udp_sockets));
     return 1;
 }
-uint8_t udp_socket_is_valid(socket_t socket)
+uint8_t udp_socket_is_valid(udp_socket_t socket)
 {
     return (socket >= 0 && socket < UDP_SOCKET_MAX);
 }
-socket_t udp_socket_num(struct udp_socket * socket)
+udp_socket_t udp_socket_num(struct udp_socket * socket)
 {
     if(!socket)
       return -1;
-    socket_t socket_num = (socket_t)(((uint16_t)socket - (uint16_t)udp_sockets)/sizeof(struct udp_socket));
+    udp_socket_t socket_num = (udp_socket_t)(((uint16_t)socket - (uint16_t)udp_sockets)/sizeof(struct udp_socket));
     if(udp_socket_is_valid(socket_num))
       return socket_num;
     return -1;
 }
 
-socket_t udp_socket_alloc(uint16_t local_port,udp_socket_callback callback)
+udp_socket_t udp_socket_alloc(uint16_t local_port,udp_socket_callback callback)
 {
   if(local_port == 0 || callback == 0)
     return -1;
   if(!udp_is_free_port(local_port))
     return -1;
   struct udp_socket * socket;
-  socket_t socket_num = -1;
+  udp_socket_t socket_num = -1;
   FOREACH_UDP_SOCKET(socket)
   {
       if(socket->callback != 0)
@@ -82,7 +82,7 @@ socket_t udp_socket_alloc(uint16_t local_port,udp_socket_callback callback)
   return socket_num;
 }
 
-void udp_socket_free(socket_t socket_num)
+void udp_socket_free(udp_socket_t socket_num)
 {
   if(!udp_socket_is_valid(socket_num))
     return;
@@ -126,7 +126,7 @@ uint8_t udp_handle_packet(const ip_address * ip_remote,const struct udp_header *
     if(port_local == 0 || port_remote == 0)
       return 0;
     struct udp_socket * socket;
-    socket_t socket_num = -1;
+    udp_socket_t socket_num = -1;
     FOREACH_UDP_SOCKET(socket)
     {
 	/* check if socket is used and if whether packet is directed to this one*/
@@ -154,7 +154,7 @@ uint8_t udp_handle_packet(const ip_address * ip_remote,const struct udp_header *
     }
     return 0;
 }
-uint8_t udp_bind_remote(socket_t socket,uint16_t remote_port,ip_address * remote_ip)
+uint8_t udp_bind_remote(udp_socket_t socket,uint16_t remote_port,ip_address * remote_ip)
 {
     if(!udp_socket_is_valid(socket))
       return 0;
@@ -163,7 +163,7 @@ uint8_t udp_bind_remote(socket_t socket,uint16_t remote_port,ip_address * remote
     memcpy(&s->ip_remote,remote_ip,sizeof(ip_address));
     return 1;
 }
-uint8_t udp_unbind_remote(socket_t socket)
+uint8_t udp_unbind_remote(udp_socket_t socket)
 {
     if(!udp_socket_is_valid(socket))
       return 0;
@@ -171,7 +171,7 @@ uint8_t udp_unbind_remote(socket_t socket)
     memset(&s->port_remote,0,sizeof(s->port_remote) + sizeof(s->ip_remote));
     return 1;
 }
-uint8_t udp_bind_local(socket_t socket,uint16_t local_port)
+uint8_t udp_bind_local(udp_socket_t socket,uint16_t local_port)
 {
     if(!udp_socket_is_valid(socket) || !udp_is_free_port(local_port))
       return 0;
@@ -189,7 +189,7 @@ uint16_t udp_get_free_local_port(void)
     }while(!udp_is_free_port(port) && port !=0); 
     return port;
 }
-uint8_t udp_send(socket_t socket_num,uint16_t length)
+uint8_t udp_send(udp_socket_t socket_num,uint16_t length)
 {
     if(length < 1 || !udp_socket_is_valid(socket_num))
       return 0;

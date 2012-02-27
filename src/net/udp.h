@@ -15,22 +15,22 @@
 #include "ip.h"
 #include "net.h"
 
-typedef int8_t socket_t;
+typedef int8_t udp_socket_t;
 
-typedef void (*udp_socket_callback)(socket_t socket,uint8_t * data,uint16_t length);
+typedef void (*udp_socket_callback)(udp_socket_t socket,uint8_t * data,uint16_t length);
 
 struct udp_header;
 
 uint8_t udp_init(void);
 uint8_t udp_handle_packet(const ip_address * ip_remote,const struct udp_header * udp,uint16_t packet_len);
 
-socket_t udp_socket_alloc(uint16_t local_port,udp_socket_callback callback);
-void udp_socket_free(socket_t socket);
+udp_socket_t udp_socket_alloc(uint16_t local_port,udp_socket_callback callback);
+void udp_socket_free(udp_socket_t socket);
 
-uint8_t udp_send(socket_t socket,uint16_t length);
-uint8_t udp_bind_remote(socket_t socket,uint16_t remote_port,ip_address * remote_ip);
-uint8_t udp_unbind_remote(socket_t socket);
-uint8_t udp_bind_local(socket_t socket,uint16_t local_port);
+uint8_t udp_send(udp_socket_t socket,uint16_t length);
+uint8_t udp_bind_remote(udp_socket_t socket,uint16_t remote_port,ip_address * remote_ip);
+uint8_t udp_unbind_remote(udp_socket_t socket);
+uint8_t udp_bind_local(udp_socket_t socket,uint16_t local_port);
 
 #define udp_get_buffer() (ip_get_buffer() + NET_HEADER_SIZE_UDP)
 #define udp_get_buffer_size() (ip_get_buffer_size() - NET_HEADER_SIZE_UDP)

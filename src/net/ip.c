@@ -14,6 +14,7 @@
 #include "arp.h"
 #include "icmp.h"
 #include "udp.h"
+#include "tcp.h"
 
 #define DEBUG_MODE
 #include "../debug.h"
@@ -54,7 +55,6 @@ uint8_t ip_is_broadcast(const ip_address * ip)
 {
     return (!memcmp(ip,&ip_broadcast,sizeof(ip_address)));
 }
-
 
 void ip_init(ip_address * addr)
 {
@@ -176,6 +176,10 @@ uint8_t ip_handle_packet(struct ip_header * header, uint16_t packet_len,const et
       break;
     case IP_PROTOCOL_UDP:
       udp_handle_packet((const ip_address*)&header->src,(const struct udp_header*)((const uint8_t*)header + header_length),packet_length-header_length);
+      break;
+    case IP_PROTOCOL_TCP:
+      //DEBUG_PRINT("ip handle: TCP\n");
+      tcp_handle_packet((const ip_address*)&header->src,(const struct tcp_header*)((const uint8_t*)header + header_length),packet_length-header_length);
       break;
     default:
       break;

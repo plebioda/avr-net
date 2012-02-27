@@ -65,7 +65,7 @@ enum tftp_mode
 
 struct tftp
 {
-  socket_t socket;
+  udp_socket_t socket;
   enum tftpd_state state;
   enum tftp_mode mode;
   uint16_t last_block;
@@ -73,7 +73,7 @@ struct tftp
 
 static struct tftp tftpd EXMEM;
 
-void tftpd_callback(socket_t socket,uint8_t * data,uint16_t length);
+void tftpd_callback(udp_socket_t socket,uint8_t * data,uint16_t length);
 
 
 uint8_t tftpd_handle_wrq(uint8_t * data,uint16_t length);
@@ -100,7 +100,7 @@ void tftpd_reset(void)
     udp_unbind_remote(tftpd.socket);
 }
 
-void tftpd_callback(socket_t socket,uint8_t * data,uint16_t length)
+void tftpd_callback(udp_socket_t socket,uint8_t * data,uint16_t length)
 {
     if(socket != tftpd.socket)
       return;
