@@ -28,6 +28,9 @@ socket_t udp_socket_alloc(uint16_t local_port,udp_socket_callback callback);
 void udp_socket_free(socket_t socket);
 
 uint8_t udp_send(socket_t socket,uint16_t length);
+uint8_t udp_bind_remote(socket_t socket,uint16_t remote_port,ip_address * remote_ip);
+uint8_t udp_unbind_remote(socket_t socket);
+uint8_t udp_bind_local(socket_t socket,uint16_t local_port);
 
 #define udp_get_buffer() (ip_get_buffer() + NET_HEADER_SIZE_UDP)
 #define udp_get_buffer_size() (ip_get_buffer_size() - NET_HEADER_SIZE_UDP)

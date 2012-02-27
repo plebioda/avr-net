@@ -44,9 +44,9 @@ Tasks:
 ( ) udp layer
 	(*) checksum
 	(*) handling packets
-	( ) sending packets	
+	(*) sending packets	
 	(*) socket alloc and free
-	( ) socket getting packet
+	(?) socket getting packet
 	( ) socket binding unused local port
-	( ) socket binding remote port and addr
+	(?) socket binding remote port and addr
 ------------------------------------------------------------

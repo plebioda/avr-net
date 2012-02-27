@@ -166,8 +166,7 @@ uint8_t ip_handle_packet(struct ip_header * header, uint16_t packet_len,const et
     return 0;
 
   /* add to arp table if ip does not exist */
-  if(!arp_table_check((const ip_address*)&header->src))
-    arp_table_insert((const ip_address*)&header->src,mac);
+  arp_table_insert((const ip_address*)&header->src,mac);
   
   /* redirect packet to the proper upper layer */
   switch(header->protocol)
