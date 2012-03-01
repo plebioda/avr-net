@@ -9,7 +9,10 @@
 #ifndef _TCP_CONFIG_H
 #define _TCP_CONFIG_H
 
+#include "net.h"
 
 #define TCP_MAX_SOCKETS		2
+
+#define TCP_MSS			(ETHERNET_MAX_PACKET_SIZE - NET_HEADER_SIZE_ETHERNET - NET_HEADER_SIZE_IP - NET_HEADER_SIZE_TCP)	
 
 #endif //_TCP_CONFIG_H

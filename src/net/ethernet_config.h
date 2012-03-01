@@ -10,10 +10,5 @@
 #define _ETHERNET_CONFIG_H
 
 
-/**
-*	Maximum size of ethernet packet in bytes
-*/
-
-#define ETHERNET_MAX_PACKET_SIZE	1500
 
 #endif //_ETHERNET_CONFIG_H

@@ -9,6 +9,6 @@
 #ifndef _APP_CONFIG_H
 #define _APP_CONFIG_H
 
-#define APP_TFTP	1 //1
+#define APP_TFTP	0 //1
 
 #endif //_APP_CONFIG_H
