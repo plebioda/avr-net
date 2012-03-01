@@ -14,6 +14,17 @@
 
 #include <string.h>
 
+/*
+*  0      7 8     15 16    23 24    31  
+* +--------+--------+--------+--------+ 
+* |     Source      |   Destination   | 
+* |      Port       |      Port       | 
+* +--------+--------+--------+--------+ 
+* |                 |                 | 
+* |     Length      |    Checksum     | 
+* +--------+--------+--------+--------+ 
+* 
+*/
 struct udp_header
 {
     uint16_t port_source;
@@ -102,13 +113,23 @@ uint8_t udp_is_free_port(uint16_t port)
 
 uint16_t udp_get_checksum(const ip_address * ip_addr,const struct udp_header * udp,uint16_t packet_len)
 {
-    /* pseudo header = ip protocol + total udp packet length (header+data) + dst ip + src ip*/
-    uint16_t checksum = IP_PROTOCOL_UDP + packet_len;
-    checksum = net_get_checksum(checksum,(const uint8_t*)ip_get_addr(),sizeof(ip_address),4);
-    checksum = net_get_checksum(checksum,(const uint8_t*)ip_addr,sizeof(ip_address),4);
-    /* udp header + data */
-    checksum = net_get_checksum(checksum,(const uint8_t*)udp,packet_len,6);
-    return ~checksum;
+  /* UDP pseudo header = ip protocol + total udp packet length (header+data) + dst ip + src ip
+        0      7 8     15 16    23 24    31 
+       +--------+--------+--------+--------+
+       |          source address           |
+       +--------+--------+--------+--------+
+       |        destination address        |
+       +--------+--------+--------+--------+
+       |  zero  |protocol|   UDP length    |
+       +--------+--------+--------+--------+
+    
+  */
+  uint16_t checksum = IP_PROTOCOL_UDP + packet_len;
+  checksum = net_get_checksum(checksum,(const uint8_t*)ip_get_addr(),sizeof(ip_address),4);
+  checksum = net_get_checksum(checksum,(const uint8_t*)ip_addr,sizeof(ip_address),4);
+  /* udp header + data */
+  checksum = net_get_checksum(checksum,(const uint8_t*)udp,packet_len,6);
+  return ~checksum;
 }
 
 uint8_t udp_handle_packet(const ip_address * ip_remote,const struct udp_header * udp,uint16_t packet_len)

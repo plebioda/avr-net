@@ -10,7 +10,7 @@
 #include "../arch/exmem.h"
 #include "../sys/timer.h"
 
-#define DEBUG_MODE
+// #define DEBUG_MODE
 #include "../debug.h"
 
 #include <string.h>
@@ -47,7 +47,7 @@ static timer_t arp_timer;
 
 
 uint8_t arp_send_reply(const struct arp_header * header);
-void arp_timer_tick(timer_t timer);
+void arp_timer_tick(timer_t timer,void * arg);
 uint8_t arp_send_request(const ip_address * ip_addr);
 
 
@@ -116,7 +116,6 @@ uint8_t arp_handle_packet(struct arp_header * header,uint16_t packet_length)
     /* Parse operation code of packet */
     if(header->operation_code != HTON16(ARP_OPERATION_REQUEST) && header->operation_code != HTON16(ARP_OPERATION_REPLY))
       return 0;
-    DEBUG_PRINT("arp_handling packet\n");
     arp_table_insert((const ip_address*)&header->sender_protocol_addr,(const ethernet_address*)&header->sender_hardware_addr);
     if(header->operation_code == HTON16(ARP_OPERATION_REQUEST))
       return arp_send_reply(header);
@@ -204,7 +203,7 @@ arp_table_insert_out:
   DEBUG(print_arp_table());
 }
 
-void arp_timer_tick(timer_t timer)
+void arp_timer_tick(timer_t timer,void * arg)
 {
     if(timer != arp_timer)
       return;

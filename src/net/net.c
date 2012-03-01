@@ -16,7 +16,7 @@ uint16_t 	hton16(uint16_t h)
 	return HTON16(h);
 }
 
-uint32_t 	hton32(uint16_t h)
+uint32_t 	hton32(uint32_t h)
 {
 	return HTON32(h);
 }

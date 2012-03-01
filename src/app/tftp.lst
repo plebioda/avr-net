@@ -9,11 +9,11 @@
   16               	.Letext0:
 DEFINED SYMBOLS
                             *ABS*:0000000000000000 tftp.c
-     /tmp/cc23YQWE.s:2      *ABS*:000000000000003f __SREG__
-     /tmp/cc23YQWE.s:3      *ABS*:000000000000003e __SP_H__
-     /tmp/cc23YQWE.s:4      *ABS*:000000000000003d __SP_L__
-     /tmp/cc23YQWE.s:5      *ABS*:0000000000000034 __CCP__
-     /tmp/cc23YQWE.s:6      *ABS*:0000000000000000 __tmp_reg__
-     /tmp/cc23YQWE.s:7      *ABS*:0000000000000001 __zero_reg__
+     /tmp/cc72w5e4.s:2      *ABS*:000000000000003f __SREG__
+     /tmp/cc72w5e4.s:3      *ABS*:000000000000003e __SP_H__
+     /tmp/cc72w5e4.s:4      *ABS*:000000000000003d __SP_L__
+     /tmp/cc72w5e4.s:5      *ABS*:0000000000000034 __CCP__
+     /tmp/cc72w5e4.s:6      *ABS*:0000000000000000 __tmp_reg__
+     /tmp/cc72w5e4.s:7      *ABS*:0000000000000001 __zero_reg__
 
 NO UNDEFINED SYMBOLS

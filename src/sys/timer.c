@@ -15,15 +15,16 @@
 #define DEBUG_MODE
 #include "../debug.h"
 
-#define TIMER_FLAG_STOPPED 	0
-#define TIMER_FLAG_ACTIVE 	1
-#define TIMER_FLAG_RUNNING 	2
+#define TIMER_STATE_UNUSED 	0
+#define TIMER_STATE_STOPPED 	1
+#define TIMER_STATE_RUNNING 	2
 
 struct timer_core
 {
   timer_callback_t callback;
   int32_t ms_left;
-  uint8_t flags;
+  uint8_t state;
+  void * arg;
 };
 
 static struct timer_core timer_cores[TIMER_MAX] EXMEM;
@@ -50,14 +51,24 @@ void timer_tick()
 	if(!timer->callback)
 	  continue;
 	/* Skip not running timers */
-	if(timer->flags != TIMER_FLAG_RUNNING)
+	if(timer->state != TIMER_STATE_RUNNING)
 	  continue;
 
 	timer->ms_left -= TIMER_MS_PER_TICK;
 	if(timer->ms_left < 0)
-	  timer->callback(timer_number(timer));
+	{
+	  timer->state = TIMER_STATE_STOPPED;
+	  timer->callback(timer_number(timer),timer->arg);
+	}
 	
     }
+}
+uint8_t timer_set_arg(timer_t timer,void * arg)
+{
+    if(!timer_valid(timer))
+      return 0;
+    timer_cores[timer].arg = arg;
+    return 1;
 }
 static uint8_t timer_valid(const timer_t timer)
 {
@@ -68,7 +79,7 @@ uint8_t timer_set(timer_t timer,int32_t ms)
     if(!timer_valid(timer))
       return 0;
     timer_cores[timer].ms_left = ms;
-    timer_cores[timer].flags = TIMER_FLAG_RUNNING;
+    timer_cores[timer].state = TIMER_STATE_RUNNING;
     return 1;
 }
 
@@ -76,7 +87,7 @@ uint8_t timer_stop(timer_t timer)
 {
     if(!timer_valid(timer))
       return 0;
-    timer_cores[timer].flags = TIMER_FLAG_STOPPED;  
+    timer_cores[timer].state = TIMER_STATE_STOPPED;  
     return 1;
 }
 
@@ -90,7 +101,7 @@ timer_t timer_alloc(timer_callback_t callback)
 	if(timer->callback == 0)
 	{
 	    timer->callback = callback;
-	    timer->flags = TIMER_FLAG_ACTIVE;
+	    timer->state= TIMER_STATE_STOPPED;
 	    timer->ms_left = 0;
 	    return timer_number(timer);
 	}
@@ -105,6 +116,7 @@ void timer_free(timer_t timer)
     if(timer >= TIMER_MAX)
       return;
     timer_cores[timer].callback = 0;
+    timer_cores[timer].state = TIMER_STATE_UNUSED;
 }
 
 static timer_t timer_number(const struct timer_core * timer)

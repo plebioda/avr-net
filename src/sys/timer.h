@@ -14,7 +14,7 @@
 #include "timer_config.h"
 
 typedef int8_t timer_t;
-typedef void (*timer_callback_t)(timer_t timer);
+typedef void (*timer_callback_t)(timer_t timer,void * arg);
 
 void timer_init(void);
 void timer_tick(void);
@@ -23,6 +23,7 @@ uint8_t timer_stop(timer_t timer);
 
 timer_t timer_alloc(timer_callback_t callback);
 void timer_free(timer_t);
+uint8_t timer_set_arg(timer_t timer,void * arg);
 
 
 

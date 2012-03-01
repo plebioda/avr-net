@@ -39,7 +39,7 @@
 #define NTOH32(val)	HTON32((val))
 
 uint16_t 	hton16(uint16_t h);
-uint32_t 	hton32(uint16_t h);
+uint32_t 	hton32(uint32_t h);
 
 #define ntoh16(n)	hton16((n))
 #define ntoh32(n)	hton32((n))
