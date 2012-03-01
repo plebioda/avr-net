@@ -56,4 +56,8 @@ Tasks:
 	( ) tftp ERROR handling
 	( ) tftp ACK handling	
 	( ) tftp DATA handling	
+( ) tcp
+	( ) handling timeout after sending SYN,ACK (retransmision)
+	( ) maximum number of allowed retransmissions
+	
 ------------------------------------------------------------
