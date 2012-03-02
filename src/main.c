@@ -39,14 +39,16 @@ void tcp_callback(tcp_socket_t socket,enum tcp_event event)
       case tcp_event_nop:
 	break;
       case tcp_event_connection_incoming:
-	DEBUG_PRINT("Incoming connection\n");
+	DEBUG_PRINT("Incoming connection, port = %u\n",tcp_get_remote_port(socket));
 	tcp_accept(socket);
 	break;
       case tcp_event_error:
 	DEBUG_PRINT("Error\n");
+	tcp_socket_free(socket);
 	break;
       case tcp_event_timeout:
 	DEBUG_PRINT("Timeout\n");
+	tcp_socket_free(socket);
 	break;
     }
 }
@@ -57,7 +59,7 @@ int main(void)
   DEBUG_INIT();
   spi_init(0);
   ethernet_address my_mac = {'<','P','A','K','O','>'};
-  ip_address my_ip = {192,168,1,200};
+  ip_address my_ip = {192,168,2,200};
   ethernet_init(&my_mac);
   ip_init(&my_ip);
   hal_init(my_mac);
@@ -68,7 +70,9 @@ int main(void)
   /* (clk = 8Mhz) / 256 = 31.25 kHz -> 32 us */
   TCNT1 = 0xffff;
   TCCR1B |= (1<<CS12) | (0<<CS11) | (0<<CS10);
-  TIMSK = (1<<TOIE1);
+  TIMSK |= (1<<TOIE1);
+  /* disable USART0 Receive interrupt */
+  UCSR0B &= ~(1<<RXCIE0);
   sei();
   
 //   udp_socket_t socket = udp_socket_alloc(12348,udp_callback);
@@ -82,11 +86,17 @@ int main(void)
   tcp_socket_t tcp_socket;
   tcp_socket = tcp_socket_alloc(tcp_callback,80);
   DEBUG_PRINT("socket = %d\n",tcp_socket);
-  ret = tcp_listen(tcp_socket);
-  DEBUG_PRINT("listen = %d\n",ret);
+//   ret = tcp_listen(tcp_socket);
+  ip_address ip_remote = {192,168,2,1};
+  ret = tcp_connect(tcp_socket,&ip_remote,80);
+  DEBUG_PRINT("connect = %d\n",ret);
   for(;;)
   {
+	cli();
 	ethernet_handle_packet();
+	sei();
+	_delay_us(10);
+	
   }
   return 0;
 }
@@ -112,3 +122,114 @@ void udp_callback(udp_socket_t socket,uint8_t * data,uint16_t len)
     DEBUG_PRINT("\n");
     udp_send(socket,len);
 }	
+// #define DEBUG_ALL_INTERRUPTS
+#ifdef DEBUG_ALL_INTERRUPTS
+SIGNAL(SIG_OVERFLOW0)
+{
+    DEBUG_PRINT("SIG_OVERFLOW0\n");
+}
+SIGNAL(SIG_INTERRUPT0)
+{
+    DEBUG_PRINT("SIG_INTERRUPT0\n");
+}
+
+SIGNAL(SIG_INTERRUPT1)
+{
+    DEBUG_PRINT("SIG_INTERRUPT1\n");
+}
+SIGNAL(SIG_INTERRUPT2)
+{
+    DEBUG_PRINT("SIG_INTERRUPT2\n");
+}
+SIGNAL(SIG_PIN_CHANGE0)
+{
+    DEBUG_PRINT("SIG_PIN_CHANGE0\n");
+}
+SIGNAL(SIG_PIN_CHANGE1)
+{
+    DEBUG_PRINT("SIG_PIN_CHANGE1\n");
+}
+SIGNAL(SIG_INPUT_CAPTURE3)
+{
+    DEBUG_PRINT("SIG_INPUT_CAPTURE3\n");
+}
+SIGNAL(SIG_OUTPUT_COMPARE3A)
+{
+    DEBUG_PRINT("SIG_OUTPUT_COMPARE3A\n");
+}
+
+SIGNAL(SIG_OUTPUT_COMPARE3B)
+{
+    DEBUG_PRINT("SIG_OUTPUT_COMPARE3B\n");
+}
+
+SIGNAL(SIG_OVERFLOW3)
+{
+    DEBUG_PRINT("SIG_OVERFLOW3\n");
+}
+SIGNAL(SIG_OUTPUT_COMPARE2)
+{
+    DEBUG_PRINT("SIG_OUTPUT_COMPARE2\n");
+}
+SIGNAL(SIG_OVERFLOW2)
+{
+    DEBUG_PRINT("SIG_OVERFLOW2\n");
+}
+SIGNAL(SIG_INPUT_CAPTURE1)
+{
+    DEBUG_PRINT("SIG_INPUT_CAPTURE1\n");
+}
+SIGNAL(SIG_OUTPUT_COMPARE1A)
+{
+    DEBUG_PRINT("SIG_OUTPUT_COMPARE1A\n");
+}
+SIGNAL(SIG_OUTPUT_COMPARE1B)
+{
+    DEBUG_PRINT("SIG_OUTPUT_COMPARE1B\n");
+}
+SIGNAL(SIG_OUTPUT_COMPARE0)
+{
+    DEBUG_PRINT("SIG_OUTPUT_COMPARE0\n");
+}
+
+SIGNAL(SIG_SPI)
+{
+    DEBUG_PRINT("SIG_SPI\n");
+}
+SIGNAL(SIG_USART0_RECV)
+{
+    DEBUG_PRINT("SIG_USART0_RECV\n");
+}
+SIGNAL(SIG_USART1_RECV)
+{
+    DEBUG_PRINT("SIG_USART1_RECV\n");
+}
+SIGNAL(SIG_USART0_DATA)
+{
+    DEBUG_PRINT("SIG_USART0_DATA\n");
+}
+SIGNAL(SIG_USART1_DATA)
+{
+    DEBUG_PRINT("SIG_USART1_DATA\n");
+}
+SIGNAL(SIG_USART0_TRANS)
+{
+    DEBUG_PRINT("SIG_USART0_TRANS\n");
+}
+SIGNAL(SIG_USART1_TRANS)
+{
+    DEBUG_PRINT("SIG_USART1_TRANS\n");
+}
+SIGNAL(SIG_EEPROM_READY)
+{
+    DEBUG_PRINT("SIG_EEPROM_READY\n");
+}
+SIGNAL(SIG_COMPARATOR)
+{
+    DEBUG_PRINT("SIG_COMPARATOR\n");
+}
+SIGNAL(SIG_SPM_READY)
+{
+    DEBUG_PRINT("SIG_SPM_READY\n");
+}
+#endif

@@ -229,7 +229,7 @@ void arp_timer_tick(timer_t timer,void * arg)
 
 uint8_t arp_get_mac(const ip_address * ip_addr,ethernet_address * ethernet_addr)
 {
-    if(ip_addr == 0 || ethernet_addr == 0)
+    if(ip_addr == 0)
       return 0;
     struct arp_table_entry * entry;
     struct arp_table_entry * empty = 0;
@@ -247,7 +247,8 @@ uint8_t arp_get_mac(const ip_address * ip_addr,ethernet_address * ethernet_addr)
 	      /* There is ethernet address in arp table */
 	      case ARP_TABLE_ENTRY_STATUS_TIMEOUT:
 		entry->timeout = ARP_TABLE_ENTRY_TIMEOUT;
-		memcpy(ethernet_addr,&entry->ethernet_addr,sizeof(ethernet_address));
+		if(ethernet_addr)
+		  memcpy(ethernet_addr,&entry->ethernet_addr,sizeof(ethernet_address));
 		return 1;
 	      /* There is ip address but waiting for reply*/
 	      case ARP_TABLE_ENTRY_STATUS_REQUEST:

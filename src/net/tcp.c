@@ -7,6 +7,7 @@
  */
 
 #include "tcp.h"
+#include "arp.h"
 
 #include "../arch/exmem.h"
 #include "../sys/timer.h"
@@ -169,27 +170,26 @@ struct tcp_tcb
     uint32_t seq;
     uint16_t mss;
     timer_t timer;
-//     uint32_t ts_val;
-//     uint32_t ts_ecr;
-//     uint8_t ws_shift_cnt;
+    uint8_t rtx;
 };
 
 static struct tcp_tcb tcp_tcbs[TCP_MAX_SOCKETS] EXMEM;
 
 #define FOREACH_TCB(tcb) for(tcb = &tcp_tcbs[0] ; tcb < &tcp_tcbs[TCP_MAX_SOCKETS] ; tcb++)
 
-uint8_t tcp_send_packet(struct tcp_tcb * tcb,uint8_t flags,uint8_t send_data);
-uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,const struct tcp_header * tcp,uint16_t length);
-uint8_t tcp_send_rst(const ip_address * ip_remote,const struct tcp_header * tcp,uint16_t length);
-uint8_t tcp_get_options(struct tcp_tcb * tcb,const struct tcp_header * tcp,uint16_t length);
-uint16_t tcp_get_checksum(const ip_address * ip_remote,const struct tcp_header * tcp,uint16_t length);
-tcp_socket_t tcp_get_socket_num(struct tcp_tcb * tcb);
-uint8_t tcp_socket_valid(tcp_socket_t socket);
-uint8_t tcp_free_port(uint16_t port);
-struct tcp_tcb * tcp_tcb_alloc(void);
-void tcp_tcb_free(struct tcp_tcb * tcb);
-void tcp_tcb_reset(struct tcp_tcb * tcb);
-void tcp_timeout(timer_t timer,void * arg);
+static uint8_t tcp_send_packet(struct tcp_tcb * tcb,uint8_t flags,uint8_t send_data);
+static uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,const struct tcp_header * tcp,uint16_t length);
+static uint8_t tcp_send_rst(const ip_address * ip_remote,const struct tcp_header * tcp,uint16_t length);
+static uint8_t tcp_get_options(struct tcp_tcb * tcb,const struct tcp_header * tcp,uint16_t length);
+static uint16_t tcp_get_checksum(const ip_address * ip_remote,const struct tcp_header * tcp,uint16_t length);
+static tcp_socket_t tcp_get_socket_num(struct tcp_tcb * tcb);
+static uint8_t tcp_socket_valid(tcp_socket_t socket);
+static uint8_t tcp_free_port(uint16_t port);
+static struct tcp_tcb * tcp_tcb_alloc(void);
+static void tcp_tcb_free(struct tcp_tcb * tcb);
+static void tcp_tcb_reset(struct tcp_tcb * tcb);
+static void tcp_timeout(timer_t timer,void * arg);
+static uint16_t tcp_port_find_unused();
 
 
 uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,const struct tcp_header * tcp,uint16_t length)
@@ -269,6 +269,8 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
       timer_set(new_tcb->timer,TCP_TIMEOUT_GENERIC);
       /* change state to SYN_RECEIVED */
       new_tcb->state = tcp_state_syn_received;
+      /* set number off allowed retransmissions */
+      new_tcb->rtx = TCP_RTX_SYN_ACK;
       return 1;
     case tcp_state_syn_received:
       DEBUG_PRINT_COLOR(IGREEN,"syn received\n");
@@ -278,6 +280,63 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
   }
   return 1;
 }
+
+void tcp_timeout(timer_t timer,void * arg)
+{
+    if(!arg)
+      return;
+    struct tcp_tcb * tcb = (struct tcp_tcb*)arg;
+    tcp_socket_t socket = tcp_get_socket_num(tcb);
+    if(socket < 0)
+      return;
+    if(timer != tcb->timer)
+      return;
+    
+    switch(tcb->state)
+    {
+      case tcp_state_closed:
+	DEBUG_PRINT_COLOR(IGREEN,"closed\n");
+	if(--tcb->rtx <= 0)
+	{
+	    tcb->callback(socket,tcp_event_timeout);
+	    DEBUG_PRINT_COLOR(IGREEN,"closed rtx == 0\n");
+	    break;
+	}
+	if(!tcp_send_packet(tcb,TCP_FLAG_SYN,0))
+	{
+	    DEBUG_PRINT_COLOR(IGREEN,"MAC not found\n");
+	    tcb->state = tcp_state_closed;
+	    timer_set(tcb->timer,TCP_TIMEOUT_ARP_MAC);
+	}
+	else
+	{
+	    DEBUG_PRINT_COLOR(IGREEN,"MAC found SYN sended\n");
+	    tcb->state = tcp_state_syn_sent;
+	    timer_set(tcb->timer,TCP_TIMEOUT_GENERIC);
+	}
+	break;
+      case tcp_state_syn_received:
+	if(--tcb->rtx <= 0)
+	{
+	  tcb->state = tcp_state_closed;
+	  tcb->callback(socket,tcp_event_timeout);
+	  break;
+	}
+	if(!tcp_send_packet(tcb,TCP_FLAG_SYN|TCP_FLAG_ACK,0))
+	{
+	  tcb->state = tcp_state_closed;
+	  tcb->callback(socket,tcp_event_error);	  
+	  DEBUG_PRINT_COLOR(IGREEN,"tcp send packet error\n");
+	  break;
+	}
+	timer_set(tcb->timer,TCP_TIMEOUT_GENERIC);
+	DEBUG_PRINT_COLOR(IGREEN,"timer set\n");
+	break;
+      default:
+	break;
+    }
+}
+
 struct tcp_tcb * tcp_tcb_alloc(void)
 {
     struct tcp_tcb * tcb;
@@ -300,31 +359,16 @@ void tcp_tcb_free(struct tcp_tcb * tcb)
 }
 void tcp_tcb_reset(struct tcp_tcb * tcb)
 {
-    //tcb->queue free
-    enum tcp_state state = tcb->state;
-    timer_t timer = tcb->timer;
-    memset(tcb,0,sizeof(struct tcp_tcb));
-    tcb->state = state;
-    tcb->timer = timer;
+  if(!tcb)
+    return;
+  tcp_socket_callback callback = tcb->callback;
+  timer_t timer = tcb->timer;
+  memset(tcb,0,sizeof(struct tcp_tcb));
+  tcb->callback = callback;
+  tcb->timer = timer;
+  tcb->state = tcp_state_closed;
 }
-void tcp_timeout(timer_t timer,void * arg)
-{
-    if(!arg)
-      return;
-    struct tcp_tcb * tcb = (struct tcp_tcb*)arg;
-    if(timer != tcb->timer)
-      return;
-    switch(tcb->state)
-    {
-      case tcp_state_syn_received:
-	tcb->callback(timer,tcp_event_timeout);
-	tcp_tcb_free(tcb);
-	break;
-      default:
-	return;
-    }
-    
-}
+
 uint8_t tcp_send_packet(struct tcp_tcb * tcb,uint8_t flags,uint8_t send_empty)
 {
   if(!tcb)
@@ -422,8 +466,9 @@ uint8_t tcp_socket_free(tcp_socket_t socket)
 {
     if(!tcp_socket_valid(socket))
       return 0;
+    DEBUG_PRINT_COLOR(IGREEN,"tcp socket %d free\n",socket);
     struct tcp_tcb * tcb = &tcp_tcbs[socket];
-    /* there should be buffer_free */
+    timer_free(tcb->timer);
     memset(tcb,0,sizeof(struct tcp_tcb));   
     return 1;
 }
@@ -441,6 +486,10 @@ tcp_socket_t tcp_socket_alloc(tcp_socket_callback callback,uint16_t port)
 	socket_num = tcp_get_socket_num(tcb);
 	if(socket_num < 0)
 	  continue;
+	tcb->timer = timer_alloc(tcp_timeout);
+	if(tcb->timer < 0)
+	  return -1;
+	timer_set_arg(tcb->timer,(void*)tcb);
 	tcb->state = tcp_state_closed;
 	tcb->port_local = port;
 	tcb->callback = callback;
@@ -485,7 +534,21 @@ uint8_t tcp_accept(tcp_socket_t socket)
 }
 uint8_t tcp_connect(tcp_socket_t socket,ip_address * ip,uint16_t port)
 {
-    return 1;
+  if(!tcp_socket_valid(socket))
+    return 0;
+  struct tcp_tcb * tcb = &tcp_tcbs[socket];
+  if(tcb->state != tcp_state_closed)
+    return 0;
+  tcb->port_local = tcp_port_find_unused();
+  if(!tcb->port_local)
+    return 0;
+  DEBUG_PRINT_COLOR(IGREEN,"tcp connect local port = %u\n",tcb->port_local);
+  tcp_tcb_reset(tcb);
+  memcpy(&tcb->ip_remote,ip,sizeof(ip_address));
+  tcb->port_remote = port;
+  tcb->rtx = TCP_RTX_SYN;
+  timer_set(tcb->timer,20);
+  return 1;
 }
 
 uint8_t tcp_disconnect(tcp_socket_t socket)
@@ -592,4 +655,26 @@ uint16_t tcp_get_checksum(const ip_address * ip_remote,const struct tcp_header *
     
     /* TCP header + data */
     return ~net_get_checksum(checksum,(const uint8_t*)tcp,length,16);
+}
+
+uint16_t tcp_get_remote_port(tcp_socket_t socket)
+{
+  if(!tcp_socket_valid(socket))
+    return 0;
+  return tcp_tcbs[socket].port_remote;
+}
+const ip_address * tcp_get_remote_ip(tcp_socket_t socket)
+{
+  if(!tcp_socket_valid(socket))
+      return 0;
+  return (const ip_address*)&tcp_tcbs[socket].ip_remote;
+}
+uint16_t tcp_port_find_unused()
+{
+    uint16_t port = 1023;
+    do
+    {
+	port++;
+    }while(!tcp_free_port(port) && port!=0);
+    return port;
 }

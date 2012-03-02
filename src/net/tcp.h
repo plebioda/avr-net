@@ -38,6 +38,8 @@ uint8_t tcp_listen(tcp_socket_t socket);
 uint8_t tcp_connect(tcp_socket_t socket,ip_address * ip,uint16_t port);
 uint8_t tcp_disconnect(tcp_socket_t socket);
 uint8_t tcp_accept(tcp_socket_t socket);
+uint16_t tcp_get_remote_port(tcp_socket_t socket);
+const ip_address * tcp_get_remote_ip(tcp_socket_t socket);
 
 #define tcp_get_buffer_size() 	(ip_get_buffer_size() - sizeof(struct tcp_header))
 
