@@ -73,7 +73,7 @@ int main(void)
   
   /* Timer 1 init*/
   /* (clk = 8Mhz) / 256 = 31.25 kHz -> 32 us */
-  TCNT1 = 0xffff;
+  TCNT1 = 312;
   TCCR1B |= (1<<CS12) | (0<<CS11) | (0<<CS10);
   TIMSK |= (1<<TOIE1);
   /* disable USART0 Receive interrupt */

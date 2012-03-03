@@ -18,6 +18,7 @@
 
 #define TCP_TIMEOUT_GENERIC 	0x10
 #define TCP_TIMEOUT_ARP_MAC	0x4
+#define TCP_TIMEOUT_IDLE	0xff
 
 #define TCP_RTX_ARP_MAC		4
 /* number of allowed retransmission of SYN, ACK packet */
