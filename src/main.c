@@ -25,11 +25,12 @@
 #include "net/arp.h"
 #include "net/udp.h"
 #include "net/tcp.h"
+#include "net/fifo.h"
 
 #include "app/app_config.h"
 #include "app/tftp.h"
 
-ip_address ip_remote = {192,168,2,1};
+uint8_t buffer[128] EXMEM;
 
 void udp_callback(udp_socket_t socket,uint8_t * data,uint16_t len);
 void tcp_callback(tcp_socket_t socket,enum tcp_event event)
@@ -93,10 +94,31 @@ int main(void)
   tcp_socket80 = tcp_socket_alloc(tcp_callback);
   DEBUG_PRINT("socket = %d\n",tcp_socket);
 //   ret = tcp_listen(tcp_socket);
-
+  ip_address ip_remote = {192,168,2,1};
 //   ret = tcp_connect(tcp_socket,&ip_remote,80);
   tcp_listen(tcp_socket80,80);
-//   DEBUG_PRINT("connect = %d\n",ret);
+  fifo_init();
+  struct fifo * fifo  = fifo_alloc();
+  uint8_t i;
+  if(!fifo)
+    DEBUG_PRINT_COLOR(B_IRED,"Fifo allocation error!\n");
+  else
+  {
+    for(i=0;i<128;i++)
+      buffer[i] = i;
+    fifo_enqueue(fifo,buffer,15);
+    fifo_print(fifo);
+    fifo_enqueue(fifo,buffer+15,5);
+    fifo_print(fifo);
+    fifo_dequeue(fifo,buffer+100,10);
+    fifo_print(fifo);
+    fifo_dequeue(fifo,buffer+110,10);
+    DEBUG_PRINT("i = %d\n",i);
+    fifo_print(fifo);
+    DEBUG_PRINT("Data:\n");
+    for(i=0;i<20;i++)
+      DEBUG_PRINT("%3d: %d\n",i,buffer[100+i]);
+  }
   for(;;)
   {
 	cli();

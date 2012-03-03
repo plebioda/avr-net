@@ -15,8 +15,9 @@
 
 struct fifo;
 
-struct fifo * fifo_alloc();
-void fifo_free();
+struct fifo * fifo_alloc(void);
+void fifo_free(struct fifo * fifo);
+void fifo_init();
 
 uint8_t fifo_clear(struct fifo * fifo);
 uint16_t fifo_length(struct fifo * fifo);
@@ -26,4 +27,9 @@ uint16_t fifo_enqueue(struct fifo * fifo,uint8_t * data,uint16_t len);
 uint16_t fifo_dequeue(struct fifo * fifo,uint8_t * data,uint16_t len); 
 uint16_t fifo_peek(struct fifo * fifo,uint8_t * data,uint16_t len);
 uint16_t fifo_skip(struct fifo * fifo,uint16_t len);
+
+#ifdef DEBUG_MODE
+void fifo_print(struct fifo * fifo);
+#endif //DEBUG_MODE
+
 #endif //_FIFO_H
