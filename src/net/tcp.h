@@ -20,7 +20,9 @@ enum tcp_event
     tcp_event_connection_incoming,
     tcp_event_error,
     tcp_event_timeout,
-    tcp_event_connection_established
+    tcp_event_connection_established,
+    tcp_event_reset
+    
 };
 
 

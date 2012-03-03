@@ -346,7 +346,43 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
   {
       return tcp_send_packet(tcb,TCP_FLAG_ACK,0);
   }
-
+  switch(tcb->state)
+  {
+    case tcp_state_syn_received:
+    case tcp_state_established:
+    case tcp_state_fin_wait_1:
+    case tcp_state_fin_wait_2:
+    case tcp_state_close_wait:
+    case tcp_state_closing:
+    case tcp_state_last_ack:
+    case tcp_state_time_wait:
+      if(tcp->flags & (TCP_FLAG_RST|TCP_FLAG_SYN))
+      {
+	tcb->state - tcp_state_closed;
+	tcb->callback(socket,tcp_event_reset);
+	timer_stop(tcb->timer);
+	return 0;
+      }
+      break;
+    default:
+      break;
+  }
+  /* all following situations requires ACK flag on */
+  if(!(tcp->flags & TCP_FLAG_ACK))
+    return 0;
+  switch(tcb->state)
+  {
+    case tcp_state_syn_received:
+      if(ntoh32(tcp->ack) != tcb->seq+1)
+	return 0;
+      tcb->seq++;
+      tcb->state = tcp_state_established;
+      tcb->callback(socket,tcp_event_connection_established);
+      timer_set(tcb->timer,TCP_TIMEOUT_IDLE);
+      break;
+    default: 
+      break; 
+  }
   return 0;
 }
 
@@ -429,6 +465,7 @@ void tcp_timeout(timer_t timer,void * arg)
 	break;
       case tcp_state_established:
 	/* IDLE tiemout */
+	DEBUG_PRINT_COLOR(IGREEN,"state establlished: idle?\n");
 	break;
       default:
 	break;

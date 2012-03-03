@@ -94,9 +94,9 @@ int main(void)
   DEBUG_PRINT("socket = %d\n",tcp_socket);
 //   ret = tcp_listen(tcp_socket);
 
-  ret = tcp_connect(tcp_socket,&ip_remote,80);
+//   ret = tcp_connect(tcp_socket,&ip_remote,80);
   tcp_listen(tcp_socket80,80);
-  DEBUG_PRINT("connect = %d\n",ret);
+//   DEBUG_PRINT("connect = %d\n",ret);
   for(;;)
   {
 	cli();
