@@ -17,7 +17,7 @@ struct fifo;
 
 struct fifo * fifo_alloc(void);
 void fifo_free(struct fifo * fifo);
-void fifo_init();
+void fifo_init(void);
 
 uint8_t fifo_clear(struct fifo * fifo);
 uint16_t fifo_length(struct fifo * fifo);

@@ -94,6 +94,7 @@ uint16_t fifo_enqueue(struct fifo * fifo,uint8_t * data,uint16_t len)
       len = FIFO_SIZE - fifo->length;
     if(!len)
       return 0;
+    uint16_t ret = len;
     fifo->length += len;
     uint16_t bytes_to_bound = (uint16_t)&fifo->buffer[FIFO_SIZE] - (uint16_t)fifo->last;
     if(len > bytes_to_bound)
@@ -107,7 +108,7 @@ uint16_t fifo_enqueue(struct fifo * fifo,uint8_t * data,uint16_t len)
     fifo->last += len;
     if(fifo->last >= &fifo->buffer[FIFO_SIZE])
       fifo->last = fifo->buffer;
-    return len;
+    return ret;
 }
 uint16_t fifo_dequeue(struct fifo * fifo,uint8_t * data,uint16_t len)
 {
@@ -118,6 +119,7 @@ uint16_t fifo_dequeue(struct fifo * fifo,uint8_t * data,uint16_t len)
     if(!len)
       return 0;
     fifo->length -= len;
+    uint16_t ret = len;
     uint16_t bytes_to_bound = (uint16_t)&fifo->buffer[FIFO_SIZE] - (uint16_t)fifo->first;
     if(len > bytes_to_bound)
     {
@@ -130,15 +132,16 @@ uint16_t fifo_dequeue(struct fifo * fifo,uint8_t * data,uint16_t len)
     fifo->first += len;
     if(fifo->first >= &fifo->buffer[FIFO_SIZE])
       fifo->first = fifo->buffer;
+    return ret;
 }
-uint16_t fifo_peek(struct fifo * fifo,uint8_t * data,uint16_t len)
-{
-  
-}
-uint16_t fifo_skip(struct fifo * fifo,uint16_t len)
-{
-  
-}
+// uint16_t fifo_peek(struct fifo * fifo,uint8_t * data,uint16_t len)
+// {
+//  
+// }
+// uint16_t fifo_skip(struct fifo * fifo,uint16_t len)
+// {
+//   
+// }
 
 #ifdef DEBUG_MODE
 void fifo_print(struct fifo * fifo)

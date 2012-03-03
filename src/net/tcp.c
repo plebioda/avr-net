@@ -11,6 +11,7 @@
 
 #include "../arch/exmem.h"
 #include "../sys/timer.h"
+#include "../util/fifo.h"
 
 #define DEBUG_MODE
 #include "../debug.h"
@@ -172,6 +173,8 @@ struct tcp_tcb
     uint16_t mss;
     timer_t timer;
     uint8_t rtx;
+    struct fifo * fifo_rx;
+    struct fifo * fifo_tx;
 };
 
 static struct tcp_tcb tcp_tcbs[TCP_MAX_SOCKETS] EXMEM;
@@ -185,12 +188,15 @@ static uint8_t tcp_get_options(struct tcp_tcb * tcb,const struct tcp_header * tc
 static uint16_t tcp_get_checksum(const ip_address * ip_remote,const struct tcp_header * tcp,uint16_t length);
 static tcp_socket_t tcp_get_socket_num(struct tcp_tcb * tcb);
 static uint8_t tcp_socket_valid(tcp_socket_t socket);
+static uint8_t tcp_tcb_valid(struct tcp_tcb * tcb);
 static uint8_t tcp_free_port(uint16_t port);
 static struct tcp_tcb * tcp_tcb_alloc(void);
 static void tcp_tcb_free(struct tcp_tcb * tcb);
 static void tcp_tcb_reset(struct tcp_tcb * tcb);
 static void tcp_timeout(timer_t timer,void * arg);
 static uint16_t tcp_port_find_unused(void);
+static uint8_t tcp_tcb_alloc_fifo(struct tcp_tcb * tcb);
+static void tcp_tcb_free_fifo(struct tcp_tcb * tcb);
 
 
 uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,const struct tcp_header * tcp,uint16_t length)
@@ -221,7 +227,8 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
 	return tcp_send_rst(ip_remote,tcp,length);
       /* get TCB for new connection */
       struct tcp_tcb * new_tcb = tcp_tcb_alloc();
-      if(!new_tcb)
+      tcp_tcb_alloc_fifo(new_tcb);
+      if(!new_tcb || !new_tcb->fifo_rx || !new_tcb->fifo_tx)
       {
 	  /* if there is no free tcb then maybe remote host will send 
 	   another SYN and then we will have any free slot, so we do not send RST*/
@@ -240,6 +247,8 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
       new_tcb->port_remote = ntoh16(tcp->port_source);
       /* set state to not acepted */
       new_tcb->state = tcp_state_not_accepted;
+      /* set mss */
+      new_tcb->mss = tcb->mss;
       socket = tcp_get_socket_num(new_tcb);
       /* Send information to user about incoming new connection */
       new_tcb->callback(socket,tcp_event_connection_incoming);
@@ -251,8 +260,6 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
 	    return tcp_send_rst(ip_remote,tcp,length);
       }
       /* User accepted the connection so we have to establish a connection */
-      /* get options to set mss */
-      tcp_get_options(new_tcb,tcp,length);
       /* set ack */
       new_tcb->ack = ntoh32(tcp->seq) + 1;
       /* send SYN, ACK segment */
@@ -358,7 +365,7 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
     case tcp_state_time_wait:
       if(tcp->flags & (TCP_FLAG_RST|TCP_FLAG_SYN))
       {
-	tcb->state - tcp_state_closed;
+	tcb->state = tcp_state_closed;
 	tcb->callback(socket,tcp_event_reset);
 	timer_stop(tcb->timer);
 	return 0;
@@ -493,12 +500,15 @@ struct tcp_tcb * tcp_tcb_alloc(void)
 void tcp_tcb_free(struct tcp_tcb * tcb)
 {
     timer_free(tcb->timer);
+    tcp_tcb_free_fifo(tcb);
     memset(tcb,0,sizeof(struct tcp_tcb));
 }
 void tcp_tcb_reset(struct tcp_tcb * tcb)
 {
-  if(!tcb)
+  if(!tcp_tcb_valid(tcb))
     return;
+//   /* free fifos */
+//   tcp_tcb_free_fifo(tcb);
   /* save callback */
   tcp_socket_callback callback = tcb->callback;
   /* save timer */
@@ -816,4 +826,31 @@ uint16_t tcp_port_find_unused(void)
 	port++;
     }while(!tcp_free_port(port) && port!=0);
     return port;
+}
+
+uint8_t tcp_tcb_alloc_fifo(struct tcp_tcb * tcb)
+{
+    if(!tcp_tcb_valid(tcb))
+      return 0;
+    tcb->fifo_rx = fifo_alloc();
+    tcb->fifo_tx = fifo_alloc();
+    if(tcb->fifo_rx == 0 || tcb->fifo_tx == 0)
+    {
+	fifo_free(tcb->fifo_rx);
+	fifo_free(tcb->fifo_tx);
+	return 0;
+    }
+    return 1;
+}
+uint8_t tcp_tcb_valid(struct tcp_tcb * tcb)
+{
+    return (tcb >= &tcp_tcbs[0] && tcb < &tcp_tcbs[TCP_MAX_SOCKETS]);
+}
+
+void tcp_tcb_free_fifo(struct tcp_tcb * tcb)
+{
+    fifo_free(tcb->fifo_rx);
+    fifo_free(tcb->fifo_tx);
+    tcb->fifo_rx = 0;
+    tcb->fifo_tx = 0;
 }
