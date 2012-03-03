@@ -168,7 +168,7 @@ struct tcp_tcb
     ip_address ip_remote;
     uint32_t ack;
     uint32_t seq;
-    uint32_t seq_next;
+    uint16_t seq_next;
     uint16_t mss;
     timer_t timer;
     uint8_t rtx;
@@ -379,6 +379,9 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
       tcb->state = tcp_state_established;
       tcb->callback(socket,tcp_event_connection_established);
       timer_set(tcb->timer,TCP_TIMEOUT_IDLE);
+      break;
+    case tcp_state_established:
+      
       break;
     default: 
       break; 
