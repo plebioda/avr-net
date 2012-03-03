@@ -168,6 +168,7 @@ struct tcp_tcb
     ip_address ip_remote;
     uint32_t ack;
     uint32_t seq;
+    uint32_t seq_next;
     uint16_t mss;
     timer_t timer;
     uint8_t rtx;
@@ -189,7 +190,7 @@ static struct tcp_tcb * tcp_tcb_alloc(void);
 static void tcp_tcb_free(struct tcp_tcb * tcb);
 static void tcp_tcb_reset(struct tcp_tcb * tcb);
 static void tcp_timeout(timer_t timer,void * arg);
-static uint16_t tcp_port_find_unused();
+static uint16_t tcp_port_find_unused(void);
 
 
 uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,const struct tcp_header * tcp,uint16_t length)
@@ -198,6 +199,9 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
     return 0;
   DEBUG_PRINT_COLOR(B_IGREEN,"TCP state machine\n");
   tcp_get_options(tcb,tcp,length);
+  tcp_socket_t socket = tcp_get_socket_num(tcb);
+  if(socket < 0)
+    return 0;
   switch(tcb->state)
   {
     case tcp_state_closed:
@@ -236,7 +240,7 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
       new_tcb->port_remote = ntoh16(tcp->port_source);
       /* set state to not acepted */
       new_tcb->state = tcp_state_not_accepted;
-      tcp_socket_t socket = tcp_get_socket_num(new_tcb);
+      socket = tcp_get_socket_num(new_tcb);
       /* Send information to user about incoming new connection */
       new_tcb->callback(socket,tcp_event_connection_incoming);
       /* Chec if user accepted the connection */
@@ -272,6 +276,53 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
       /* set number off allowed retransmissions */
       new_tcb->rtx = TCP_RTX_SYN_ACK;
       return 1;
+    case tcp_state_syn_sent:
+      DEBUG_PRINT_COLOR(IGREEN,"syn sent\n");
+      timer_stop(tcb->timer);
+      if(tcp->flags & TCP_FLAG_ACK)
+      {
+	  if(ntoh32(tcp->ack) != tcb->seq + 1 )
+	  {
+	      if(!(tcp->flags&TCP_FLAG_RST))
+		return tcp_send_rst(ip_remote,tcp,length);
+	  }
+	  if(tcp->flags & TCP_FLAG_RST)
+	  {
+	      tcb->state = tcp_state_closed;
+	      tcb->callback(socket,tcp_event_error);
+	      return 0;
+	  }
+	  tcb->seq++;
+      }
+      if(tcp->flags & TCP_FLAG_RST)
+	return 0;
+      /* This step should be reached only if the ACK is ok, or there is
+        no ACK, and it the segment did not contain a RST */
+      if(tcp->flags & TCP_FLAG_SYN)
+      {
+	tcb->ack = ntoh32(tcp->seq) + 1;
+	if(tcp->flags & TCP_FLAG_ACK)
+	{
+	  if(!tcp_send_packet(tcb,TCP_FLAG_ACK,0))
+	  {
+	    tcb->state = tcp_state_closed;
+	    tcb->callback(socket,tcp_event_error);
+	    return 0;
+	  }
+	  tcb->state = tcp_state_established;
+	  tcb->callback(socket,tcp_event_connection_established);
+	  return 1;
+	}
+	if(!tcp_send_packet(tcb,TCP_FLAG_SYN|TCP_FLAG_ACK,0))
+	{
+	    tcb->state = tcp_state_closed;
+	    tcb->callback(socket,tcp_event_error);
+	    return 0;	  
+	}
+	tcb->state = tcp_state_syn_received;
+	return 1;
+      }
+      return 0;
     case tcp_state_syn_received:
       DEBUG_PRINT_COLOR(IGREEN,"syn received\n");
       break;
@@ -291,7 +342,7 @@ void tcp_timeout(timer_t timer,void * arg)
       return;
     if(timer != tcb->timer)
       return;
-    
+    DEBUG_PRINT_COLOR(B_IGREEN,"TCP Timeout\n");
     switch(tcb->state)
     {
       case tcp_state_closed:
@@ -299,21 +350,34 @@ void tcp_timeout(timer_t timer,void * arg)
 	if(--tcb->rtx <= 0)
 	{
 	    tcb->callback(socket,tcp_event_timeout);
-	    DEBUG_PRINT_COLOR(IGREEN,"closed rtx == 0\n");
 	    break;
 	}
 	if(!tcp_send_packet(tcb,TCP_FLAG_SYN,0))
 	{
-	    DEBUG_PRINT_COLOR(IGREEN,"MAC not found\n");
 	    tcb->state = tcp_state_closed;
 	    timer_set(tcb->timer,TCP_TIMEOUT_ARP_MAC);
 	}
 	else
 	{
-	    DEBUG_PRINT_COLOR(IGREEN,"MAC found SYN sended\n");
 	    tcb->state = tcp_state_syn_sent;
 	    timer_set(tcb->timer,TCP_TIMEOUT_GENERIC);
 	}
+	break;
+      case tcp_state_syn_sent:
+	DEBUG_PRINT_COLOR(IGREEN,"syn sent\n");
+	if(--tcb->rtx <= 0)
+	{
+	    tcb->state = tcp_state_closed;
+	    tcb->callback(socket,tcp_event_timeout);
+	    break;
+	}
+	if(!tcp_send_packet(tcb,TCP_FLAG_SYN,0))
+	{
+	    tcb->state = tcp_state_closed;
+	    tcb->callback(socket,tcp_event_error);
+	    break;
+	}
+	timer_set(tcb->timer,TCP_TIMEOUT_GENERIC);
 	break;
       case tcp_state_syn_received:
 	if(--tcb->rtx <= 0)
@@ -326,11 +390,9 @@ void tcp_timeout(timer_t timer,void * arg)
 	{
 	  tcb->state = tcp_state_closed;
 	  tcb->callback(socket,tcp_event_error);	  
-	  DEBUG_PRINT_COLOR(IGREEN,"tcp send packet error\n");
 	  break;
 	}
 	timer_set(tcb->timer,TCP_TIMEOUT_GENERIC);
-	DEBUG_PRINT_COLOR(IGREEN,"timer set\n");
 	break;
       default:
 	break;
@@ -363,10 +425,12 @@ void tcp_tcb_reset(struct tcp_tcb * tcb)
     return;
   tcp_socket_callback callback = tcb->callback;
   timer_t timer = tcb->timer;
+  uint16_t port = tcb->port_local;
   memset(tcb,0,sizeof(struct tcp_tcb));
   tcb->callback = callback;
   tcb->timer = timer;
   tcb->state = tcp_state_closed;
+  tcb->port_local = port;
 }
 
 uint8_t tcp_send_packet(struct tcp_tcb * tcb,uint8_t flags,uint8_t send_empty)
@@ -473,10 +537,8 @@ uint8_t tcp_socket_free(tcp_socket_t socket)
     return 1;
 }
 
-tcp_socket_t tcp_socket_alloc(tcp_socket_callback callback,uint16_t port)
+tcp_socket_t tcp_socket_alloc(tcp_socket_callback callback)
 {
-    if(!tcp_free_port(port))
-      return -1;
     struct tcp_tcb * tcb;
     tcp_socket_t socket_num = -1;
     FOREACH_TCB(tcb)
@@ -491,7 +553,6 @@ tcp_socket_t tcp_socket_alloc(tcp_socket_callback callback,uint16_t port)
 	  return -1;
 	timer_set_arg(tcb->timer,(void*)tcb);
 	tcb->state = tcp_state_closed;
-	tcb->port_local = port;
 	tcb->callback = callback;
 	break;
     }
@@ -512,13 +573,16 @@ uint8_t tcp_socket_valid(tcp_socket_t socket)
     return (socket >=0 && socket < TCP_MAX_SOCKETS);
 }
 
-uint8_t tcp_listen(tcp_socket_t socket)
+uint8_t tcp_listen(tcp_socket_t socket,uint16_t port)
 {
     if(!tcp_socket_valid(socket))
+      return 0;
+    if(!tcp_free_port(port))
       return 0;
     struct tcp_tcb * tcb = &tcp_tcbs[socket];
     if(tcb->state != tcp_state_closed)
       return 0;
+    tcb->port_local = port;
     tcb->state = tcp_state_listen;
     return 1;
 }
@@ -669,7 +733,7 @@ const ip_address * tcp_get_remote_ip(tcp_socket_t socket)
       return 0;
   return (const ip_address*)&tcp_tcbs[socket].ip_remote;
 }
-uint16_t tcp_port_find_unused()
+uint16_t tcp_port_find_unused(void)
 {
     uint16_t port = 1023;
     do

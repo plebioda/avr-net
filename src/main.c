@@ -29,6 +29,7 @@
 #include "app/app_config.h"
 #include "app/tftp.h"
 
+ip_address ip_remote = {192,168,2,1};
 
 void udp_callback(udp_socket_t socket,uint8_t * data,uint16_t len);
 void tcp_callback(tcp_socket_t socket,enum tcp_event event)
@@ -37,6 +38,9 @@ void tcp_callback(tcp_socket_t socket,enum tcp_event event)
     switch(event)
     {
       case tcp_event_nop:
+	break;
+      case tcp_event_connection_established:
+	DEBUG_PRINT("Connection established, port = %u\n",tcp_get_remote_port(socket));
 	break;
       case tcp_event_connection_incoming:
 	DEBUG_PRINT("Incoming connection, port = %u\n",tcp_get_remote_port(socket));
@@ -48,6 +52,7 @@ void tcp_callback(tcp_socket_t socket,enum tcp_event event)
 	break;
       case tcp_event_timeout:
 	DEBUG_PRINT("Timeout\n");
+// 	tcp_connect(socket,&ip_remote,80);
 	tcp_socket_free(socket);
 	break;
     }
@@ -83,12 +88,14 @@ int main(void)
   tcp_init();
   DEBUG_PRINT_COLOR(B_IYELLOW,"Initialized...\n");  
   uint8_t ret;
-  tcp_socket_t tcp_socket;
-  tcp_socket = tcp_socket_alloc(tcp_callback,80);
+  tcp_socket_t tcp_socket,tcp_socket80;
+  tcp_socket = tcp_socket_alloc(tcp_callback);
+  tcp_socket80 = tcp_socket_alloc(tcp_callback);
   DEBUG_PRINT("socket = %d\n",tcp_socket);
 //   ret = tcp_listen(tcp_socket);
-  ip_address ip_remote = {192,168,2,1};
+
   ret = tcp_connect(tcp_socket,&ip_remote,80);
+  tcp_listen(tcp_socket80,80);
   DEBUG_PRINT("connect = %d\n",ret);
   for(;;)
   {
