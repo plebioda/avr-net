@@ -6,11 +6,9 @@
  * published by the Free Software Foundation.
  */
 
-#ifndef _UDP_CONFIG_H
-#define _UDP_CONFIG_H
+#ifndef _ICMP_CONFIG_H
+#define _ICMP_CONFIG_H
 
 #include "net_config.h"
 
-#define UDP_SOCKET_MAX	4
-
-#endif //_UDP_CONFIG_H
+#endif //_ICMP_CONFIG_H

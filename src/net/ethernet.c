@@ -15,7 +15,7 @@
 #include "ip.h"
 #include "arp.h"
 
-#define DEBUG_MODE
+//#define DEBUG_MODE
 #include "../debug.h"
 
 struct ethernet_header

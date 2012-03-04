@@ -8,7 +8,7 @@
 
 #include "enc28j60.h"
 
-#define DEBUG_MODE
+//#define DEBUG_MODE
 #include "../debug.h"
 
 static uint8_t  enc28j60_bank;

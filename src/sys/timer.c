@@ -79,7 +79,7 @@ static uint8_t timer_valid(const timer_t timer)
 }
 uint8_t timer_set(timer_t timer,int32_t ms)
 {
-    if(!timer_valid(timer))
+    if(!timer_valid(timer) || ms < 0)
       return 0;
     timer_cores[timer].ms_left = ms;
     timer_cores[timer].state = TIMER_STATE_RUNNING;

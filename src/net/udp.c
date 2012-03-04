@@ -6,10 +6,15 @@
  * published by the Free Software Foundation.
  */
 
+
+
+#include "udp.h"
+
+#if NET_UDP
+
 #define DEBUG_MODE
 #include "../debug.h"
 
-#include "udp.h"
 #include "../arch/exmem.h"
 
 #include <string.h>
@@ -231,3 +236,5 @@ uint8_t udp_send(udp_socket_t socket_num,uint16_t length)
     
     return ip_send_packet((const ip_address*)&socket->ip_remote,IP_PROTOCOL_UDP,length);
 }
+
+#endif //NET_UDP

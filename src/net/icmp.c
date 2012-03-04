@@ -6,12 +6,16 @@
  * published by the Free Software Foundation.
  */
 
-#include <string.h>
+
+
+#include "icmp.h"
+
+#if NET_ICMP
 
 #define DEBUG_MODE
 #include "../debug.h"
 
-#include "icmp.h"
+#include <string.h>
 
 #include "net.h"
 #include "ethernet.h"
@@ -27,13 +31,6 @@ struct  icmp_header
     uint8_t code;
     uint16_t checksum;
 };
-
-// struct icmp_echo_header
-// {
-//     uint16_t id;
-//     uint16_t sequence_number;
-//     uint16_t length;
-// };
 
 uint8_t icmp_send_echo_reply(const ip_address * ip_addr,const struct icmp_header * icmp,uint16_t packet_len);
 
@@ -76,3 +73,5 @@ uint8_t icmp_send_echo_reply(const ip_address * ip_addr,const struct icmp_header
   return ip_send_packet(ip_addr,IP_PROTOCOL_ICMP,packet_len);
       
 }
+
+#endif //NET_ICMP

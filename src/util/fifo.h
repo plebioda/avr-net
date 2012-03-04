@@ -23,7 +23,7 @@ uint8_t fifo_clear(struct fifo * fifo);
 uint16_t fifo_length(struct fifo * fifo);
 uint16_t fifo_size(struct fifo * fifo);
 uint16_t fifo_space(struct fifo * fifo);
-uint16_t fifo_enqueue(struct fifo * fifo,uint8_t * data,uint16_t len);
+uint16_t fifo_enqueue(struct fifo * fifo,const uint8_t * data,uint16_t len);
 uint16_t fifo_dequeue(struct fifo * fifo,uint8_t * data,uint16_t len); 
 uint16_t fifo_peek(struct fifo * fifo,uint8_t * data,uint16_t len);
 uint16_t fifo_skip(struct fifo * fifo,uint16_t len);

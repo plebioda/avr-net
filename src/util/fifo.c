@@ -71,7 +71,7 @@ uint8_t fifo_valid(struct fifo * fifo)
 uint16_t fifo_length(struct fifo * fifo)
 {
     if(!fifo_valid(fifo))
-      return 0xffff;
+      return 0;
     return fifo->length;
 }
 uint16_t fifo_size(struct fifo * fifo)
@@ -83,10 +83,10 @@ uint16_t fifo_size(struct fifo * fifo)
 uint16_t fifo_space(struct fifo * fifo)
 {
     if(!fifo_valid(fifo))
-      return 0;
+      return 0xffff;
     return (FIFO_SIZE-fifo->length);
 }
-uint16_t fifo_enqueue(struct fifo * fifo,uint8_t * data,uint16_t len)
+uint16_t fifo_enqueue(struct fifo * fifo,const uint8_t * data,uint16_t len)
 {
     if(!fifo_valid(fifo))
       return 0;

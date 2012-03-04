@@ -19,32 +19,36 @@
 
 #include "sys/timer.h"
 
+#include "util/fifo.h"
+
 #include "net/hal.h"
 #include "net/ethernet.h"
 #include "net/ip.h"
 #include "net/arp.h"
 #include "net/udp.h"
 #include "net/tcp.h"
-#include "util/fifo.h"
 
 #include "app/app_config.h"
 #include "app/tftp.h"
 
-uint8_t buffer[128] EXMEM;
+uint8_t data[1500] EXMEM;
 
 void udp_callback(udp_socket_t socket,uint8_t * data,uint16_t len);
+
 void tcp_callback(tcp_socket_t socket,enum tcp_event event)
 {
-    DEBUG_PRINT("tcp callback: socket %d event: ",socket);
+    DEBUG_PRINT("tcpcallbck:soc%d event:",socket);
+    int16_t len;
+    uint8_t * ptr;
     switch(event)
     {
       case tcp_event_nop:
 	break;
       case tcp_event_connection_established:
-	DEBUG_PRINT("Connection established, port = %u\n",tcp_get_remote_port(socket));
+	DEBUG_PRINT("Con.est.,port=%u\n",tcp_get_remote_port(socket));
 	break;
       case tcp_event_connection_incoming:
-	DEBUG_PRINT("Incoming connection, port = %u\n",tcp_get_remote_port(socket));
+	DEBUG_PRINT("Con.inc.,port=%u\n",tcp_get_remote_port(socket));
 	tcp_accept(socket);
 	break;
       case tcp_event_error:
@@ -55,6 +59,17 @@ void tcp_callback(tcp_socket_t socket,enum tcp_event event)
 	DEBUG_PRINT("Timeout\n");
 // 	tcp_connect(socket,&ip_remote,80);
 	tcp_socket_free(socket);
+	break;
+      case tcp_event_data_received:
+	len = tcp_read(socket,data,1500);
+	if(len <= 0)
+	  break;
+	DEBUG_PRINT("Data received:\n");
+	ptr = data;
+	while(--len)
+	{
+	    DEBUG_PRINT("%c",*(ptr++));
+	}
 	break;
       default:
 	break;
@@ -68,13 +83,15 @@ int main(void)
   spi_init(0);
   ethernet_address my_mac = {'<','P','A','K','O','>'};
   ip_address my_ip = {192,168,1,200};
+  DEBUG_PRINT_COLOR(B_IYELLOW,"Initialized...\n");
   fifo_init();
   ethernet_init(&my_mac);
   ip_init(&my_ip);
   hal_init(my_mac);
   arp_init();
+#if NET_UDP
   udp_init();
-  
+#endif
   /* Timer 1 init*/
   /* (clk = 8Mhz) / 256 = 31.25 kHz -> 32 us */
   TCNT1 = 312;
@@ -84,42 +101,16 @@ int main(void)
   UCSR0B &= ~(1<<RXCIE0);
   sei();
   
-//   udp_socket_t socket = udp_socket_alloc(12348,udp_callback);
-  
 #if APP_TFTP
   tftpd_init();
 #endif
   tcp_init();
-  DEBUG_PRINT_COLOR(B_IYELLOW,"Initialized...\n");  
+    
   tcp_socket_t tcp_socket,tcp_socket80;
   tcp_socket = tcp_socket_alloc(tcp_callback);
   tcp_socket80 = tcp_socket_alloc(tcp_callback);
   DEBUG_PRINT("socket = %d\n",tcp_socket);
-//   ret = tcp_listen(tcp_socket);
-//   ip_address ip_remote = {192,168,2,1};
-//   ret = tcp_connect(tcp_socket,&ip_remote,80);
   tcp_listen(tcp_socket80,80);
-//   struct fifo * fifo  = fifo_alloc();
-//   uint8_t i;
-//   if(!fifo)
-//     DEBUG_PRINT_COLOR(B_IRED,"Fifo allocation error!\n");
-//   else
-//   {
-//     for(i=0;i<128;i++)
-//       buffer[i] = i;
-//     fifo_enqueue(fifo,buffer,15);
-//     fifo_print(fifo);
-//     fifo_enqueue(fifo,buffer+15,3);
-//     fifo_print(fifo);
-//     fifo_dequeue(fifo,buffer+100,10);
-//     fifo_print(fifo);
-//     fifo_dequeue(fifo,buffer+110,10);
-//     DEBUG_PRINT("i = %d\n",i);
-//     fifo_print(fifo);
-//     DEBUG_PRINT("Data:\n");
-//     for(i=0;i<20;i++)
-//       DEBUG_PRINT("%3d: %d\n",i,buffer[100+i]);
-//   }
   for(;;)
   {
 	cli();
@@ -137,6 +128,9 @@ SIGNAL(SIG_OVERFLOW1)
     timer_tick();    
 }
 
+
+
+#if NET_UDP
 void udp_callback(udp_socket_t socket,uint8_t * data,uint16_t len)
 {
     uint16_t i;
@@ -150,7 +144,12 @@ void udp_callback(udp_socket_t socket,uint8_t * data,uint16_t len)
     }
     DEBUG_PRINT("\n");
     udp_send(socket,len);
-}	
+}
+#endif //NET_UDP
+
+
+
+
 // #define DEBUG_ALL_INTERRUPTS
 #ifdef DEBUG_ALL_INTERRUPTS
 SIGNAL(SIG_OVERFLOW0)

@@ -9,7 +9,9 @@
 #ifndef _FIFO_CONFIG_H
 #define _FIFO_CONFIG_H
 
+#include "../net/tcp_config.h"
+
 #define FIFO_MAX_COUNT		4
-#define FIFO_SIZE		20//TCP_MSS
+#define FIFO_SIZE		TCP_MSS
 
 #endif //_FIFO_CONFIG_H

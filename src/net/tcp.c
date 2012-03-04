@@ -170,6 +170,7 @@ struct tcp_tcb
     uint32_t ack;
     uint32_t seq;
     uint16_t seq_next;
+    uint16_t window;
     uint16_t mss;
     timer_t timer;
     uint8_t rtx;
@@ -203,7 +204,6 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
 {
   if(!tcb || !ip_remote || !tcp || length < sizeof(struct tcp_header))
     return 0;
-  DEBUG_PRINT_COLOR(B_IGREEN,"TCP state machine\n");
   tcp_get_options(tcb,tcp,length);
   tcp_socket_t socket = tcp_get_socket_num(tcb);
   if(socket < 0)
@@ -211,13 +211,11 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
   switch(tcb->state)
   {
     case tcp_state_closed:
-      DEBUG_PRINT_COLOR(IGREEN,"closed\n");
       if(tcp->flags & TCP_FLAG_RST)
 	return 0;
       tcp_send_rst(ip_remote,tcp,length);
       return 1;
     case tcp_state_listen:
-      DEBUG_PRINT_COLOR(IGREEN,"listen\n");
       if(tcp->flags & TCP_FLAG_RST)
 	return 0;
       if(tcp->flags & TCP_FLAG_ACK)
@@ -281,7 +279,6 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
       new_tcb->rtx = TCP_RTX_SYN_ACK;
       return 1;
     case tcp_state_syn_sent:
-      DEBUG_PRINT_COLOR(IGREEN,"syn sent\n");
       /* stop the timer because we received packet in state SYN-SENT */
       timer_stop(tcb->timer);
       /* check for ACK flag */
@@ -377,22 +374,59 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
   /* all following situations requires ACK flag on */
   if(!(tcp->flags & TCP_FLAG_ACK))
     return 0;
+  uint32_t rcv_ack = ntoh32(tcp->ack);
   switch(tcb->state)
   {
     case tcp_state_syn_received:
-      if(ntoh32(tcp->ack) != tcb->seq+1)
+    {
+
+      if(rcv_ack != tcb->seq+1)
 	return 0;
       tcb->seq++;
       tcb->state = tcp_state_established;
       tcb->callback(socket,tcp_event_connection_established);
       timer_set(tcb->timer,TCP_TIMEOUT_IDLE);
       break;
+    }
     case tcp_state_established:
-      
+    case tcp_state_fin_wait_1:
+    case tcp_state_fin_wait_2:
+    case tcp_state_close_wait:
+    case tcp_state_closing:
+    {
+      if(rcv_ack == tcb->seq)
+      {
+	DEBUG_PRINT("rcv_ack == tcb->seq\n");
+	break;
+      }
+      DEBUG_PRINT("rcv_ack != tcb->seq\n");
       break;
+    }
     default: 
       break; 
   }
+  switch(tcb->state)
+  {
+    case tcp_state_established:
+    case tcp_state_fin_wait_1:
+    case tcp_state_fin_wait_2:
+    {
+      uint8_t data_offset = (tcp->offset>>4)<<2;
+      uint16_t data_length = length - data_offset;
+      if(data_length > 0)
+      {
+	uint16_t buffered_data = fifo_enqueue(tcb->fifo_rx,(const uint8_t*)tcp + data_offset,data_length);
+	tcb->ack += buffered_data;
+	tcp_send_packet(tcb,TCP_FLAG_ACK,0);
+	DEBUG_PRINT_COLOR(IGREEN,"rcv %d bytes\n",buffered_data);
+	tcb->callback(socket,tcp_event_data_received);
+      }
+      break;
+    }
+    default:
+      break;
+  }
+  
   return 0;
 }
 
@@ -406,20 +440,19 @@ void tcp_timeout(timer_t timer,void * arg)
       return;
     if(timer != tcb->timer)
       return;
-    DEBUG_PRINT_COLOR(B_IGREEN,"TCP Timeout\n");
+    int32_t tset = -1;
+    if(--tcb->rtx <= 0)
+    {
+      /* if we exceeded maximum number of retransmissions 
+      change state to closed and send event to user*/
+      tcb->state = tcp_state_closed;
+      tcb->callback(socket,tcp_event_timeout);
+      return;
+    }
     switch(tcb->state)
     {
       /* TCB is in this state when user called connect */
       case tcp_state_closed:
-	DEBUG_PRINT_COLOR(IGREEN,"closed\n");
-	/* check if another retransmission is allowed */
-	if(--tcb->rtx <= 0)
-	{
-	  /* if maximum retransmissions's number is exceeded
-	     send information about it to user*/
-	  tcb->callback(socket,tcp_event_timeout);
-	  break;
-	}
 	/* retransmit SYN packet */
 	if(!tcp_send_packet(tcb,TCP_FLAG_SYN,0))
 	{
@@ -428,26 +461,16 @@ void tcp_timeout(timer_t timer,void * arg)
 	    MAC address, so we remain in closed state and set timer to ARP
 	    MAC request timeout*/
 	  tcb->state = tcp_state_closed;
-	  timer_set(tcb->timer,TCP_TIMEOUT_ARP_MAC);
+	  tset = TCP_TIMEOUT_ARP_MAC;
 	}
 	else
 	{
 	  /* SYN packet sent so set timer and change state to SYN-SENT*/
 	  tcb->state = tcp_state_syn_sent;
-	  timer_set(tcb->timer,TCP_TIMEOUT_GENERIC);
+	  tset = TCP_TIMEOUT_GENERIC;
 	}
 	break;
       case tcp_state_syn_sent:
-	DEBUG_PRINT_COLOR(IGREEN,"syn sent\n");
-	/* check if next retransmission is allowed */
-	if(--tcb->rtx <= 0)
-	{
-	  /* if we exceeded maximum number of retransmissions 
-	  change state to closed and send event to user*/
-	  tcb->state = tcp_state_closed;
-	  tcb->callback(socket,tcp_event_timeout);
-	  break;
-	}
 	if(!tcp_send_packet(tcb,TCP_FLAG_SYN,0))
 	{
 	  /* error while sending packet */
@@ -456,30 +479,25 @@ void tcp_timeout(timer_t timer,void * arg)
 	  break;
 	}
 	/* set timer and wait for SYN-ACK packet */
-	timer_set(tcb->timer,TCP_TIMEOUT_GENERIC);
+	tset = TCP_TIMEOUT_GENERIC;
 	break;
       case tcp_state_syn_received:
-	if(--tcb->rtx <= 0)
-	{
-	  tcb->state = tcp_state_closed;
-	  tcb->callback(socket,tcp_event_timeout);
-	  break;
-	}
 	if(!tcp_send_packet(tcb,TCP_FLAG_SYN|TCP_FLAG_ACK,0))
 	{
 	  tcb->state = tcp_state_closed;
 	  tcb->callback(socket,tcp_event_error);	  
 	  break;
 	}
-	timer_set(tcb->timer,TCP_TIMEOUT_GENERIC);
+	tset = TCP_TIMEOUT_GENERIC;
 	break;
       case tcp_state_established:
 	/* IDLE tiemout */
-	DEBUG_PRINT_COLOR(IGREEN,"state establlished: idle?\n");
+	DEBUG_PRINT_COLOR(IGREEN,"established\n");
 	break;
       default:
 	break;
     }
+    timer_set(tcb->timer,tset);
 }
 
 struct tcp_tcb * tcp_tcb_alloc(void)
@@ -507,19 +525,22 @@ void tcp_tcb_reset(struct tcp_tcb * tcb)
 {
   if(!tcp_tcb_valid(tcb))
     return;
-//   /* free fifos */
-//   tcp_tcb_free_fifo(tcb);
   /* save callback */
   tcp_socket_callback callback = tcb->callback;
   /* save timer */
   timer_t timer = tcb->timer;
   /* save local port */
   uint16_t port = tcb->port_local;
+  /* save rx and tx fifo */
+  struct fifo * fifo_tx = tcb->fifo_tx;
+  struct fifo * fifo_rx = tcb->fifo_rx;
   memset(tcb,0,sizeof(struct tcp_tcb));
   tcb->callback = callback;
   tcb->timer = timer;
   tcb->state = tcp_state_closed;
   tcb->port_local = port;
+  tcb->fifo_rx = fifo_rx;
+  tcb->fifo_tx = fifo_tx;
 }
 
 uint8_t tcp_send_packet(struct tcp_tcb * tcb,uint8_t flags,uint8_t send_empty)
@@ -541,7 +562,8 @@ uint8_t tcp_send_packet(struct tcp_tcb * tcb,uint8_t flags,uint8_t send_empty)
   /* set flags */
   tcp->flags = flags;
   /* set window to buffer free space length */
-  tcp->window = hton16(320);
+  tcp->window = hton16(fifo_space(tcb->fifo_rx));
+  DEBUG_PRINT("window = %d\n",fifo_space(tcb->fifo_rx));
   uint16_t packet_header_len = sizeof(struct tcp_header);
   uint16_t packet_data_len = 0;
   uint16_t packet_total_len =0;
@@ -754,7 +776,7 @@ uint8_t tcp_send_rst(const ip_address * ip_remote,const struct tcp_header * tcp_
     return 0;
   if(tcp_rcv->flags & TCP_FLAG_RST)
     return 0;
-  DEBUG_PRINT_COLOR(IGREEN,"send rst\n");
+//   DEBUG_PRINT_COLOR(IGREEN,"send rst\n");
   struct tcp_header * tcp_rst = (struct tcp_header*)ip_get_buffer();
   memset(tcp_rst,0,sizeof(struct tcp_header));
   tcp_rst->port_destination = tcp_rcv->port_source;
@@ -853,4 +875,11 @@ void tcp_tcb_free_fifo(struct tcp_tcb * tcb)
     fifo_free(tcb->fifo_tx);
     tcb->fifo_rx = 0;
     tcb->fifo_tx = 0;
+}
+int16_t tcp_read(tcp_socket_t socket,uint8_t * data,uint16_t maxlen)
+{
+    if(!tcp_socket_valid(socket))
+      return -1;
+    struct tcp_tcb * tcb = &tcp_tcbs[socket];
+    return fifo_dequeue(tcb->fifo_rx,data,maxlen);
 }

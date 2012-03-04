@@ -10,6 +10,7 @@
 #define _TCP_CONFIG_H
 
 #include "net.h"
+#include "net_config.h"
 
 #define TCP_MAX_SOCKETS		5
 

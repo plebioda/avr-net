@@ -21,7 +21,8 @@ enum tcp_event
     tcp_event_error,
     tcp_event_timeout,
     tcp_event_connection_established,
-    tcp_event_reset
+    tcp_event_reset,
+    tcp_event_data_received
     
 };
 
@@ -43,6 +44,9 @@ uint8_t tcp_listen(tcp_socket_t socket,uint16_t port);
 uint8_t tcp_connect(tcp_socket_t socket,ip_address * ip,uint16_t port);
 uint8_t tcp_disconnect(tcp_socket_t socket);
 uint8_t tcp_accept(tcp_socket_t socket);
+
+int16_t tcp_read(tcp_socket_t socket,uint8_t * data,uint16_t maxlen);
+
 uint16_t tcp_get_remote_port(tcp_socket_t socket);
 const ip_address * tcp_get_remote_ip(tcp_socket_t socket);
 
