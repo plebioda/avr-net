@@ -31,7 +31,9 @@
 #include "app/app_config.h"
 #include "app/tftp.h"
 
-uint8_t data[1500] EXMEM;
+char * www = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<html><body><h1>Hello avr-net!</h1><p>ATMega162</p></body></html>\r\n";
+
+uint8_t data[256] EXMEM;
 
 void udp_callback(udp_socket_t socket,uint8_t * data,uint16_t len);
 
@@ -70,6 +72,8 @@ void tcp_callback(tcp_socket_t socket,enum tcp_event event)
 	{
 	    DEBUG_PRINT("%c",*(ptr++));
 	}
+	len = tcp_write(socket,www,112);
+	DEBUG_PRINT("len = %d\n",len);
 	break;
       default:
 	break;
@@ -111,6 +115,28 @@ int main(void)
   tcp_socket80 = tcp_socket_alloc(tcp_callback);
   DEBUG_PRINT("socket = %d\n",tcp_socket);
   tcp_listen(tcp_socket80,80);
+//   struct fifo * fifo = fifo_alloc();
+//   uint16_t i;
+//   for(i=0;i<256;i++)
+//     data[i] = i;
+//   fifo_enqueue(fifo,data,45);
+//   fifo_print(fifo);
+//   fifo_dequeue(fifo,data+100,10);
+//   for(i=0;i<10;i++)
+//     DEBUG_PRINT("data %3d: %02x %3d\n",i,data[100+i],data[100+i]);
+//   fifo_print(fifo);
+//   fifo_skip(fifo,15);
+//   fifo_print(fifo);
+//   fifo_enqueue(fifo,data+90,25);
+//   fifo_print(fifo);
+//   DEBUG_PRINT("fifo_peek = %d\n",fifo_peek(fifo,&data[100],5,2));
+//   for(i=0;i<5;i++)
+//     DEBUG_PRINT("data %3d: %02x %3d\n",i,data[100+i],data[100+i]);
+//   fifo_print(fifo);
+//   fifo_skip(fifo,7);
+//   fifo_print(fifo);
+//   fifo_skip(fifo,13);
+//   fifo_print(fifo);
   for(;;)
   {
 	cli();

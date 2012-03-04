@@ -12,6 +12,8 @@
 #include "fifo_config.h"
 
 #include <stdint.h>
+#include <avr/pgmspace.h>
+
 
 struct fifo;
 
@@ -24,12 +26,13 @@ uint16_t fifo_length(struct fifo * fifo);
 uint16_t fifo_size(struct fifo * fifo);
 uint16_t fifo_space(struct fifo * fifo);
 uint16_t fifo_enqueue(struct fifo * fifo,const uint8_t * data,uint16_t len);
+uint16_t fifo_enqueue_P(struct fifo * fifo,const prog_uint8_t * data,uint16_t len);
 uint16_t fifo_dequeue(struct fifo * fifo,uint8_t * data,uint16_t len); 
-uint16_t fifo_peek(struct fifo * fifo,uint8_t * data,uint16_t len);
+uint16_t fifo_peek(const struct fifo * fifo,uint8_t * data,uint16_t len,uint16_t offset);
 uint16_t fifo_skip(struct fifo * fifo,uint16_t len);
 
-#ifdef DEBUG_MODE
+// #ifdef DEBUG_MODE
 void fifo_print(struct fifo * fifo);
-#endif //DEBUG_MODE
+// #endif //DEBUG_MODE
 
 #endif //_FIFO_H

@@ -394,13 +394,16 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
     case tcp_state_close_wait:
     case tcp_state_closing:
     {
+      /* nothing acked */
       if(rcv_ack == tcb->seq)
-      {
-	DEBUG_PRINT("rcv_ack == tcb->seq\n");
 	break;
+      uint32_t seq_next = tcb->seq + (uint32_t)tcb->seq_next;
+      if((rcv_ack > tcb->seq) && (rcv_ack <= seq_next))
+      {
+	uint16_t acked_bytes = (uint16_t)(rcv_ack - tcb->seq);
+	
       }
-      DEBUG_PRINT("rcv_ack != tcb->seq\n");
-      break;
+      
     }
     default: 
       break; 
@@ -578,6 +581,7 @@ uint8_t tcp_send_packet(struct tcp_tcb * tcb,uint8_t flags,uint8_t send_empty)
       max_packet_szie -= sizeof(uint32_t);
   }
   tcp->offset = (packet_header_len>>2)<<4;
+  packet_data_len += fifo_dequeue(tcb->fifo_tx,data_ptr,max_packet_szie);
   packet_total_len = packet_header_len+packet_data_len;
   tcp->checksum = hton16(tcp_get_checksum((const ip_address*)&tcb->ip_remote,tcp,packet_total_len));
   return ip_send_packet((const ip_address*)&tcb->ip_remote,IP_PROTOCOL_TCP,packet_total_len);
@@ -882,4 +886,24 @@ int16_t tcp_read(tcp_socket_t socket,uint8_t * data,uint16_t maxlen)
       return -1;
     struct tcp_tcb * tcb = &tcp_tcbs[socket];
     return fifo_dequeue(tcb->fifo_rx,data,maxlen);
+}
+
+int16_t tcp_write(tcp_socket_t socket,uint8_t * data,uint16_t len)
+{
+  if(!tcp_socket_valid(socket))
+    return -1;
+  struct tcp_tcb * tcb = &tcp_tcbs[socket];
+  int16_t ret = fifo_enqueue(tcb->fifo_tx,data,len);
+  tcp_send_packet(tcb,TCP_FLAG_ACK,1);
+  return ret;
+}
+
+int16_t tcp_write_P(tcp_socket_t socket,prog_uint8_t * data,uint16_t len)
+{
+  if(!tcp_socket_valid(socket))
+    return -1;
+  struct tcp_tcb * tcb = &tcp_tcbs[socket];
+  int16_t ret = fifo_enqueue_P(tcb->fifo_tx,data,len);
+  tcp_send_packet(tcb,TCP_FLAG_ACK,1);
+  return ret;
 }
