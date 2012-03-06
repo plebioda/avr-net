@@ -12,7 +12,7 @@
 #include "net.h"
 #include "net_config.h"
 
-#define TCP_MAX_SOCKETS		5
+#define TCP_MAX_SOCKETS		3
 
 #define TCP_MSS			(ETHERNET_MAX_PACKET_SIZE - NET_HEADER_SIZE_ETHERNET - NET_HEADER_SIZE_IP - NET_HEADER_SIZE_TCP)	
 

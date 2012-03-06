@@ -222,6 +222,8 @@ uint8_t                 enc28j60_get_revision    (void)
 
 uint8_t         enc28j60_send_packet    (uint8_t * packet,uint16_t len)
 {
+      /* wait until previous packet was sent */
+//       while(enc28j60_read(ECON1) & (1 << ECON1_TXRTS));
       // Set the write pointer to start of transmit buffer area
       enc28j60_write(EWRPTL,ENC28J60_TXSTART_INIT&0xff);
       enc28j60_write(EWRPTH,ENC28J60_TXSTART_INIT>>8);

@@ -346,10 +346,17 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
     default:
       break;
   }
+  /* check sequence number */
+  /* we accept only packets which starts 
+  at the beggining of the fifo_rx last pointer, it means that 
+  we do not support packets that arrive out of order */
   if(ntoh32(tcp->seq) != tcb->ack)
   {
+      /* if we received packet out of order send packet to tell 
+      the remote host about our position*/
       return tcp_send_packet(tcb,TCP_FLAG_ACK,0);
   }
+  /* check RST and SYN bits */
   switch(tcb->state)
   {
     case tcp_state_syn_received:
@@ -371,17 +378,20 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
     default:
       break;
   }
-  /* all following situations requires ACK flag on */
+  /* check ACK field */
+  /* if ACK bit is off drop the segment and return */
   if(!(tcp->flags & TCP_FLAG_ACK))
     return 0;
-  uint32_t rcv_ack = ntoh32(tcp->ack);
+  /* all following situations requires ACK flag on */
+  uint32_t rcv_ack = ntoh32(tcp->ack);  
   switch(tcb->state)
   {
     case tcp_state_syn_received:
     {
 
       if(rcv_ack != tcb->seq+1)
-	return 0;
+	//return 0;
+	return tcp_send_rst(ip_remote,tcp,length);
       tcb->seq++;
       tcb->state = tcp_state_established;
       tcb->callback(socket,tcp_event_connection_established);
@@ -398,16 +408,58 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
       if(rcv_ack == tcb->seq)
 	break;
       uint32_t seq_next = tcb->seq + (uint32_t)tcb->seq_next;
+      /* check if ack lies within a window */
+      DEBUG_PRINT_COLOR(B_IMAGENTA,"rcv_ack %lu, tcb->seq %lu seq_next %lu\n",rcv_ack,tcb->seq,seq_next);
       if((rcv_ack > tcb->seq) && (rcv_ack <= seq_next))
       {
+	/* get number of acked bytes */
 	uint16_t acked_bytes = (uint16_t)(rcv_ack - tcb->seq);
+	/* remove acked bytes form tx fifo */
+	fifo_skip(tcb->fifo_tx,acked_bytes);
 	
+	/* update sequence number */
+	tcb->seq += acked_bytes;
+	/* update next sequence number */
+	if(tcb->seq_next >= acked_bytes)
+	  tcb->seq_next -= acked_bytes;
+	else
+	  tcb->seq_next = 0;
+// 	DEBUG_PRINT_COLOR(IBLUE,"seq_next=%d,rcv_ack=%d\n",tcb->seq_next,rcv_ack);
+	/* update remote host window size */
+	tcb->window = ntoh16(tcp->window);
+	/* send information o user that some data was acknowledged */
+	tcb->callback(socket,tcp_event_data_acked);
+	/* if there is data in tx buffer send it to keep data flowing */
+	DEBUG_PRINT_COLOR(IYELLOW,"fifo len %d seq_next %d\n",fifo_length(tcb->fifo_tx),tcb->seq_next);
+	if(fifo_length(tcb->fifo_tx) - tcb->seq_next > 0)
+	{
+	    DEBUG_PRINT_COLOR(B_IBLUE,"HERE\n");
+	    if(!tcp_send_packet(tcb,TCP_FLAG_ACK,1))
+	    {
+		tcb->state = tcp_state_closed;
+		tcb->callback(socket,tcp_event_error);
+	    }
+	}
+	break;
       }
-      
+      /* if the ack is duplicate. it can be ignored */
+      else if(rcv_ack < tcb->seq)
+      {
+	 return 0;
+      }
+      /* if the ACK acks something not yet sent, then send an ACK,
+      drop the segment and return */
+      if(!tcp_send_packet(tcb,TCP_FLAG_ACK,1))
+      {
+	tcb->state = tcp_state_closed;
+	tcb->callback(socket,tcp_event_error);	  
+      }
+      return 0;
     }
     default: 
       break; 
   }
+  /* process the segment text */
   switch(tcb->state)
   {
     case tcp_state_established:
@@ -416,13 +468,26 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
     {
       uint8_t data_offset = (tcp->offset>>4)<<2;
       uint16_t data_length = length - data_offset;
+      /* check if packets contains any data */
       if(data_length > 0)
       {
+	/* put data into rx fifo */
 	uint16_t buffered_data = fifo_enqueue(tcb->fifo_rx,(const uint8_t*)tcp + data_offset,data_length);
+	/* update acknowledgment number */
 	tcb->ack += buffered_data;
-	tcp_send_packet(tcb,TCP_FLAG_ACK,0);
-	DEBUG_PRINT_COLOR(IGREEN,"rcv %d bytes\n",buffered_data);
-	tcb->callback(socket,tcp_event_data_received);
+	if(buffered_data > 0)
+	{
+	  /* if any data inserted to rx fifo send an ack */
+	  if(!tcp_send_packet(tcb,TCP_FLAG_ACK,1))
+	  {
+	    tcb->state = tcp_state_closed;
+	    tcb->callback(socket,tcp_event_error);	  	      
+	  }
+	  /* send information to user that some data have been received */
+	  tcb->callback(socket,tcp_event_data_received);
+	  DEBUG_PRINT_COLOR(IGREEN,"rcv %d bytes\n",buffered_data);
+	  tcb->callback(socket,tcp_event_data_received);
+	}
       }
       break;
     }
@@ -503,6 +568,107 @@ void tcp_timeout(timer_t timer,void * arg)
     timer_set(tcb->timer,tset);
 }
 
+uint8_t tcp_send_packet(struct tcp_tcb * tcb,uint8_t flags,uint8_t send_data)
+{
+  if(!tcb)
+    return 0;
+  struct tcp_header * tcp = (struct tcp_header*)ip_get_buffer();
+ 
+  memset(tcp,0,sizeof(struct tcp_header));
+  /* set destination port */
+  tcp->port_destination = hton16(tcb->port_remote);
+  /* set source port */
+  tcp->port_source = hton16(tcb->port_local);
+  /* not using urgent */
+  tcp->urgent = HTON16(0x0000);
+  /* set acknowledgment number */
+  tcp->ack = hton32(tcb->ack);
+  /* set flags */
+  tcp->flags = flags;
+  /* set window to buffer free space length */
+  tcp->window = /*hton16(6);*/hton16(fifo_space(tcb->fifo_rx));
+  uint16_t packet_header_len = sizeof(struct tcp_header);
+  uint16_t max_packet_size = tcp_get_buffer_size();
+  uint8_t * data_ptr = (uint8_t*)tcp + sizeof(struct tcp_header);
+  /* if SYN packet send maximum segment size in options field */
+  if(tcp->flags & TCP_FLAG_SYN)
+  {
+      *((uint32_t*)data_ptr) = HTON32(((uint32_t)TCP_OPT_MSS<<24)|((uint32_t)TCP_OPT_LENGTH_MSS<<16)|(uint32_t)TCP_MSS);
+      data_ptr += sizeof(uint32_t);
+      packet_header_len += sizeof(uint32_t);
+      max_packet_size -= sizeof(uint32_t);
+  }
+  
+  tcp->offset = (packet_header_len>>2)<<4;
+  
+  int16_t tx_data_size = fifo_length(tcb->fifo_tx);
+  
+  if(max_packet_size > tcb->mss)
+    max_packet_size = tcb->mss;
+  if(tcb->window > 0)
+  {
+    if(tx_data_size > tcb->window)
+      tx_data_size = tcb->window;
+    if(max_packet_size > tcb->window)
+      max_packet_size = tcb->window;
+  }
+  else if(tx_data_size > tcb->mss)
+  {
+    /* if window is zero we just send one packet witch mss bytes
+    when this data will be acked we will update information about window size */
+    tx_data_size = tcb->mss;
+  } 
+  DEBUG_PRINT_COLOR(IRED,"seq_next=%d\n",tcb->seq_next);
+  uint16_t tx_data_offset = tcb->seq_next;
+  tx_data_size -= tx_data_offset;
+  uint32_t packet_seq = tcb->seq + (uint32_t)tx_data_offset;
+  uint8_t packet_sent = 1;  
+  uint16_t packet_total_len;
+  uint16_t data_length = 0;
+  uint16_t counter = 0;
+  do
+  {
+    if(send_data)
+    {
+       data_length = fifo_peek(tcb->fifo_tx,data_ptr,max_packet_size,tx_data_offset);
+       if(data_length != max_packet_size)
+       {
+	  DEBUG_PRINT_COLOR(B_IRED,"data_length != max_packet_size\n");
+	  DEBUG_PRINT_COLOR(B_IRED,"tx_data_offset=%d\n",tx_data_offset);
+       }
+       //        DEBUG_PRINT_COLOR(IRED,"data length = %d\n",data_length);
+    }
+    packet_total_len = data_length + packet_header_len;
+//     DEBUG_PRINT_COLOR(IRED,"packet_seq=%d\n",packet_seq);
+    tcp->seq = hton32(packet_seq);
+    tcp->checksum = hton16(tcp_get_checksum((const ip_address*)&tcb->ip_remote,tcp,packet_total_len));
+    packet_sent = ip_send_packet((const ip_address*)&tcb->ip_remote,IP_PROTOCOL_TCP,packet_total_len);
+    
+    if(packet_sent)
+    {
+      counter++;
+//       DEBUG_PRINT_COLOR(B_ICYAN,"sent seq=%lu\n",packet_seq);
+//       DEBUG_PRINT_COLOR(IRED,"packet sent\n");
+      tx_data_offset += data_length;
+      packet_seq += (uint32_t)data_length;
+//       DEBUG_PRINT_COLOR(IRED,"tx_data_size=%d\n",tx_data_size);
+      tx_data_size -= data_length;
+//       DEBUG_PRINT_COLOR(IRED,"tx_data_offset=%d\n",tx_data_offset);
+//       DEBUG_PRINT_COLOR(IRED,"tx_data_size=%d\n",tx_data_size);
+    }
+    
+  }while(packet_sent && send_data && tx_data_size > 0);
+//   DEBUG_PRINT_COLOR(IRED,"exit:packet_sent=%d\n",packet_sent);
+//   DEBUG_PRINT_COLOR(IRED,"exit:send_data=%d\n",send_data);
+//   DEBUG_PRINT_COLOR(IRED,"exit:tx_data_size=%d\n",tx_data_size);
+  
+  tcb->seq_next = tx_data_offset;
+//   DEBUG_PRINT_COLOR(IRED,"fifo_length exit=%d\n",fifo_length(tcb->fifo_tx));
+//   DEBUG_PRINT_COLOR(B_IGREEN,"packets sent:%d\n",counter);
+//   DEBUG_PRINT_COLOR(B_IGREEN,"seq=%lu next=%d\n",tcb->seq,tcb->seq_next);
+  return packet_sent;
+}
+
 struct tcp_tcb * tcp_tcb_alloc(void)
 {
     struct tcp_tcb * tcb;
@@ -546,46 +712,7 @@ void tcp_tcb_reset(struct tcp_tcb * tcb)
   tcb->fifo_tx = fifo_tx;
 }
 
-uint8_t tcp_send_packet(struct tcp_tcb * tcb,uint8_t flags,uint8_t send_empty)
-{
-  if(!tcb)
-    return 0;
-  struct tcp_header * tcp = (struct tcp_header*)ip_get_buffer();
-  memset(tcp,0,sizeof(struct tcp_header));
-  /* set destination port */
-  tcp->port_destination = hton16(tcb->port_remote);
-  /* set source port */
-  tcp->port_source = hton16(tcb->port_local);
-  /* not using urgent */
-  tcp->urgent = HTON16(0x0000);
-  /* set acknowledgment number */
-  tcp->ack = hton32(tcb->ack);
-  /* set sequence number */
-  tcp->seq = hton32(tcb->seq);
-  /* set flags */
-  tcp->flags = flags;
-  /* set window to buffer free space length */
-  tcp->window = hton16(fifo_space(tcb->fifo_rx));
-  DEBUG_PRINT("window = %d\n",fifo_space(tcb->fifo_rx));
-  uint16_t packet_header_len = sizeof(struct tcp_header);
-  uint16_t packet_data_len = 0;
-  uint16_t packet_total_len =0;
-  uint16_t max_packet_szie = tcp_get_buffer_size();
-  uint8_t * data_ptr = (uint8_t*)tcp + sizeof(struct tcp_header);
-  /* if SYN packet send maximum segment size in options field */
-  if(tcp->flags & TCP_FLAG_SYN)
-  {
-      *((uint32_t*)data_ptr) = HTON32(((uint32_t)TCP_OPT_MSS<<24)|((uint32_t)TCP_OPT_LENGTH_MSS<<16)|(uint32_t)TCP_MSS);
-      data_ptr += sizeof(uint32_t);
-      packet_header_len += sizeof(uint32_t);
-      max_packet_szie -= sizeof(uint32_t);
-  }
-  tcp->offset = (packet_header_len>>2)<<4;
-  packet_data_len += fifo_dequeue(tcb->fifo_tx,data_ptr,max_packet_szie);
-  packet_total_len = packet_header_len+packet_data_len;
-  tcp->checksum = hton16(tcp_get_checksum((const ip_address*)&tcb->ip_remote,tcp,packet_total_len));
-  return ip_send_packet((const ip_address*)&tcb->ip_remote,IP_PROTOCOL_TCP,packet_total_len);
-}
+
 
 uint8_t tcp_get_options(struct tcp_tcb * tcb,const struct tcp_header * tcp,uint16_t length)
 {
@@ -888,7 +1015,7 @@ int16_t tcp_read(tcp_socket_t socket,uint8_t * data,uint16_t maxlen)
     return fifo_dequeue(tcb->fifo_rx,data,maxlen);
 }
 
-int16_t tcp_write(tcp_socket_t socket,uint8_t * data,uint16_t len)
+int16_t tcp_write(tcp_socket_t socket,const uint8_t * data,uint16_t len)
 {
   if(!tcp_socket_valid(socket))
     return -1;
@@ -898,7 +1025,7 @@ int16_t tcp_write(tcp_socket_t socket,uint8_t * data,uint16_t len)
   return ret;
 }
 
-int16_t tcp_write_P(tcp_socket_t socket,prog_uint8_t * data,uint16_t len)
+int16_t tcp_write_P(tcp_socket_t socket,const prog_uint8_t * data,uint16_t len)
 {
   if(!tcp_socket_valid(socket))
     return -1;
@@ -906,4 +1033,8 @@ int16_t tcp_write_P(tcp_socket_t socket,prog_uint8_t * data,uint16_t len)
   int16_t ret = fifo_enqueue_P(tcb->fifo_tx,data,len);
   tcp_send_packet(tcb,TCP_FLAG_ACK,1);
   return ret;
+}
+int16_t tcp_write_string_P(tcp_socket_t socket,const prog_char * string)
+{
+    return tcp_write_P(socket,(const prog_uint8_t*)string,strlen_P(string));
 }

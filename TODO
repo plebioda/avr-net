@@ -59,5 +59,7 @@ Tasks:
 ( ) tcp
 	( ) handling timeout after sending SYN,ACK (retransmision)
 	( ) maximum number of allowed retransmissions
+	( ) test retransmissions by setting mss of remote host to small number of bytes and
+	    transfer a lot of data, buffer in enc28j60 should be full and so not all packets will be acked
 	
 ------------------------------------------------------------

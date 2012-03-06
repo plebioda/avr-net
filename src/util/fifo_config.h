@@ -12,6 +12,6 @@
 #include "../net/tcp_config.h"
 
 #define FIFO_MAX_COUNT		4
-#define FIFO_SIZE		30//TCP_MSS
+#define FIFO_SIZE		2048
 
 #endif //_FIFO_CONFIG_H

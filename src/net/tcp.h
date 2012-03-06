@@ -23,7 +23,8 @@ enum tcp_event
     tcp_event_timeout,
     tcp_event_connection_established,
     tcp_event_reset,
-    tcp_event_data_received
+    tcp_event_data_received,
+    tcp_event_data_acked
     
 };
 
@@ -47,8 +48,9 @@ uint8_t tcp_disconnect(tcp_socket_t socket);
 uint8_t tcp_accept(tcp_socket_t socket);
 
 int16_t tcp_read(tcp_socket_t socket,uint8_t * data,uint16_t maxlen);
-int16_t tcp_write(tcp_socket_t socket,uint8_t * data,uint16_t len);
-int16_t tcp_write_P(tcp_socket_t socket,prog_uint8_t * data,uint16_t len);
+int16_t tcp_write(tcp_socket_t socket,const uint8_t * data,uint16_t len);
+int16_t tcp_write_P(tcp_socket_t socket,const prog_uint8_t * data,uint16_t len);
+int16_t tcp_write_string_P(tcp_socket_t socket,const prog_char * string);
 
 uint16_t tcp_get_remote_port(tcp_socket_t socket);
 const ip_address * tcp_get_remote_ip(tcp_socket_t socket);

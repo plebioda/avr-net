@@ -31,15 +31,22 @@
 #include "app/app_config.h"
 #include "app/tftp.h"
 
-char * www = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<html><body><h1>Hello avr-net!</h1><p>ATMega162</p></body></html>\r\n";
-
-uint8_t data[256] EXMEM;
-
+uint8_t data[1500] EXMEM;
+// 	len = tcp_write_string_P(socket,
+// 				 PSTR("HTTP/1.1 200 OK\r\n"
+// 				 "Content-Type: text/html\r\n"
+// // 				 "Content-Length: 65\r\n"
+// 				 "<html>"
+// 				 "<body"
+// 				 "><h1>Hello avr-net!</h1>"
+// 				 "<p>ATMega162</p>"
+// 				 "</body>"
+// 				 "</html>"));
 void udp_callback(udp_socket_t socket,uint8_t * data,uint16_t len);
 
 void tcp_callback(tcp_socket_t socket,enum tcp_event event)
 {
-    DEBUG_PRINT("tcpcallbck:soc%d event:",socket);
+//     DEBUG_PRINT("tcpcallbck:soc%d event:\n",socket);
     int16_t len;
     uint8_t * ptr;
     switch(event)
@@ -63,18 +70,27 @@ void tcp_callback(tcp_socket_t socket,enum tcp_event event)
 	tcp_socket_free(socket);
 	break;
       case tcp_event_data_received:
+      {
 	len = tcp_read(socket,data,1500);
 	if(len <= 0)
 	  break;
-	DEBUG_PRINT("Data received:\n");
+	DEBUG_PRINT("\nData received len = %d:\n",len);
 	ptr = data;
-	while(--len)
+	if(*ptr == 0xff)
+	  break;
+	uint16_t i = len;
+	while(i--)
 	{
-	    DEBUG_PRINT("%c",*(ptr++));
+// 	    DEBUG_PRINT("%c",*(ptr));
+	    if(*ptr >= 'a' && *ptr <= 'z')
+	      *ptr -= 0x20;
+	    ptr++;
 	}
-	len = tcp_write(socket,www,112);
-	DEBUG_PRINT("len = %d\n",len);
+	tcp_write(socket,data,len);
 	break;
+      }
+      case tcp_event_data_acked:
+// 	DEBUG_PRINT("data acked\n");
       default:
 	break;
     }
@@ -104,17 +120,17 @@ int main(void)
   /* disable USART0 Receive interrupt */
   UCSR0B &= ~(1<<RXCIE0);
   sei();
-  
+  DEBUG_PRINT("SP = %x\n",SP);
 #if APP_TFTP
   tftpd_init();
 #endif
   tcp_init();
     
   tcp_socket_t tcp_socket,tcp_socket80;
-  tcp_socket = tcp_socket_alloc(tcp_callback);
+//   tcp_socket = tcp_socket_alloc(tcp_callback);
   tcp_socket80 = tcp_socket_alloc(tcp_callback);
-  DEBUG_PRINT("socket = %d\n",tcp_socket);
-  tcp_listen(tcp_socket80,80);
+  DEBUG_PRINT("socket = %d\n",tcp_socket80);
+  tcp_listen(tcp_socket80,23);
 //   struct fifo * fifo = fifo_alloc();
 //   uint16_t i;
 //   for(i=0;i<256;i++)
