@@ -155,7 +155,7 @@ uint16_t fifo_dequeue(struct fifo * fifo,uint8_t * data,uint16_t len)
       fifo->first = fifo->buffer;
     return ret;
 }
-uint16_t fifo_peek(const struct fifo * fifo,uint8_t * data,uint16_t len,uint16_t offset)
+uint16_t fifo_peek(struct fifo * fifo,uint8_t * data,uint16_t len,uint16_t offset)
 {
   /* check if fifo pointer is valid */
   if(!fifo_valid(fifo))

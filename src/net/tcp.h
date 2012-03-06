@@ -24,8 +24,10 @@ enum tcp_event
     tcp_event_connection_established,
     tcp_event_reset,
     tcp_event_data_received,
-    tcp_event_data_acked
-    
+    tcp_event_data_acked,
+    tcp_event_connection_closing,
+    tcp_event_connection_closed,
+    tcp_event_connection_idle
 };
 
 
@@ -44,7 +46,7 @@ uint8_t tcp_socket_free(tcp_socket_t socket);
 
 uint8_t tcp_listen(tcp_socket_t socket,uint16_t port);
 uint8_t tcp_connect(tcp_socket_t socket,ip_address * ip,uint16_t port);
-uint8_t tcp_disconnect(tcp_socket_t socket);
+uint8_t tcp_close(tcp_socket_t socket);
 uint8_t tcp_accept(tcp_socket_t socket);
 
 int16_t tcp_read(tcp_socket_t socket,uint8_t * data,uint16_t maxlen);

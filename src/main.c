@@ -46,7 +46,7 @@ void udp_callback(udp_socket_t socket,uint8_t * data,uint16_t len);
 
 void tcp_callback(tcp_socket_t socket,enum tcp_event event)
 {
-//     DEBUG_PRINT("tcpcallbck:soc%d event:\n",socket);
+    DEBUG_PRINT("tcpcallbck:soc%d event:",socket);
     int16_t len;
     uint8_t * ptr;
     switch(event)
@@ -67,14 +67,14 @@ void tcp_callback(tcp_socket_t socket,enum tcp_event event)
       case tcp_event_timeout:
 	DEBUG_PRINT("Timeout\n");
 // 	tcp_connect(socket,&ip_remote,80);
-	tcp_socket_free(socket);
+// 	tcp_socket_free(socket);
 	break;
       case tcp_event_data_received:
       {
 	len = tcp_read(socket,data,1500);
+	DEBUG_PRINT("Data received len = %d:\n",len);
 	if(len <= 0)
-	  break;
-	DEBUG_PRINT("\nData received len = %d:\n",len);
+	  break;	
 	ptr = data;
 	if(*ptr == 0xff)
 	  break;
@@ -86,12 +86,24 @@ void tcp_callback(tcp_socket_t socket,enum tcp_event event)
 	      *ptr -= 0x20;
 	    ptr++;
 	}
-	tcp_write(socket,data,len);
+// 	tcp_write(socket,data,len);
+// 	DEBUG_PRINT("after tcp-write\n");
+	tcp_close(socket);
+	DEBUG_PRINT("after tcp-close\n");
 	break;
       }
+      case tcp_event_connection_closing:
+	DEBUG_PRINT("connection closing\n");
+	break;
+      case tcp_event_connection_closed:
+	DEBUG_PRINT("connection closed\n");
+	tcp_socket_free(socket);
+	break;
       case tcp_event_data_acked:
-// 	DEBUG_PRINT("data acked\n");
+	DEBUG_PRINT("data acked\n");
+	break;
       default:
+	DEBUG_PRINT("event=%d\n",event);
 	break;
     }
 }
@@ -126,11 +138,11 @@ int main(void)
 #endif
   tcp_init();
     
-  tcp_socket_t tcp_socket,tcp_socket80;
+  tcp_socket_t tcp_socket;
 //   tcp_socket = tcp_socket_alloc(tcp_callback);
-  tcp_socket80 = tcp_socket_alloc(tcp_callback);
-  DEBUG_PRINT("socket = %d\n",tcp_socket80);
-  tcp_listen(tcp_socket80,23);
+  tcp_socket = tcp_socket_alloc(tcp_callback);
+  DEBUG_PRINT("socket = %d\n",tcp_socket);
+  tcp_listen(tcp_socket,23);
 //   struct fifo * fifo = fifo_alloc();
 //   uint16_t i;
 //   for(i=0;i<256;i++)

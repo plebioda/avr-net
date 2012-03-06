@@ -66,6 +66,12 @@ void timer_tick()
 	
     }
 }
+int32_t timer_get_time(timer_t timer)
+{
+  if(!timer_valid(timer))
+    return 0;
+  return timer_cores[timer].ms_left;
+}
 uint8_t timer_set_arg(timer_t timer,void * arg)
 {
     if(!timer_valid(timer))

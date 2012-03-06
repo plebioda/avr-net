@@ -61,5 +61,7 @@ Tasks:
 	( ) maximum number of allowed retransmissions
 	( ) test retransmissions by setting mss of remote host to small number of bytes and
 	    transfer a lot of data, buffer in enc28j60 should be full and so not all packets will be acked
-	
+	( ) tcp close handle remaining cases
+	( ) handle receiving data in fin-wait-2 state, there is ack from local host after last 
+	    FIN-ACK from remote, which cousing RST from remote host
 ------------------------------------------------------------

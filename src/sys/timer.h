@@ -20,6 +20,7 @@ void timer_init(void);
 void timer_tick(void);
 uint8_t timer_set(timer_t timer,int32_t ms);
 uint8_t timer_stop(timer_t timer);
+int32_t timer_get_time(timer_t timer);
 
 timer_t timer_alloc(timer_callback_t callback);
 void timer_free(timer_t);
