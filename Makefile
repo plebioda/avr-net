@@ -202,7 +202,7 @@ LDFLAGS += -Wl,--section-start=.exram=0x800500
 AVRDUDE_PROGRAMMER = stk500
 
 # com1 = serial port. Use lpt1 to connect to parallel port.
-AVRDUDE_PORT = /dev/ttyUSB1
+AVRDUDE_PORT = /dev/ttyUSB0
 
 # LFUSE   CKDIV8 CKOUT SUT1 SUT0 CKSEL3210
 #         1     1     0    1     0010 => 0x5f

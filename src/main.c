@@ -86,10 +86,10 @@ void tcp_callback(tcp_socket_t socket,enum tcp_event event)
 	      *ptr -= 0x20;
 	    ptr++;
 	}
-// 	tcp_write(socket,data,len);
+	tcp_write(socket,data,len);
 // 	DEBUG_PRINT("after tcp-write\n");
-	tcp_close(socket);
-	DEBUG_PRINT("after tcp-close\n");
+// 	tcp_close(socket);
+// 	DEBUG_PRINT("after tcp-close\n");
 	break;
       }
       case tcp_event_connection_closing:
