@@ -33,7 +33,7 @@ uint8_t ethernet_send_packet(ethernet_address * dst,uint16_t type,uint16_t len);
 
 #define ethernet_get_buffer()	(&ethernet_tx_buffer[NET_HEADER_SIZE_ETHERNET])
 #define ethernet_get_broadcast()
-#define ethernet_get_buffer_size() (ETHERNET_MAX_PACKET_SIZE)
+#define ethernet_get_buffer_size() (ETHERNET_MAX_PACKET_SIZE -NET_HEADER_SIZE_ETHERNET)
 
 #endif //_ETHERNET_H
 

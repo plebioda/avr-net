@@ -46,7 +46,7 @@ struct udp_socket
     ip_address ip_remote;
 };
 
-static struct udp_socket udp_sockets[UDP_SOCKET_MAX] EXMEM;
+static struct udp_socket udp_sockets[UDP_SOCKET_MAX]; // EXMEM
 
 #define FOREACH_UDP_SOCKET(socket) for((socket) = &udp_sockets[0] ; (socket) < &udp_sockets[UDP_SOCKET_MAX] ; (socket)++)
 

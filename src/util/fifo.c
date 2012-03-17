@@ -23,7 +23,7 @@ struct fifo
     uint8_t * last;
 };
 
-static struct fifo fifos[FIFO_MAX_COUNT] EXMEM;
+static struct fifo fifos[FIFO_MAX_COUNT]; // EXMEM
 
 #define FOREACH_FIFO(fifo) for(fifo = &fifos[0] ; fifo < &fifos[FIFO_MAX_COUNT]; fifo++)
 

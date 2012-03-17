@@ -16,7 +16,7 @@
 #include "udp.h"
 #include "tcp.h"
 
-//#define DEBUG_MODE
+// #define DEBUG_MODE
 #include "../debug.h"
 
 #define IP_V4		0x4
@@ -92,6 +92,7 @@ uint8_t ip_send_packet(const ip_address * ip_dst,uint8_t protocol,uint16_t lengt
 	 so we return 0 which means that packet was not send
       */
 	return 0;
+	DEBUG_PRINT_COLOR(B_IMAGENTA,"ip mac ok\n");
   }
   struct ip_header * ip = (struct ip_header*)ethernet_get_buffer();
   

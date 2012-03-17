@@ -10,7 +10,7 @@
 #include <avr/iom162.h>
 #include <avr/interrupt.h>
 
-#define DEBUG_MODE
+// #define DEBUG_MODE
 #include "debug.h"
 
 #include "arch/exmem.h"
@@ -31,8 +31,9 @@
 #include "app/app_config.h"
 #include "app/tftp.h"
 
-uint8_t data[1500] EXMEM;
-// 	len = tcp_write_string_P(socket,
+uint8_t data[1500]; //EXMEM
+uint8_t temp[10]; //EXMEM
+ // 	len = tcp_write_string_P(socket,
 // 				 PSTR("HTTP/1.1 200 OK\r\n"
 // 				 "Content-Type: text/html\r\n"
 // // 				 "Content-Length: 65\r\n"
@@ -46,7 +47,7 @@ void udp_callback(udp_socket_t socket,uint8_t * data,uint16_t len);
 
 void tcp_callback(tcp_socket_t socket,enum tcp_event event)
 {
-    DEBUG_PRINT("tcpcallbck:soc%d event:",socket);
+//     DEBUG_PRINT("tcpcallbck:soc%d event:",socket);
     int16_t len;
     uint8_t * ptr;
     switch(event)
@@ -54,10 +55,10 @@ void tcp_callback(tcp_socket_t socket,enum tcp_event event)
       case tcp_event_nop:
 	break;
       case tcp_event_connection_established:
-	DEBUG_PRINT("Con.est.,port=%u\n",tcp_get_remote_port(socket));
+// 	DEBUG_PRINT("Con.est.,port=%u\n",tcp_get_remote_port(socket));
 	break;
       case tcp_event_connection_incoming:
-	DEBUG_PRINT("Con.inc.,port=%u\n",tcp_get_remote_port(socket));
+// 	DEBUG_PRINT("Con.inc.,port=%u\n",tcp_get_remote_port(socket));
 	tcp_accept(socket);
 	break;
       case tcp_event_error:
@@ -87,7 +88,7 @@ void tcp_callback(tcp_socket_t socket,enum tcp_event event)
 	    ptr++;
 	}
 	tcp_write(socket,data,len);
-// 	DEBUG_PRINT("after tcp-write\n");
+	DEBUG_PRINT("after tcp-write\n");
 // 	tcp_close(socket);
 // 	DEBUG_PRINT("after tcp-close\n");
 	break;
@@ -108,14 +109,21 @@ void tcp_callback(tcp_socket_t socket,enum tcp_event event)
     }
 }
 
+void tcallback(timer_t timer,void * arg)
+{
+     PORTE ^= 1<<2;
+    timer_set(timer,15);
+}
+
 int main(void)
 {
+  DDRE |= 1<<2;
   timer_init();
   DEBUG_INIT();
   spi_init(0);
   ethernet_address my_mac = {'<','P','A','K','O','>'};
   ip_address my_ip = {192,168,1,200};
-  DEBUG_PRINT_COLOR(B_IYELLOW,"Initialized...\n");
+//   DEBUG_PRINT_COLOR(B_IYELLOW,"Initialized...\n");
   fifo_init();
   ethernet_init(&my_mac);
   ip_init(&my_ip);
@@ -137,34 +145,16 @@ int main(void)
   tftpd_init();
 #endif
   tcp_init();
-    
+  timer_t timer = timer_alloc(tcallback);  
+  timer_set(timer,100);
   tcp_socket_t tcp_socket;
 //   tcp_socket = tcp_socket_alloc(tcp_callback);
   tcp_socket = tcp_socket_alloc(tcp_callback);
   DEBUG_PRINT("socket = %d\n",tcp_socket);
   tcp_listen(tcp_socket,23);
-//   struct fifo * fifo = fifo_alloc();
-//   uint16_t i;
-//   for(i=0;i<256;i++)
-//     data[i] = i;
-//   fifo_enqueue(fifo,data,45);
-//   fifo_print(fifo);
-//   fifo_dequeue(fifo,data+100,10);
-//   for(i=0;i<10;i++)
-//     DEBUG_PRINT("data %3d: %02x %3d\n",i,data[100+i],data[100+i]);
-//   fifo_print(fifo);
-//   fifo_skip(fifo,15);
-//   fifo_print(fifo);
-//   fifo_enqueue(fifo,data+90,25);
-//   fifo_print(fifo);
-//   DEBUG_PRINT("fifo_peek = %d\n",fifo_peek(fifo,&data[100],5,2));
-//   for(i=0;i<5;i++)
-//     DEBUG_PRINT("data %3d: %02x %3d\n",i,data[100+i],data[100+i]);
-//   fifo_print(fifo);
-//   fifo_skip(fifo,7);
-//   fifo_print(fifo);
-//   fifo_skip(fifo,13);
-//   fifo_print(fifo);
+  DEBUG_PRINT("eth buffer = %x\n",ethernet_get_buffer());
+  DEBUG_PRINT("data = %x\n",data);
+  DEBUG_PRINT("temmp = %x\n",temp);
   for(;;)
   {
 	cli();
@@ -177,9 +167,9 @@ int main(void)
 
 SIGNAL(SIG_OVERFLOW1)
 {
-    /* 10 ms / 32 us = 312.5 */
-    TCNT1 = 312;
-    timer_tick();    
+    /* 1 ms / 32 us = 312.5 */
+    TCNT1 = -32;
+    timer_tick(); 
 }
 
 

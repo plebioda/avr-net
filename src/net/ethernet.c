@@ -15,7 +15,7 @@
 #include "ip.h"
 #include "arp.h"
 
-//#define DEBUG_MODE
+// #define DEBUG_MODE
 #include "../debug.h"
 
 struct ethernet_header
@@ -27,17 +27,17 @@ struct ethernet_header
 
 static ethernet_address ethernet_mac;
 
-uint8_t ethernet_tx_buffer[ETHERNET_MAX_PACKET_SIZE + NET_HEADER_SIZE_ETHERNET] EXMEM;
-uint8_t ethernet_rx_buffer[ETHERNET_MAX_PACKET_SIZE + NET_HEADER_SIZE_ETHERNET] EXMEM;
+uint8_t ethernet_tx_buffer[ETHERNET_MAX_PACKET_SIZE + NET_HEADER_SIZE_ETHERNET]; // EXMEM
+uint8_t ethernet_rx_buffer[ETHERNET_MAX_PACKET_SIZE + NET_HEADER_SIZE_ETHERNET]; //EXMEM
 
 void ethernet_init(ethernet_address * mac)
 {
   memset(ethernet_mac,1,sizeof(ethernet_mac));
   if(mac)
     memcpy(&ethernet_mac,mac,sizeof(ethernet_mac));
-  DEBUG_PRINT_COLOR(U_YELLOW,"ethernet init:");
-  DEBUG_PRINT("%c:%c:%c:%c:%c:%c",(*mac)[0],(*mac)[1],(*mac)[2],(*mac)[3],(*mac)[4],(*mac)[5]);
-  DEBUG_PRINT("\n");
+//   DEBUG_PRINT_COLOR(U_YELLOW,"ethernet init:");
+//   DEBUG_PRINT("%c:%c:%c:%c:%c:%c",(*mac)[0],(*mac)[1],(*mac)[2],(*mac)[3],(*mac)[4],(*mac)[5]);
+//   DEBUG_PRINT("\n");
 }
 
 const ethernet_address * ethernet_get_mac()
@@ -76,6 +76,7 @@ uint8_t ethernet_handle_packet()
 
 uint8_t ethernet_send_packet(ethernet_address * dst,uint16_t type,uint16_t len)
 {
+  DEBUG_PRINT_COLOR(B_IRED,"eth sp len=%d\n",len);
   if(len > ETHERNET_MAX_PACKET_SIZE -NET_HEADER_SIZE_ETHERNET)
     return 0;
   struct ethernet_header * header = (struct ethernet_header*)ethernet_tx_buffer;

@@ -12,11 +12,11 @@
 #include "exmem_config.h"
 #include <avr/io.h>
 
-#if EXMEM_USE_ATTR
-	#define EXMEM __attribute__ ((section(".exram")))
-#else
-	#define EXMEM
-#endif
+// #if EXMEM_USE_ATTR
+// 	#define EXMEM __attribute__ ((section(".exram")))
+// #else
+// 	#define EXMEM
+// #endif
 
 void before_main(void) __attribute__((naked)) __attribute__((section(".init3")));
 

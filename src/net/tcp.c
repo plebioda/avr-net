@@ -13,7 +13,7 @@
 #include "../sys/timer.h"
 #include "../util/fifo.h"
 
-#define DEBUG_MODE
+// #define DEBUG_MODE
 #include "../debug.h"
 
 #include <string.h>
@@ -180,7 +180,7 @@ struct tcp_tcb
     struct fifo * fifo_tx;
 };
 
-static struct tcp_tcb tcp_tcbs[TCP_MAX_SOCKETS] EXMEM;
+static struct tcp_tcb tcp_tcbs[TCP_MAX_SOCKETS]; // EXMEM
 
 #define FOREACH_TCB(tcb) for(tcb = &tcp_tcbs[0] ; tcb < &tcp_tcbs[TCP_MAX_SOCKETS] ; tcb++)
 
@@ -211,6 +211,7 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
   tcp_socket_t socket = tcp_get_socket_num(tcb);
   if(socket < 0)
     return 0;
+  DEBUG_PRINT_COLOR(B_IYELLOW,"Flags=%x\n",tcp->flags);
   switch(tcb->state)
   {
     case tcp_state_closed:
@@ -269,8 +270,6 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
 	  /* if any error occured during sending packet 
 	  change state to closed, send error event to user 
 	  and free tcb of this connection */
-// 	  new_tcb->state = tcp_state_closed;
-// 	  new_tcb->callback(socket,tcp_event_error);
 	  tcp_tcb_close(tcb,socket,tcp_event_error);
 	  tcp_tcb_free(new_tcb);
 	  return 0;
@@ -299,9 +298,6 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
 	{
 	  /*if ACK is set and RST is set there was a problem with aour SYN packet
 	  so send event to user */
-// 	  timer_stop(tcb->timer);
-// 	  tcb->state = tcp_state_closed;
-// 	  tcb->callback(socket,tcp_event_error);
 	  tcp_tcb_close(tcb,socket,tcp_event_error);
 	  return 0;
 	}
@@ -324,9 +320,6 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
 	  /* send ACK of SYN-ACK */
 	  if(!tcp_send_packet(tcb,TCP_FLAG_ACK,0))
 	  {
-// 	    timer_stop(tcb->timer);
-// 	    tcb->state = tcp_state_closed;
-// 	    tcb->callback(socket,tcp_event_error);
 	    tcp_tcb_close(tcb,socket,tcp_event_error);
 	    return 0;
 	  }
@@ -342,9 +335,6 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
 	send SYN-ACK*/
 	if(!tcp_send_packet(tcb,TCP_FLAG_SYN|TCP_FLAG_ACK,0))
 	{
-// 	  tcb->state = tcp_state_closed;
-// 	  tcb->callback(socket,tcp_event_error);
-// 	  timer_stop(tcb->timer);
 	  tcp_tcb_close(tcb,socket,tcp_event_error);
 	  return 0;	  
 	}
@@ -383,9 +373,6 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
     case tcp_state_time_wait:
       if(tcp->flags & (TCP_FLAG_RST|TCP_FLAG_SYN))
       {
-// 	tcb->state = tcp_state_closed;
-// 	tcb->callback(socket,tcp_event_reset);
-// 	timer_stop(tcb->timer);
 	tcp_tcb_close(tcb,socket,tcp_event_reset);
 	return 0;
       }
@@ -428,7 +415,7 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
       }
       uint32_t seq_next = tcb->seq + (uint32_t)tcb->seq_next;
       /* check if ack lies within a window */
-      DEBUG_PRINT_COLOR(B_IMAGENTA,"rcv_ack %lu, tcb->seq %lu seq_next %lu\n",rcv_ack,tcb->seq,seq_next);
+//       DEBUG_PRINT_COLOR(B_IMAGENTA,"rcv_ack %lu, tcb->seq %lu seq_next %lu\n",rcv_ack,tcb->seq,seq_next);
       if((rcv_ack > tcb->seq) && (rcv_ack <= seq_next))
       {
 	DEBUG_PRINT_COLOR(B_IRED,"ack in window\n");
@@ -548,7 +535,7 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
       /* check if packets contains any data */
       if(data_length > 0)
       {
-	 DEBUG_PRINT_COLOR(IGREEN,"data text received\n");
+	 DEBUG_PRINT_COLOR(IGREEN,"data text received f=%x\n",tcp->flags);
 	/* put data into rx fifo */
 	buffered_data = fifo_enqueue(tcb->fifo_rx,(const uint8_t*)tcp + data_offset,data_length);
 	/* update acknowledgment number */
@@ -561,7 +548,7 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
 	    tcp_tcb_close(tcb,socket,tcp_event_error);
 	    return 0;
 	  }
-	  DEBUG_PRINT_COLOR(IGREEN,"sending ack = %lx\n",tcb->ack);
+	  DEBUG_PRINT_COLOR(IGREEN,"sending ack = %lx, f=%x\n",tcb->ack,tcp->flags);
 	  /* start idle timeout */
 	  if(tcb->state == tcp_state_established && fifo_length(tcb->fifo_tx)<1)
 	    timer_set(tcb->timer,TCP_TIMEOUT_IDLE);
@@ -578,6 +565,7 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
     default:
       break;
   }
+  DEBUG_PRINT_COLOR(B_IBLUE,"Flags=%x\n",tcp->flags);
   /* process the FIN bit */
   if(tcp->flags & TCP_FLAG_FIN)
   {
@@ -803,8 +791,8 @@ uint8_t tcp_send_packet(struct tcp_tcb * tcb,uint8_t flags,uint8_t send_data)
   tcp->offset = (packet_header_len>>2)<<4;
   
   int16_t tx_data_size = fifo_length(tcb->fifo_tx);
-  DEBUG_PRINT_COLOR(B_IBLUE,"tx=%d\n",tx_data_size);
-  tcb->mss = 4;
+//   DEBUG_PRINT_COLOR(B_IBLUE,"tx=%d\n",tx_data_size);
+//   tcb->mss = 4;
   if(max_packet_size > tcb->mss)
     max_packet_size = tcb->mss;
   if(tcb->window > 0)
@@ -1221,6 +1209,7 @@ void tcp_tcb_free_fifo(struct tcp_tcb * tcb)
 }
 int16_t tcp_read(tcp_socket_t socket,uint8_t * data,uint16_t maxlen)
 {
+//     return 0;
     if(!tcp_socket_valid(socket))
       return -1;
     struct tcp_tcb * tcb = &tcp_tcbs[socket];

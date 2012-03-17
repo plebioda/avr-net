@@ -27,7 +27,7 @@ struct timer_core
   void * arg;
 };
 
-static struct timer_core timer_cores[TIMER_MAX] EXMEM;
+static struct timer_core timer_cores[TIMER_MAX]; // EXMEM
 static timer_t timer_number(const struct timer_core * timer);
 static uint8_t timer_valid(const timer_t timer);
 

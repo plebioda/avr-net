@@ -71,7 +71,7 @@ struct tftp
   uint16_t last_block;
 };
 
-static struct tftp tftpd EXMEM;
+static struct tftp tftpd; // EXMEM
 
 void tftpd_callback(udp_socket_t socket,uint8_t * data,uint16_t length);
 

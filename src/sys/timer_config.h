@@ -11,6 +11,6 @@
 
 
 #define TIMER_MAX		4
-#define TIMER_MS_PER_TICK	10
+#define TIMER_MS_PER_TICK	1
 
 #endif //_TIMER_CONFIG_H

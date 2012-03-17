@@ -40,7 +40,7 @@ struct arp_table_entry
     uint16_t		timeout;
 };
 
-static struct arp_table_entry 	arp_table[ARP_TABLE_SIZE] EXMEM;
+static struct arp_table_entry 	arp_table[ARP_TABLE_SIZE]; //EXMEM
 static timer_t arp_timer;
 
 #define FOREACH_ARP_ENTRY(entry) for(entry = &arp_table[0] ; entry < &arp_table[ARP_TABLE_SIZE] ; entry++)
