@@ -21,6 +21,8 @@
 #include "ethernet.h"
 #include "ip.h"
 
+#include "../util/memory.h"
+
 #define ICMP_TYPE_ECHO_REPLY			0x00
 #define ICMP_TYPE_ECHO_REQUEST			0x08
 #define ICMP_TYPE_DESTINATION_UNREACHABLE	0x03
@@ -61,7 +63,7 @@ uint8_t icmp_send_echo_reply(const ip_address * ip_addr,const struct icmp_header
 {
   struct icmp_header * icmp_reply = (struct icmp_header*)ip_get_buffer();
   
-  memcpy(icmp_reply,icmp,packet_len);
+  memorycpy(icmp_reply,icmp,packet_len);
   
   /* set type */
   icmp_reply->type = ICMP_TYPE_ECHO_REPLY;

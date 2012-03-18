@@ -17,7 +17,7 @@
 
 #include "../arch/exmem.h"
 
-#include <string.h>
+#include "../util/memory.h"
 
 /*
 *  0      7 8     15 16    23 24    31  
@@ -58,7 +58,7 @@ uint16_t 	udp_get_free_local_port(void);
 
 uint8_t udp_init(void)
 {
-    memset(udp_sockets,0,sizeof(udp_sockets));
+    memoryset(udp_sockets,0,sizeof(udp_sockets));
     return 1;
 }
 uint8_t udp_socket_is_valid(udp_socket_t socket)
@@ -90,7 +90,7 @@ udp_socket_t udp_socket_alloc(uint16_t local_port,udp_socket_callback callback)
       socket_num = udp_socket_num(socket);
       if(socket_num<0)
 	continue;
-      memset(socket,0,sizeof(struct udp_socket));
+      memoryset(socket,0,sizeof(struct udp_socket));
       socket->callback = callback;
       socket->port_local = local_port;
       return socket_num;
@@ -102,7 +102,7 @@ void udp_socket_free(udp_socket_t socket_num)
 {
   if(!udp_socket_is_valid(socket_num))
     return;
-  memset(&udp_sockets[socket_num],0,sizeof(struct udp_socket));
+  memoryset(&udp_sockets[socket_num],0,sizeof(struct udp_socket));
 }
 
 uint8_t udp_is_free_port(uint16_t port)
@@ -172,7 +172,7 @@ uint8_t udp_handle_packet(const ip_address * ip_remote,const struct udp_header *
 	if(socket_num < 0)
 	  continue;
 	/* bind remote port and ip to socket so it can get this values later if needed */
-	memcpy(&socket->ip_remote,ip_remote,sizeof(ip_address));
+	memorycpy(&socket->ip_remote,ip_remote,sizeof(ip_address));
 	socket->port_remote = port_remote;
 	/* call callback function of socket */
 	socket->callback(socket_num,(uint8_t*)udp + sizeof(struct udp_header),packet_len-sizeof(struct udp_header));
@@ -186,7 +186,7 @@ uint8_t udp_bind_remote(udp_socket_t socket,uint16_t remote_port,ip_address * re
       return 0;
     struct udp_socket * s = &udp_sockets[socket];
     s->port_remote = remote_port;
-    memcpy(&s->ip_remote,remote_ip,sizeof(ip_address));
+    memorycpy(&s->ip_remote,remote_ip,sizeof(ip_address));
     return 1;
 }
 uint8_t udp_unbind_remote(udp_socket_t socket)
@@ -194,7 +194,7 @@ uint8_t udp_unbind_remote(udp_socket_t socket)
     if(!udp_socket_is_valid(socket))
       return 0;
     struct udp_socket * s = &udp_sockets[socket];
-    memset(&s->port_remote,0,sizeof(s->port_remote) + sizeof(s->ip_remote));
+    memoryset(&s->port_remote,0,sizeof(s->port_remote) + sizeof(s->ip_remote));
     return 1;
 }
 uint8_t udp_bind_local(udp_socket_t socket,uint16_t local_port)

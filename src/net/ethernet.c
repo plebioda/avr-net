@@ -6,17 +6,16 @@
  * published by the Free Software Foundation.
  */
 
-/* for memset, memcpy,...*/
-#include <string.h>	
 
 #include "ethernet.h"
 #include "hal.h"
 #include "../arch/exmem.h"
 #include "ip.h"
 #include "arp.h"
-
 // #define DEBUG_MODE
 #include "../debug.h"
+
+#include <string.h>
 
 struct ethernet_header
 {
@@ -30,15 +29,13 @@ static ethernet_address ethernet_mac;
 uint8_t ethernet_tx_buffer[ETHERNET_MAX_PACKET_SIZE + NET_HEADER_SIZE_ETHERNET]; // EXMEM
 uint8_t ethernet_rx_buffer[ETHERNET_MAX_PACKET_SIZE + NET_HEADER_SIZE_ETHERNET]; //EXMEM
 
-void ethernet_init(ethernet_address * mac)
+void ethernet_init(const ethernet_address * mac)
 {
   memset(ethernet_mac,1,sizeof(ethernet_mac));
   if(mac)
     memcpy(&ethernet_mac,mac,sizeof(ethernet_mac));
-//   DEBUG_PRINT_COLOR(U_YELLOW,"ethernet init:");
-//   DEBUG_PRINT("%c:%c:%c:%c:%c:%c",(*mac)[0],(*mac)[1],(*mac)[2],(*mac)[3],(*mac)[4],(*mac)[5]);
-//   DEBUG_PRINT("\n");
 }
+
 
 const ethernet_address * ethernet_get_mac()
 {

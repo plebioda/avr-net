@@ -130,7 +130,7 @@ void            enc28j60_phy_write       (uint8_t addr,uint16_t data)
       _delay_us(15);
 }
 
-void enc28j60_init(uint8_t * macaddr)
+void enc28j60_init(const uint8_t * macaddr)
 {    
     DEBUG_PRINT_COLOR(U_RED,"enc28j60t init:");
     DEBUG_PRINT("%c:%c:%c:%c:%c:%c",(macaddr)[0],(macaddr)[1],(macaddr)[2],(macaddr)[3],(macaddr)[4],(macaddr)[5]);

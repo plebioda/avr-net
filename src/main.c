@@ -10,7 +10,7 @@
 #include <avr/iom162.h>
 #include <avr/interrupt.h>
 
-// #define DEBUG_MODE
+#define DEBUG_MODE
 #include "debug.h"
 
 #include "arch/exmem.h"
@@ -31,8 +31,7 @@
 #include "app/app_config.h"
 #include "app/tftp.h"
 
-uint8_t data[1500]; //EXMEM
-uint8_t temp[10]; //EXMEM
+uint8_t data[1500];
  // 	len = tcp_write_string_P(socket,
 // 				 PSTR("HTTP/1.1 200 OK\r\n"
 // 				 "Content-Type: text/html\r\n"
@@ -47,6 +46,7 @@ void udp_callback(udp_socket_t socket,uint8_t * data,uint16_t len);
 
 void tcp_callback(tcp_socket_t socket,enum tcp_event event)
 {
+    static uint16_t counter = 0;
 //     DEBUG_PRINT("tcpcallbck:soc%d event:",socket);
     int16_t len;
     uint8_t * ptr;
@@ -55,10 +55,11 @@ void tcp_callback(tcp_socket_t socket,enum tcp_event event)
       case tcp_event_nop:
 	break;
       case tcp_event_connection_established:
-// 	DEBUG_PRINT("Con.est.,port=%u\n",tcp_get_remote_port(socket));
+	counter = 0;
+	DEBUG_PRINT("Con.est.,port=%u\n",tcp_get_remote_port(socket));
 	break;
       case tcp_event_connection_incoming:
-// 	DEBUG_PRINT("Con.inc.,port=%u\n",tcp_get_remote_port(socket));
+	DEBUG_PRINT("Con.inc.,port=%u\n",tcp_get_remote_port(socket));
 	tcp_accept(socket);
 	break;
       case tcp_event_error:
@@ -79,6 +80,7 @@ void tcp_callback(tcp_socket_t socket,enum tcp_event event)
 	ptr = data;
 	if(*ptr == 0xff)
 	  break;
+	counter += len;
 	uint16_t i = len;
 	while(i--)
 	{
@@ -88,9 +90,8 @@ void tcp_callback(tcp_socket_t socket,enum tcp_event event)
 	    ptr++;
 	}
 	tcp_write(socket,data,len);
-	DEBUG_PRINT("after tcp-write\n");
-// 	tcp_close(socket);
-// 	DEBUG_PRINT("after tcp-close\n");
+	if(counter > 2000)
+	  tcp_close(socket);
 	break;
       }
       case tcp_event_connection_closing:
@@ -121,26 +122,24 @@ int main(void)
   timer_init();
   DEBUG_INIT();
   spi_init(0);
-  ethernet_address my_mac = {'<','P','A','K','O','>'};
-  ip_address my_ip = {192,168,1,200};
-//   DEBUG_PRINT_COLOR(B_IYELLOW,"Initialized...\n");
+  const ethernet_address my_mac = {'<','P','A','K','O','>'};
+  const ip_address my_ip = {192,168,1,200};
   fifo_init();
   ethernet_init(&my_mac);
   ip_init(&my_ip);
-  hal_init(my_mac);
+  hal_init((const uint8_t*)my_mac);
   arp_init();
 #if NET_UDP
   udp_init();
 #endif
   /* Timer 1 init*/
   /* (clk = 8Mhz) / 256 = 31.25 kHz -> 32 us */
-  TCNT1 = 312;
+  TCNT1 = -312;
   TCCR1B |= (1<<CS12) | (0<<CS11) | (0<<CS10);
   TIMSK |= (1<<TOIE1);
   /* disable USART0 Receive interrupt */
   UCSR0B &= ~(1<<RXCIE0);
   sei();
-  DEBUG_PRINT("SP = %x\n",SP);
 #if APP_TFTP
   tftpd_init();
 #endif
@@ -150,11 +149,7 @@ int main(void)
   tcp_socket_t tcp_socket;
 //   tcp_socket = tcp_socket_alloc(tcp_callback);
   tcp_socket = tcp_socket_alloc(tcp_callback);
-  DEBUG_PRINT("socket = %d\n",tcp_socket);
   tcp_listen(tcp_socket,23);
-  DEBUG_PRINT("eth buffer = %x\n",ethernet_get_buffer());
-  DEBUG_PRINT("data = %x\n",data);
-  DEBUG_PRINT("temmp = %x\n",temp);
   for(;;)
   {
 	cli();

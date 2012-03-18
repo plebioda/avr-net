@@ -56,7 +56,7 @@ uint8_t ip_is_broadcast(const ip_address * ip)
     return (!memcmp(ip,&ip_broadcast,sizeof(ip_address)));
 }
 
-void ip_init(ip_address * addr)
+void ip_init(const ip_address * addr)
 {
   memset(&ip_broadcast,0xff,sizeof(ip_address));
   memset(&ip_addr,0,sizeof(ip_address));

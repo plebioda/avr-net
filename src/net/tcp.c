@@ -13,11 +13,12 @@
 #include "../sys/timer.h"
 #include "../util/fifo.h"
 
-// #define DEBUG_MODE
+#define DEBUG_MODE
 #include "../debug.h"
 
 #include <string.h>
 #include <stdint.h>
+
 
 /* TCP Flags:
 * URG:  Urgent Pointer field significant
@@ -211,7 +212,6 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
   tcp_socket_t socket = tcp_get_socket_num(tcb);
   if(socket < 0)
     return 0;
-  DEBUG_PRINT_COLOR(B_IYELLOW,"Flags=%x\n",tcp->flags);
   switch(tcb->state)
   {
     case tcp_state_closed:
@@ -415,7 +415,7 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
       }
       uint32_t seq_next = tcb->seq + (uint32_t)tcb->seq_next;
       /* check if ack lies within a window */
-//       DEBUG_PRINT_COLOR(B_IMAGENTA,"rcv_ack %lu, tcb->seq %lu seq_next %lu\n",rcv_ack,tcb->seq,seq_next);
+      DEBUG_PRINT_COLOR(B_IMAGENTA,"rcv_ack %lu, tcb->seq %lu seq_next %lu\n",rcv_ack,tcb->seq,seq_next);
       if((rcv_ack > tcb->seq) && (rcv_ack <= seq_next))
       {
 	DEBUG_PRINT_COLOR(B_IRED,"ack in window\n");
@@ -433,13 +433,13 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
 	  tcb->seq_next = 0;
 	/* reset retransmission counter */
 	tcb->rtx = TCP_RTX_DATA;
-// 	DEBUG_PRINT_COLOR(IBLUE,"seq_next=%d,rcv_ack=%d\n",tcb->seq_next,rcv_ack);
+	DEBUG_PRINT_COLOR(IBLUE,"seq_next=%d,rcv_ack=%d\n",tcb->seq_next,rcv_ack);
 	/* update remote host window size */
 	tcb->window = ntoh16(tcp->window);
-	/* send information o user that some data was acknowledged */
+	/* send information to user that some data was acknowledged */
 	tcb->callback(socket,tcp_event_data_acked);
 	/* if there is data in tx buffer send it to keep data flowing */
-// 	DEBUG_PRINT_COLOR(IYELLOW,"fifo len %d seq_next %d\n",fifo_length(tcb->fifo_tx),tcb->seq_next);
+	DEBUG_PRINT_COLOR(IYELLOW,"fifo len %d seq_next %d\n",fifo_length(tcb->fifo_tx),tcb->seq_next);
 	if((fifo_length(tcb->fifo_tx) - tcb->seq_next > 0) || (tcb->state == tcp_state_start_close && fifo_length(tcb->fifo_tx)))
 	{
 	    DEBUG_PRINT_COLOR(B_IBLUE,"HERE\n");
@@ -447,21 +447,27 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
 	    {
 	      tcp_tcb_close(tcb,socket,tcp_event_error);
 	    }
+	    /* reset timer to avoid uneccessary retransmissions */
+	    timer_set(tcb->timer,TCP_TIMEOUT_GENERIC);
 	}
 	else if(tcb->state == tcp_state_start_close)
 	{
-	    timer_set(tcb->timer,1);
+	  /* if we are in start close state and all data was send 
+	  set timer to 1 and continue processing in this state in tcp_timeout*/
+	  timer_set(tcb->timer,1);
 	}
 	else
 	{
-	    timer_set(tcb->timer,TCP_TIMEOUT_IDLE);
+	  /* if there is nothing to send and we are not in start close state 
+	  set timer to IDLE timeout */
+	  timer_set(tcb->timer,TCP_TIMEOUT_IDLE);
 	}
 	break;
       }
       /* if the ack is duplicate. it can be ignored */
       else if(rcv_ack < tcb->seq)
       {
-	DEBUG_PRINT_COLOR(B_IRED,"ack duplicated\n");
+// 	DEBUG_PRINT_COLOR(B_IRED,"ack duplicated\n");
 	 return 0;
       }
       else if(rcv_ack == tcb->seq+1)
@@ -554,7 +560,7 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
 	    timer_set(tcb->timer,TCP_TIMEOUT_IDLE);
 	  /* send information to user that some data have been received */
 	  tcb->callback(socket,tcp_event_data_received);
-// 	  DEBUG_PRINT_COLOR(IGREEN,"rcv %d bytes\n",buffered_data);
+	  DEBUG_PRINT_COLOR(IGREEN,"rcv %d bytes\n",buffered_data);
 	}
       }
       /* do not process fin if not all data has been buffered */
@@ -569,7 +575,7 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
   /* process the FIN bit */
   if(tcp->flags & TCP_FLAG_FIN)
   {
-    DEBUG_PRINT_COLOR(B_IBLUE,"FIN received\n");
+//     DEBUG_PRINT_COLOR(B_IBLUE,"FIN received\n");
     switch(tcb->state)
     {
       case tcp_state_closed:
@@ -593,16 +599,16 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
 	timer_set(tcb->timer,1);
 	break;
       case tcp_state_fin_wait_1:
-	 DEBUG_PRINT_COLOR(IGREEN,"process FIN: 1\n");
+	 DEBUG_PRINT_COLOR(IGREEN,"FIN: 1\n");
 	tcb->state = tcp_state_closing;
 	timer_set(tcb->timer,TCP_TIMEOUT_GENERIC);
 	tcb->rtx = 5;
 	break;
       case tcp_state_fin_wait_2:
-	DEBUG_PRINT_COLOR(IGREEN,"process FIN: 2\n");
+	DEBUG_PRINT_COLOR(IGREEN,"FIN: 2\n");
 	tcb->state = tcp_state_time_wait;
       case tcp_state_time_wait:
-	DEBUG_PRINT_COLOR(IGREEN,"process FIN: time wait\n");
+	DEBUG_PRINT_COLOR(IGREEN,"FIN: time wait\n");
 	timer_set(tcb->timer,TCP_TIMEOUT_TIME_WAIT);
       default:
 	break;
@@ -634,7 +640,7 @@ void tcp_timeout(timer_t timer,void * arg)
       /* TCB is in this state when user called connect */
       case tcp_state_closed:
 	/* retransmit SYN packet */
-	DEBUG_PRINT_COLOR(B_IGREEN,"cl\n");
+// 	DEBUG_PRINT_COLOR(B_IGREEN,"cl\n");
 	if(!tcp_send_packet(tcb,TCP_FLAG_SYN,0))
 	{
 	  /* if tcp_send_packet returned zero there is 
@@ -652,7 +658,7 @@ void tcp_timeout(timer_t timer,void * arg)
 	}
 	break;
       case tcp_state_syn_sent:
-	DEBUG_PRINT_COLOR(B_IGREEN,"ss\n");
+// 	DEBUG_PRINT_COLOR(B_IGREEN,"ss\n");
 	if(!tcp_send_packet(tcb,TCP_FLAG_SYN,0))
 	{
 	  /* error while sending packet */
@@ -663,7 +669,7 @@ void tcp_timeout(timer_t timer,void * arg)
 	tset = TCP_TIMEOUT_GENERIC;
 	break;
       case tcp_state_syn_received:
-	DEBUG_PRINT_COLOR(B_IGREEN,"sr\n");
+// 	DEBUG_PRINT_COLOR(B_IGREEN,"sr\n");
 	if(!tcp_send_packet(tcb,TCP_FLAG_SYN|TCP_FLAG_ACK,0))
 	{
 	  tcp_tcb_close(tcb,socket,tcp_event_error);
@@ -673,29 +679,34 @@ void tcp_timeout(timer_t timer,void * arg)
 	break;
       case tcp_state_start_close:
       case tcp_state_established:
-	/* IDLE tiemout */
 	if(fifo_length(tcb->fifo_tx) > 0)
 	{
 	  /* send buffered data again*/
 	  tcb->seq_next = 0;
-	  DEBUG_PRINT_COLOR(B_IGREEN,"timeout established/start close send\n");
+// 	  DEBUG_PRINT_COLOR(B_IGREEN,"timeout established/start close send\n");
 	  if(!tcp_send_packet(tcb,TCP_FLAG_ACK,1))
 	  {
-	    tcp_tcb_close(tcb,socket,tcp_event_error);
+	    /* close connection and send error event to user only
+	    if there is some error in sending packet but not coused by
+	    lack of mac addr in arp table. If there is no remote host of
+	    specified ip address there number of retransmissions will be decreased
+	    to zero and then the error event will be sent ot user*/
+	    if(arp_get_mac((const ip_address*)tcb->ip_remote,NULL))
+	      tcp_tcb_close(tcb,socket,tcp_event_error);
 	    return;
 	  }
-	  DEBUG_PRINT_COLOR(B_IGREEN,"timeout established/start close ack sent\n");
+// 	  DEBUG_PRINT_COLOR(B_IGREEN,"timeout established/start close ack sent\n");
 	  tset = TCP_TIMEOUT_GENERIC;
 	}else if(tcb->state == tcp_state_start_close)
 	{
-	  DEBUG_PRINT_COLOR(B_IGREEN,"start close\n");
+// 	  DEBUG_PRINT_COLOR(B_IGREEN,"start close\n");
 	  /* if all data has benn sent, send FIN */
 	  if(!tcp_send_packet(tcb,TCP_FLAG_FIN|TCP_FLAG_ACK,1))
 	  {
 	    tcp_tcb_close(tcb,socket,tcp_event_error);
 	    return;
 	  }
-	  DEBUG_PRINT_COLOR(B_IGREEN,"start_close: FIN-ACK sent\n");
+// 	  DEBUG_PRINT_COLOR(B_IGREEN,"start_close: FIN-ACK sent\n");
 	  tcb->rtx = TCP_RTX_FIN;
 	  tset = TCP_TIMEOUT_GENERIC;
 	  tcb->state = tcp_state_fin_wait_1;
@@ -712,7 +723,7 @@ void tcp_timeout(timer_t timer,void * arg)
 	  tcp_tcb_close(tcb,socket,tcp_event_error);
 	  return;
 	}
-	DEBUG_PRINT_COLOR(B_IGREEN,"FIN-ACK sent\n");
+// 	DEBUG_PRINT_COLOR(B_IGREEN,"FIN-ACK sent\n");
 	tcb->state = tcp_state_last_ack;
 	tset = TCP_TIMEOUT_GENERIC;
 	tcb->rtx = 0;
@@ -723,13 +734,13 @@ void tcp_timeout(timer_t timer,void * arg)
 	switch(tcb->state)
 	{
 	  case tcp_state_fin_wait_1:
-	    DEBUG_PRINT_COLOR(B_IGREEN,"fin-wait-1\n");	    
+// 	    DEBUG_PRINT_COLOR(B_IGREEN,"fin-wait-1\n");	    
 	    break;
 	  case tcp_state_closing:
-	    DEBUG_PRINT_COLOR(B_IGREEN,"closing\n");
+// 	    DEBUG_PRINT_COLOR(B_IGREEN,"closing\n");
 	    break;
 	  case tcp_state_last_ack:	  
-	    DEBUG_PRINT_COLOR(B_IGREEN,"last ack\n");
+// 	    DEBUG_PRINT_COLOR(B_IGREEN,"last ack\n");
 	    break;
 	  default:
 	    break;
@@ -744,11 +755,11 @@ void tcp_timeout(timer_t timer,void * arg)
 	tset = TCP_TIMEOUT_GENERIC;
 	break;
       case tcp_state_fin_wait_2:
-	DEBUG_PRINT_COLOR(B_IGREEN,"fin-wait-2\n");
+// 	DEBUG_PRINT_COLOR(B_IGREEN,"fin-wait-2\n");
 	tcp_tcb_close(tcb,socket,tcp_event_timeout);
 	return;
       case tcp_state_time_wait:
-	DEBUG_PRINT_COLOR(B_IGREEN,"time wait\n");	
+// 	DEBUG_PRINT_COLOR(B_IGREEN,"time wait\n");	
 	tcp_tcb_close(tcb,socket,tcp_event_connection_closed);
 	return;
       default:
@@ -888,12 +899,7 @@ struct tcp_tcb * tcp_tcb_alloc(void)
     }
     return 0;
 }
-void tcp_tcb_free(struct tcp_tcb * tcb)
-{
-    timer_free(tcb->timer);
-    tcp_tcb_free_fifo(tcb);
-    memset(tcb,0,sizeof(struct tcp_tcb));
-}
+
 void tcp_tcb_reset(struct tcp_tcb * tcb)
 {
   if(!tcp_tcb_valid(tcb))
@@ -968,15 +974,14 @@ uint8_t tcp_free_port(uint16_t port)
     return 1;
 }
 
+
+
 uint8_t tcp_socket_free(tcp_socket_t socket)
 {
     if(!tcp_socket_valid(socket))
       return 0;
     struct tcp_tcb * tcb = &tcp_tcbs[socket];
-    timer_free(tcb->timer);
-    fifo_free(tcb->fifo_rx);
-    fifo_free(tcb->fifo_tx);
-    memset(tcb,0,sizeof(struct tcp_tcb));   
+    tcp_tcb_free(tcb);
     return 1;
 }
 
@@ -1197,7 +1202,7 @@ uint8_t tcp_tcb_alloc_fifo(struct tcp_tcb * tcb)
 }
 uint8_t tcp_tcb_valid(struct tcp_tcb * tcb)
 {
-    return (tcb >= &tcp_tcbs[0] && tcb < &tcp_tcbs[TCP_MAX_SOCKETS]);
+    return (tcb && tcb >= &tcp_tcbs[0] && tcb < &tcp_tcbs[TCP_MAX_SOCKETS]);
 }
 
 void tcp_tcb_free_fifo(struct tcp_tcb * tcb)
@@ -1264,3 +1269,12 @@ void tcp_tcb_close(struct tcp_tcb * tcb,tcp_socket_t socket,enum tcp_event event
     tcb->callback(socket,event);
 }
 
+void tcp_tcb_free(struct tcp_tcb * tcb)
+{
+  if(!tcp_tcb_valid(tcb))
+    return;
+  timer_free(tcb->timer);
+  tcp_tcb_free_fifo(tcb);
+  tcb->state = tcp_state_unused;
+  memset(tcb,0,0x1f);
+}

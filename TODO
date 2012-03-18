@@ -64,4 +64,5 @@ Tasks:
 	( ) tcp close handle remaining cases
 	( ) handle receiving data in fin-wait-2 state, there is ack from local host after last 
 	    FIN-ACK from remote, which cousing RST from remote host
+( ) fifo with ability to set buffer size
 ------------------------------------------------------------

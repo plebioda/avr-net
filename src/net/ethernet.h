@@ -10,6 +10,7 @@
 #define _ETHERNET_H
 
 #include <stdint.h>
+#include <avr/pgmspace.h>
 #include "ethernet_config.h"
 #include "net.h"
 
@@ -24,7 +25,7 @@ extern uint8_t ethernet_tx_buffer[];
 
 typedef uint8_t ethernet_address[6];
 
-void ethernet_init(ethernet_address * mac);
+void ethernet_init(const ethernet_address * mac);
 
 const ethernet_address * ethernet_get_mac(void);
 

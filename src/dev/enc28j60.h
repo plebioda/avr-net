@@ -23,7 +23,7 @@
 #define ENC28J60_CS_INACTIVE()  ENC28J60_PORT |=  (1<<ENC28J60_CS)
 
 
-void             enc28j60_init           (uint8_t * macaddr);
+void             enc28j60_init           (const uint8_t * macaddr);
 void             enc28j60_spi_init       (void);
 uint8_t          enc28j60_read_op        (uint8_t op,uint8_t addr);
 void             enc28j60_write_op       (uint8_t op,uint8_t addr,uint8_t data);

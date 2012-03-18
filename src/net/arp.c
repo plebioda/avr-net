@@ -9,7 +9,6 @@
 #include "arp.h"
 #include "../arch/exmem.h"
 #include "../sys/timer.h"
-
 // #define DEBUG_MODE
 #include "../debug.h"
 
