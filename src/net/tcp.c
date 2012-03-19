@@ -695,18 +695,15 @@ void tcp_timeout(timer_t timer,void * arg)
 	      tcp_tcb_close(tcb,socket,tcp_event_error);
 	    return;
 	  }
-// 	  DEBUG_PRINT_COLOR(B_IGREEN,"timeout established/start close ack sent\n");
 	  tset = TCP_TIMEOUT_GENERIC;
 	}else if(tcb->state == tcp_state_start_close)
 	{
-// 	  DEBUG_PRINT_COLOR(B_IGREEN,"start close\n");
 	  /* if all data has benn sent, send FIN */
 	  if(!tcp_send_packet(tcb,TCP_FLAG_FIN|TCP_FLAG_ACK,1))
 	  {
 	    tcp_tcb_close(tcb,socket,tcp_event_error);
 	    return;
 	  }
-// 	  DEBUG_PRINT_COLOR(B_IGREEN,"start_close: FIN-ACK sent\n");
 	  tcb->rtx = TCP_RTX_FIN;
 	  tset = TCP_TIMEOUT_GENERIC;
 	  tcb->state = tcp_state_fin_wait_1;
