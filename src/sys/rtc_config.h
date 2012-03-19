@@ -6,17 +6,12 @@
  * published by the Free Software Foundation.
  */
 
-#include "ds1338.h"
-#include "../arch/i2c.h"
+#ifndef _RTC_CONFIG_H
+#define _RTC_CONFIG_H
 
+#include "../dev/ds1338.h"
 
+#define hal_get_date_time(x)  ds1338_get_date_time((x))	
+#define hal_set_date_time(x)  ds1338_set_date_time((x))
 
-uint8_t ds1338_get_date_time(struct date_time * date_time)
-{
-  return 0;
-}
-
-uint8_t ds1338_set_date_time(struct date_time * date_time)
-{
-  return 0;
-}
+#endif //_RTC_CONFIG_H

@@ -9,6 +9,9 @@
 #ifndef _DS1338_H
 #define _DS1338_H
 
+#include <stdint.h>
+#include "../sys/rtc.h"
+
 #define DS1338_I2C_ADDR_RD		0xd1
 #define DS1338_I2C_ADDR_WR		0xd0
 
@@ -76,6 +79,10 @@
 *	|  1  |  X  |  X  |     1      |   0  |
 *	+-----+-----+-----+------------+------+
 */
+
+
+uint8_t ds1338_get_date_time(struct date_time * date_time);
+uint8_t ds1338_set_date_time(struct date_time * date_time);
 
 #endif //_DS1338_H
 

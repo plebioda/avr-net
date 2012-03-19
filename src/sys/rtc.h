@@ -6,17 +6,21 @@
  * published by the Free Software Foundation.
  */
 
-#include "ds1338.h"
-#include "../arch/i2c.h"
+#ifndef _RTC_H
+#define _RTC_H
 
+#include <stdint.h>
 
-
-uint8_t ds1338_get_date_time(struct date_time * date_time)
+struct date_time 
 {
-  return 0;
-}
+  uint8_t seconds;
+  uint8_t minutes;
+  uint8_t hours;
+  uint8_t day;
+  uint8_t date;
+  uint8_t month;
+  uint8_t year;
+  uint8_t format;
+};
 
-uint8_t ds1338_set_date_time(struct date_time * date_time)
-{
-  return 0;
-}
+#endif //_RTC_H
