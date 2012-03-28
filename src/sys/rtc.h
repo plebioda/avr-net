@@ -11,6 +11,12 @@
 
 #include <stdint.h>
 
+
+
+#define RTC_FORMAT_BCD		0
+#define RTC_FORMAT_12_24	1
+#define RTC_FORMAT_AM_PM	2
+
 struct date_time 
 {
   uint8_t seconds;
@@ -22,5 +28,7 @@ struct date_time
   uint8_t year;
   uint8_t format;
 };
+
+#include "rtc_config.h"
 
 #endif //_RTC_H

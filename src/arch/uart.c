@@ -9,37 +9,28 @@
 
 #include "uart.h"
 
-UART_BAUD_DATA g_prog_uart_baud[5] PROGMEM = 
-{
-        {2400, 207}, // +0.2%
-        {4800, 103}, // +0.2%
-        {9600, 51}, //  +0.2%
-        {14400, 25}, // -0.8%
-        {38400, 12}  // +0.2%
-};
+#define UBRRVAL (F_CPU/(UART_BAUD_RATE*16)-1)
 
-void            uart_init_baud(uint8_t baud_index)
+void            uart_init(void)
 {
-    UCSR0B = 0;
-    uint16_t ubrr = pgm_read_word(&g_prog_uart_baud[baud_index].ubrr);
-    UBRR0H = (uint8_t)(ubrr>>8);
-    UBRR0L = (uint8_t)(ubrr);
-    UCSR0A = 0;
-    UCSR0B = (1<<RXCIE0) | (1<<RXEN0) | (1<<TXEN0);
-    UCSR0C = (1<<URSEL0) | (1<<UCSZ01) | (1<<UCSZ00); 
+    UBRR1H = 12>>8;
+    UBRR1L = 12&0xff;
+    UCSR1A = (1<<U2X1);
+    UCSR1B = (1<<RXEN1) | (1<<TXEN1);
+    UCSR1C = (1<<UCSZ11) | (1<<UCSZ10); 
 }
 
 int             uart_putc         (char data,FILE* f)
 {
-    while(!(1<<UDRE0 & UCSR0A)){}
-    UDR0 = data;
+    while(!((1<<UDRE1) & UCSR1A));
+    UDR1 = data;
     return 0;
 }
 
 int             uart_getc         (FILE* f)
 {
     char data;
-    while(!(1<<RXC0 & UCSR0A)){}
-    data = UDR0;
+    while(!(1<<RXC1 & UCSR1A)){}
+    data = UDR1;
     return data;
 }

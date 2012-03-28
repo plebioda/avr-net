@@ -45,10 +45,9 @@ typedef struct fcheat_file
 #define FCHEAT_STATIC_FDEVOPENWR(put,get) \
 {0,0,FCHEAT_SWR|FCHEAT_SRD,0,0,put,get}
 
-void            uart_init_baud    (uint8_t baud_index);
+void            uart_init(void);
 int             uart_putc         (char data,FILE*);
 int             uart_getc         (FILE*);
 
-#define uart_init()	uart_init_baud(UART_BAUD_INDEX_DEFAULT)
 
 #endif //_UART_H

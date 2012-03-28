@@ -14,15 +14,17 @@
 
 #include "../arch/spi.h"
 
+#include "enc28j60_config.h"
 
-#define ENC28J60_PORT           PORTB
-#define ENC28J60_DDR            DDRB
-#define ENC28J60_CS             4
+#define ENC28J60_RST_ON()	ENC28J60_RST_PORT &= ~(1<<ENC28J60_RST);
+#define ENC28J60_RST_OFF()	ENC28J60_RST_PORT |= (1<<ENC28J60_RST);
+#define ENC28J60_CS_ACTIVE()    ENC28J60_CS_PORT &= ~(1<<ENC28J60_CS)
+#define ENC28J60_CS_INACTIVE()  ENC28J60_CS_PORT |=  (1<<ENC28J60_CS)
 
-#define ENC28J60_CS_ACTIVE()    ENC28J60_PORT &= ~(1<<ENC28J60_CS)
-#define ENC28J60_CS_INACTIVE()  ENC28J60_PORT |=  (1<<ENC28J60_CS)
-
-
+void enc28j60_io_init(void);
+void enc28j60_reset(void);
+void enc28j60_clear_bits(uint8_t address,uint8_t bits);
+void enc28j60_set_bits(uint8_t address,uint8_t bits);
 void             enc28j60_init           (const uint8_t * macaddr);
 void             enc28j60_spi_init       (void);
 uint8_t          enc28j60_read_op        (uint8_t op,uint8_t addr);
@@ -267,6 +269,30 @@ uint8_t          enc28j60_get_revision   (void);
 #define PKTCTRL_PPADEN   0x04
 #define PKTCTRL_PCRCEN   0x02
 #define PKTCTRL_POVERRIDE 0x01
+
+// PHLCON - PHY module LED control register
+#define PHLCON_STRCH		1
+#define PHLCON_STRCH_TIME	2
+#define PHLCON_LEDB		4
+#define PHLCON_LEDA		8
+
+#define PHLCON_STRCH_TIME_139MS	2
+#define PHLCON_STRCH_TIME_73MS	1
+#define PHLCON_STRCH_TIME_40MS	0
+
+#define PHLCON_LED_TA		1	// display transmit activity (strechable)
+#define PHLCON_LED_RA		2	// display receive activity (strechable)
+#define PHLCON_LED_COL		3	// display collision activity (strechable)
+#define PHLCON_LED_LS		4	// display link status
+#define PHLCON_LED_DS		5 	// dispaly duplex status
+#define PHLCON_LED_TRA		7 	// dispaly transmit and receive activity (strechable)
+#define PHLCON_LED_ON		8 	// On
+#define PHLCON_LED_OFF		9 	// Off
+#define PHLCON_LED_BLINK_FAST	10 	// blink fast
+#define PHLCON_LED_BLINK_SLOW	11 	// blink slow
+#define PHLCON_LED_LS_RA	12 	// display link status and receive activity (always streched)
+#define PHLCON_LED_LS_TRA	13 	// display link status and transmit/receive activity (always streched)
+#define PHLCON_LED_DS_COL	14	// display duplex status and collision activity
 
 
 

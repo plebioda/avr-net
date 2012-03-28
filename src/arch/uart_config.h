@@ -9,6 +9,6 @@
 #ifndef _UART_CONFIG_H
 #define _UART_CONFIG_H
 
-#define UART_BAUD_INDEX_DEFAULT 2
+#define UART_BAUD_RATE 9600UL
 
 #endif //_UART_CONFIG_H

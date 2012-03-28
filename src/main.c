@@ -7,7 +7,6 @@
  */
 
 #include <avr/io.h>
-#include <avr/iom162.h>
 #include <avr/interrupt.h>
 
 #define DEBUG_MODE
@@ -16,6 +15,7 @@
 #include "arch/exmem.h"
 #include "arch/spi.h"
 #include "arch/uart.h"
+#include "arch/i2c.h"
 
 #include "sys/timer.h"
 
@@ -31,7 +31,7 @@
 #include "app/app_config.h"
 #include "app/tftp.h"
 
-uint8_t data[1500];
+// uint8_t data[1500];
  // 	len = tcp_write_string_P(socket,
 // 				 PSTR("HTTP/1.1 200 OK\r\n"
 // 				 "Content-Type: text/html\r\n"
@@ -42,129 +42,138 @@ uint8_t data[1500];
 // 				 "<p>ATMega162</p>"
 // 				 "</body>"
 // 				 "</html>"));
-void udp_callback(udp_socket_t socket,uint8_t * data,uint16_t len);
+// void udp_callback(udp_socket_t socket,uint8_t * data,uint16_t len);
 
-void tcp_callback(tcp_socket_t socket,enum tcp_event event)
-{
-    static uint16_t counter = 0;
-//     DEBUG_PRINT("tcpcallbck:soc%d event:",socket);
-    int16_t len;
-    uint8_t * ptr;
-    switch(event)
-    {
-      case tcp_event_nop:
-	break;
-      case tcp_event_connection_established:
-	counter = 0;
-	DEBUG_PRINT("Con.est.,port=%u\n",tcp_get_remote_port(socket));
-	break;
-      case tcp_event_connection_incoming:
-	DEBUG_PRINT("Con.inc.,port=%u\n",tcp_get_remote_port(socket));
-	tcp_accept(socket);
-	break;
-      case tcp_event_error:
-	DEBUG_PRINT("Error\n");
-	tcp_socket_free(socket);
-	break;
-      case tcp_event_timeout:
-	DEBUG_PRINT("Timeout\n");
-// 	tcp_connect(socket,&ip_remote,80);
+// void tcp_callback(tcp_socket_t socket,enum tcp_event event)
+// {
+//     static uint16_t counter = 0;
+// //     DEBUG_PRINT("tcpcallbck:soc%d event:",socket);
+//     int16_t len;
+//     uint8_t * ptr;
+//     switch(event)
+//     {
+//       case tcp_event_nop:
+// 	break;
+//       case tcp_event_connection_established:
+// 	counter = 0;
+// 	DEBUG_PRINT("Con.est.,port=%u\n",tcp_get_remote_port(socket));
+// 	break;
+//       case tcp_event_connection_incoming:
+// 	DEBUG_PRINT("Con.inc.,port=%u\n",tcp_get_remote_port(socket));
+// 	tcp_accept(socket);
+// 	break;
+//       case tcp_event_error:
+// 	DEBUG_PRINT("Error\n");
 // 	tcp_socket_free(socket);
-	break;
-      case tcp_event_data_received:
-      {
-	len = tcp_read(socket,data,1500);
-	DEBUG_PRINT("Data received len = %d:\n",len);
-	if(len <= 0)
-	  break;	
-	ptr = data;
-	if(*ptr == 0xff)
-	  break;
-	counter += len;
-	uint16_t i = len;
-	while(i--)
-	{
-// 	    DEBUG_PRINT("%c",*(ptr));
-	    if(*ptr >= 'a' && *ptr <= 'z')
-	      *ptr -= 0x20;
-	    ptr++;
-	}
-	tcp_write(socket,data,len);
-	if(counter > 2000)
-	  tcp_close(socket);
-	break;
-      }
-      case tcp_event_connection_closing:
-	DEBUG_PRINT("connection closing\n");
-	break;
-      case tcp_event_connection_closed:
-	DEBUG_PRINT("connection closed\n");
-	tcp_socket_free(socket);
-	break;
-      case tcp_event_data_acked:
-	DEBUG_PRINT("data acked\n");
-	break;
-      default:
-	DEBUG_PRINT("event=%d\n",event);
-	break;
-    }
-}
-
+// 	break;
+//       case tcp_event_timeout:
+// 	DEBUG_PRINT("Timeout\n");
+// // 	tcp_connect(socket,&ip_remote,80);
+// // 	tcp_socket_free(socket);
+// 	break;
+//       case tcp_event_data_received:
+//       {
+// 	len = tcp_read(socket,data,1500);
+// 	DEBUG_PRINT("Data received len = %d:\n",len);
+// 	if(len <= 0)
+// 	  break;	
+// 	ptr = data;
+// 	if(*ptr == 0xff)
+// 	  break;
+// 	counter += len;
+// 	uint16_t i = len;
+// 	while(i--)
+// 	{
+// // 	    DEBUG_PRINT("%c",*(ptr));
+// 	    if(*ptr >= 'a' && *ptr <= 'z')
+// 	      *ptr -= 0x20;
+// 	    ptr++;
+// 	}
+// 	tcp_write(socket,data,len);
+// 	if(counter > 2000)
+// 	  tcp_close(socket);
+// 	break;
+//       }
+//       case tcp_event_connection_closing:
+// 	DEBUG_PRINT("connection closing\n");
+// 	break;
+//       case tcp_event_connection_closed:
+// 	DEBUG_PRINT("connection closed\n");
+// 	tcp_socket_free(socket);
+// 	break;
+//       case tcp_event_data_acked:
+// 	DEBUG_PRINT("data acked\n");
+// 	break;
+//       default:
+// 	DEBUG_PRINT("event=%d\n",event);
+// 	break;
+//     }
+// }
+// 
 void tcallback(timer_t timer,void * arg)
 {
-     PORTE ^= 1<<2;
-    timer_set(timer,15);
+    PORTD ^= 1<<7;
+    timer_set(timer,10);
 }
 
 int main(void)
 {
-  DDRE |= 1<<2;
   timer_init();
+  DDRD |= 1<<7;
+  DDRB = 0xff;
+  PORTB = 0xff;
+  DDRE = 0xff;
+  PORTE = 0xff;
   DEBUG_INIT();
   spi_init(0);
   const ethernet_address my_mac = {'<','P','A','K','O','>'};
-  const ip_address my_ip = {192,168,1,200};
-  fifo_init();
-  ethernet_init(&my_mac);
-  ip_init(&my_ip);
-  hal_init((const uint8_t*)my_mac);
-  arp_init();
-#if NET_UDP
-  udp_init();
-#endif
-  /* Timer 1 init*/
-  /* (clk = 8Mhz) / 256 = 31.25 kHz -> 32 us */
-  TCNT1 = -312;
-  TCCR1B |= (1<<CS12) | (0<<CS11) | (0<<CS10);
-  TIMSK |= (1<<TOIE1);
-  /* disable USART0 Receive interrupt */
-  UCSR0B &= ~(1<<RXCIE0);
+//   const ip_address my_ip = {192,168,1,200};
+//   fifo_init();
+//   hal_init((const uint8_t*)my_mac);
+//   ethernet_init(&my_mac);
+//   ip_init(&my_ip);  
+//   arp_init();
+  TCNT0 = 0;
+  TCCR0 |= (1<<WGM01)|(0<<WGM00)|(0<<CS02)|(1<<CS01)|(1<<CS00);
+  OCR0 = 31;
+  TIMSK |= (1<<OCIE0)|(0<<TOIE0);
   sei();
-#if APP_TFTP
-  tftpd_init();
-#endif
-  tcp_init();
   timer_t timer = timer_alloc(tcallback);  
   timer_set(timer,100);
-  tcp_socket_t tcp_socket;
-//   tcp_socket = tcp_socket_alloc(tcp_callback);
-  tcp_socket = tcp_socket_alloc(tcp_callback);
-  tcp_listen(tcp_socket,23);
+//   const ip_address rem_ip = {192,168,1,16};
+  DEBUG_PRINT("Hello ATMega128!\n");
+//   DEBUG_PRINT("ENC28J60 rev %d\n",enc28j60_get_revision());
+  i2c_init();
+  uint8_t i2cbuff[13];
+  uint8_t rtc_addr=0;
+  DEBUG_PRINT("i2c twbr=%d\n",TWBR);
+  uint8_t i2cret;
+  i2cbuff[0]=7;
+  i2cbuff[1]=0x13;
+  i2cret = i2c_write(0xd0,i2cbuff,2);
   for(;;)
   {
-	cli();
-	ethernet_handle_packet();
-	sei();
-	_delay_us(10);
+    i2cret = i2c_write(0xd0,&rtc_addr,1);
+    DEBUG_PRINT("i2c_write ret=%d\n",i2cret);
+    i2cret = i2c_read(0xd0,i2cbuff,12);
+    DEBUG_PRINT("i2c_read ret=%d\n",i2cret);
+    for(i2cret = 0 ; i2cret < 8 ; i2cret++)
+      DEBUG_PRINT("%x|",i2cbuff[i2cret]);
+    DEBUG_PRINT("\n");
+    _delay_ms(200);
+    _delay_ms(200);
+    _delay_ms(200);
+    _delay_ms(200);
+    _delay_ms(200);
+    _delay_ms(200);
+    
   }
   return 0;
 }
-
-SIGNAL(SIG_OVERFLOW1)
+SIGNAL(SIG_OUTPUT_COMPARE0)
 {
-    /* 1 ms / 32 us = 312.5 */
-    TCNT1 = -32;
-    timer_tick(); 
+  //1ms
+  timer_tick();
 }
 
 

@@ -17,5 +17,5 @@ void before_main(void)
     SFIOR = 1<<XMBK | 1<<XMM0;
     DDRC = 0x80;
     PORTC &= ~(1<<7);
-    SP = 0x7fff;
+    SP = 0xffff;
 }

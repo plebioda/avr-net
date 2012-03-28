@@ -40,7 +40,7 @@
 
 
 # MCU name
-MCU = atmega162
+MCU = atmega128
 
 
 # Processor frequency.
@@ -48,7 +48,7 @@ MCU = atmega162
 #     processor frequency. You can then use this symbol in your source code to 
 #     calculate timings. Do NOT tack on a 'UL' at the end, this will be done
 #     automatically to create a 32-bit value in your source code.
-F_CPU = 8000000
+F_CPU = 1000000
 
 
 # Output format. (can be srec, ihex, binary)
@@ -60,7 +60,11 @@ TARGET = main
 
 # List C source files here. (C dependencies are automatically generated.)
 SRC = $(wildcard src/*.c) $(wildcard src/*/*.c)
-
+# SRC = src/main.c
+# SRC += src/debug.c
+# SRC += src/arch/uart.c
+# SRC += src/arch/spi.c
+# SRC += src/dev/enc28j60.c
 
 
 # List Assembler source files here.
@@ -199,20 +203,20 @@ LDFLAGS += -Wl,--section-start=.exram=0x800500
 # Type: avrdude -c ?
 # to get a full listing.
 #
-AVRDUDE_PROGRAMMER = stk500
+AVRDUDE_PROGRAMMER = stk200
 
 # com1 = serial port. Use lpt1 to connect to parallel port.
-AVRDUDE_PORT = /dev/ttyUSB0
+AVRDUDE_PORT = /dev/parport0
 
 # LFUSE   CKDIV8 CKOUT SUT1 SUT0 CKSEL3210
 #         1     1     0    1     0010 => 0x5f
-LFUSE = 0xd2
+LFUSE = 0xe1
 # HFUSE  OCDEN JTAGEN SPIEN WDTON EESAVE BOOTSZ10 BOOTRST
 #         1     1     0     1      0      00       1 => 0xd1
 HFUSE = 0xd1
 # EFUSE X X X M161C BODLEVEL210 X
 #      1 1 1   1      110      1 => 0xfd
-EFUSE = 0xfd
+EFUSE = 0xff
 # LOCK X X BLB12 BLB11 BLB02 BLB01 BL2 BL1
 #      0 0   0     0     0     0    1   1 => 0x03
 LOCK = 0x03
@@ -220,10 +224,10 @@ LOCK = 0x03
 
 AVRDUDE_WRITE_FLASH = -U flash:w:$(TARGET).hex
 #AVRDUDE_WRITE_EEPROM = -U eeprom:w:$(TARGET).eep
-#AVRDUDE_WRITE_EFUSE = -U efuse:w:$(EFUSE):m
+# AVRDUDE_WRITE_EFUSE = -U efuse:w:$(EFUSE):m
 #AVRDUDE_WRITE_FUSE = -U fuse:w:$(FUSE)
 #AVRDUDE_WRITE_HFUSE = -U hfuse:w:$(HFUSE):m
-#AVRDUDE_WRITE_LFUSE = -U lfuse:w:$(LFUSE):m
+# AVRDUDE_WRITE_LFUSE = -U lfuse:w:$(LFUSE):m
 #AVRDUDE_WRITE_LOCK = -U lock:w:$(LOCK):m
 
 # Uncomment the following if you want avrdude's erase cycle counter.

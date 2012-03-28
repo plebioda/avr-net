@@ -12,7 +12,7 @@
 #include "../arch/exmem.h"
 #include "ip.h"
 #include "arp.h"
-// #define DEBUG_MODE
+#define DEBUG_MODE
 #include "../debug.h"
 
 #include <string.h>
@@ -46,10 +46,11 @@ uint8_t ethernet_handle_packet()
 {
   /* receive packet */
   uint16_t packet_size = hal_receive_packet(ethernet_rx_buffer,sizeof(ethernet_rx_buffer));
-  
+   
   if(packet_size < 1)
     return 0;
-//   DEBUG_PRINT("Packet size = %d\n",packet_size);
+ 
+  DEBUG_PRINT("Packet size = %d\n",packet_size);
   
   /* get ethernet header */
   struct ethernet_header * header = (struct ethernet_header*)ethernet_rx_buffer;

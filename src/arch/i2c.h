@@ -9,6 +9,12 @@
 #ifndef _I2C_H
 #define _I2C_H
 
+#include "i2c_config.h"
 
+#include <stdint.h>
 
+void i2c_init(void);
+uint8_t i2c_write(uint8_t addr,uint8_t * data,uint16_t len);
+uint8_t i2c_read(uint8_t addr,uint8_t * data,uint16_t len);
+uint8_t i2c_probe(void);
 #endif //_I2C_H

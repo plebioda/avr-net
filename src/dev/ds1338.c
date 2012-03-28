@@ -9,7 +9,10 @@
 #include "ds1338.h"
 #include "../arch/i2c.h"
 
-
+uint8_t ds1338_init()
+{
+  
+}
 
 uint8_t ds1338_get_date_time(struct date_time * date_time)
 {
@@ -19,4 +22,14 @@ uint8_t ds1338_get_date_time(struct date_time * date_time)
 uint8_t ds1338_set_date_time(struct date_time * date_time)
 {
   return 0;
+}
+
+uint8_t ds1338_stop()
+{
+  return 0;
+}
+
+uint8_t ds1338_start()
+{
+ return 0; 
 }

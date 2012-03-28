@@ -11,7 +11,9 @@
 
 #include "../dev/ds1338.h"
 
-#define hal_get_date_time(x)  ds1338_get_date_time((x))	
-#define hal_set_date_time(x)  ds1338_set_date_time((x))
+#define rtc_hal_get_date_time(x)  	ds1338_get_date_time((x))	
+#define rtc_hal_set_date_time(x)  	ds1338_set_date_time((x))
+#define rtc_hal_stop()			ds1338_stop();
+#define rtc_hal_start()			ds1338_start();
 
 #endif //_RTC_CONFIG_H
