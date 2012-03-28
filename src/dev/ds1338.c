@@ -30,9 +30,21 @@ uint8_t ds1338_get_date_time(struct date_time * date_time)
   if(ret) return ret;
   ret = i2c_read(DS1338_I2C_ADDR,date_time,sizeof(struct date_time));
   if(ret) return ret;
-  
+  if(date_time->hours&&(1<<DS1338_TIME_FORMAT))
+  {
+      date_time->hours&=~(1<<DS1338_TIME_FORMAT);
+      date_time->format |= (1<<RTC_FORMAT_12_24);
+      if(date_time->hours&&(1<<DS1338_TIME_PM_AM))
+	date_time->format &= ~(1<<RTC_FORMAT_AM_PM);
+      else
+	date_time->format |= (1<<RTC_FORMAT_AM_PM);
+      date_time->hours &= ~(1<<DS1338_TIME_PM_AM);
+  }
   return 0;
 }
+#define RTC_FORMAT_BCD		0x0
+#define RTC_FORMAT_12_24	0x1
+#define RTC_FORMAT_AM_PM	0x2
 
 uint8_t ds1338_set_date_time(struct date_time * date_time)
 {
@@ -40,9 +52,17 @@ uint8_t ds1338_set_date_time(struct date_time * date_time)
   uint8_t ret;
   ret = i2c_write(DS1338_I2C_ADDR,&addr,1);
   if(ret) return ret;
-  ret = i2c_write(DS1338_I2C_ADDR,date_time,sizeof(struct date_time));
+  uint8_t format = date_time->format;
+  if(format&&(1<<RTC_FORMAT_12_24))
+  {
+    date_time->hours |= (1<<DS1338_TIME_FORMAT);
+    if(format&&(1<<RTC_FORMAT_AM_PM))
+      date_time->hours &= ~(1<<DS1338_TIME_PM_AM);
+    else
+      date_time->hours |= (1<<DS1338_TIME_PM_AM);
+  }
+  ret = i2c_write(DS1338_I2C_ADDR,date_time,sizeof(struct date_time)-1);
   if(ret) return ret;
-  
   return 0;
 }
 

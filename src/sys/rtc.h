@@ -13,7 +13,6 @@
 
 
 
-#define RTC_FORMAT_BCD		0x0
 #define RTC_FORMAT_12_24	0x1
 #define RTC_FORMAT_AM_PM	0x2
 

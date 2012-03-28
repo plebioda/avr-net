@@ -37,6 +37,7 @@
 #define DS1338_GET_HOUR_BCD(x)		((x)&0x3f)
 #define DS1338_GET_10HOUR(x)		(DS1338_GET_HOUR_BCD(x)>>4)
 #define DS1338_GET_HOUR(x)		(DS1338_GET_HOUR_BCD(x)&0xf)
+#define DS1338_TIME_PM_AM		5
 #define DS1338_TIME_FORMAT		6
 #define DS1338_GET_DATE_BCD(x)		(x)
 #define DS1338_GET_10DATE(x)		(DS1338_GET_DATE_BCD(x)>>4)
