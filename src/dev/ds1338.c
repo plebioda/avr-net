@@ -50,7 +50,7 @@ uint8_t ds1338_start_stop(uint8_t start)
 {
   uint8_t addr_sec[2];
   uint8_t ret;
-  addr_sec[0]=0;
+  addr_sec[0]=DS1338_REG_CLOCK_HALT;
   ret = i2c_write(DS1338_I2C_ADDR,addr_sec,1);
   if(ret) return ret;
   ret = i2c_read(DS1338_I2C_ADDR,&addr_sec[1],1);
@@ -70,4 +70,20 @@ uint8_t ds1338_stop()
 uint8_t ds1338_start()
 {
   return ds1338_start_stop(1);
+}
+
+uint8_t ds1338_set_format(uint8_t format)
+{
+  uint8_t addr_sec[2];
+  uint8_t ret;
+  addr_sec[0]=DS1338_REG_TIME_FORMAT;
+  ret = i2c_write(DS1338_I2C_ADDR,addr_sec,1);
+  if(ret) return ret;
+  ret = i2c_read(DS1338_I2C_ADDR,&addr_sec[1],1);
+  if(ret) return ret;
+  if(format&(1<<RTC_FORMAT_12_24))
+    addr_sec[1] |= (1<<DS1338_TIME_FORMAT);
+  else
+    addr_sec[1] &= ~(1<<DS1338_TIME_FORMAT);
+  return i2c_write(DS1338_I2C_ADDR,addr_sec,2); 
 }

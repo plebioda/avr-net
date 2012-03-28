@@ -81,11 +81,12 @@
 *	+-----+-----+-----+------------+------+
 */
 
-uint8_t ds1338_init();
+uint8_t ds1338_init(uint8_t format);
 uint8_t ds1338_get_date_time(struct date_time * datetime);
 uint8_t ds1338_set_date_time(struct date_time * datetime);
 uint8_t ds1338_stop(void);
 uint8_t ds1338_start(void);
+uint8_t ds1338_set_format(uint8_t format);
 
 #endif //_DS1338_H
 
