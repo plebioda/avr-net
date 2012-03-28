@@ -41,37 +41,38 @@ void i2c_init(void)
   TWBR = I2C_TWBR;
 }
 
-
-
-uint8_t i2c_probe(void)
+uint8_t i2c_write_byte_ns(uint8_t addr,uint8_t data)
 {
   i2c_send_start();
   i2c_wait();
-  if(i2c_get_status() != I2C_SR_START)
-    return 1;
-  i2c_send_byte(0xd1);
+  if(!(i2c_get_status() == I2C_SR_START || i2c_get_status() ==I2C_SR_REP_START))
+    return (I2C_ERR_WRITE|I2C_ERR_START);
+  i2c_send_byte((addr));
   i2c_wait();
-  if(i2c_get_status() != I2C_SR_SLAR_ACK)
-    return 2;
-  i2c_send_stop();
-  return 0;
+  if(i2c_get_status() != I2C_SR_SLAW_ACK)
+    return (I2C_ERR_WRITE|I2C_ERR_SLA_ACK); 
+  i2c_send_byte(data);
+  i2c_wait();
+  if(i2c_get_status() != I2C_SR_DATAW_ACK)
+    return (I2C_ERR_WRITE|I2C_ERR_ACK);
 }
-
 
 uint8_t i2c_write(uint8_t addr,uint8_t * data,uint16_t len)
 {
   i2c_send_start();
   i2c_wait();
+  if(!(i2c_get_status() == I2C_SR_START || i2c_get_status() ==I2C_SR_REP_START))
+    return (I2C_ERR_WRITE|I2C_ERR_START);
   i2c_send_byte((addr));
   i2c_wait();
   if(i2c_get_status() != I2C_SR_SLAW_ACK)
-    return 1;
+    return (I2C_ERR_WRITE|I2C_ERR_SLA_ACK);
   while(len--)
   {
       i2c_send_byte(*(data++));
       i2c_wait();
       if(i2c_get_status() != I2C_SR_DATAW_ACK)
-	return 2;
+	return (I2C_ERR_WRITE|I2C_ERR_ACK);
   }
   i2c_send_stop();
   return 0;
@@ -80,22 +81,24 @@ uint8_t i2c_read(uint8_t addr,uint8_t * data,uint16_t len)
 {
   i2c_send_start();
   i2c_wait();
+  if(!(i2c_get_status() == I2C_SR_START || i2c_get_status() ==I2C_SR_REP_START))
+    return (I2C_ERR_READ|I2C_ERR_START);  
   i2c_send_byte((addr|1));
   i2c_wait();
   if(i2c_get_status() != I2C_SR_SLAR_ACK)
-    return 1;
+    return (I2C_ERR_READ|I2C_ERR_SLA_ACK);  
   while(--len)
   {
       i2c_rcv_byte_ack();
       i2c_wait();
       if(i2c_get_status() != I2C_SR_DATAR_ACK)
-	return 2;
+	return (I2C_ERR_READ|I2C_ERR_ACK);  
       *(data++) = i2c_get_byte();
   }
   i2c_rcv_byte_nack();
   i2c_wait();
   if(i2c_get_status() != I2C_SR_DATAR_NACK)
-    return 3;
+    return (I2C_ERR_READ|I2C_ERR_NACK);  
   *(data++) = i2c_get_byte();
   i2c_send_stop();
   return 0;

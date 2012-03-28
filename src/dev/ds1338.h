@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include "../sys/rtc.h"
 
+#define DS1338_I2C_ADDR			0xd0
 #define DS1338_I2C_ADDR_RD		0xd1
 #define DS1338_I2C_ADDR_WR		0xd0
 

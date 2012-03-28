@@ -13,8 +13,19 @@
 
 #include <stdint.h>
 
+#define I2C_ERR_START		0x01
+#define I2C_ERR_ACK		0x02
+#define I2C_ERR_SLA_ACK		0x06
+#define I2C_ERR_NACK		0x04
+
+#define I2C_ERR_WRITE		0x10
+#define I2C_ERR_READ		0x20
+
+#define I2C_ERR_
+
+
 void i2c_init(void);
 uint8_t i2c_write(uint8_t addr,uint8_t * data,uint16_t len);
+uint8_t i2c_write_byte_ns(uint8_t addr,uint8_t data);
 uint8_t i2c_read(uint8_t addr,uint8_t * data,uint16_t len);
-uint8_t i2c_probe(void);
 #endif //_I2C_H
