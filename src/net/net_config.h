@@ -9,8 +9,8 @@
 #ifndef _NET_CONFIG_H
 #define _NET_CONFIG_H
 
-#define NET_ICMP	0
-#define NET_UDP		0
+#define NET_ICMP	1
+#define NET_UDP		1
 #define NET_TCP		1
 
 

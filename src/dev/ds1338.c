@@ -9,7 +9,29 @@
 #include "ds1338.h"
 #include "../arch/i2c.h"
 
-uint8_t ds1338_init()
+#define DEBUG_MODE
+#include "../debug.h"
+
+#ifdef DEBUG_MODE
+
+#include <avr/pgmspace.h>
+
+static char * days[7] = {"Mon","Tue","Wed","Thu","Fri","Sat","Sun"};
+
+void ds1338_print_time(struct date_time * dt)
+{
+  DEBUG_PRINT("ds1338 time: %02x:%02x:%02x",dt->hours,dt->minutes,dt->seconds);
+  DEBUG_PRINT(" %s ",days[dt->day-1]);
+  DEBUG_PRINT("%02x.%02x.%02x",dt->date,dt->month,dt->year);
+  DEBUG_PRINT(" format = %02x\n",dt->format);
+}
+
+#define DEBUG_PRINT_TIME(dt)
+#else
+#define DEBUG_PRINT_TIME(dt)
+#endif //DEBUG_MODE
+
+uint8_t ds1338_init(void)
 {
   uint8_t addr_ctl[2];
   //control byte address
@@ -19,7 +41,7 @@ uint8_t ds1338_init()
 		(0<<DS1338_CTL_SQWE)|
 		(0<<DS1338_CTL_RS1)|
 		(0<<DS1338_CTL_RS0);
-  i2c_write(DS1338_I2C_ADDR,addr_ctl,2);
+  return i2c_write(DS1338_I2C_ADDR,addr_ctl,2);
 }
 
 uint8_t ds1338_get_date_time(struct date_time * date_time)
@@ -28,7 +50,7 @@ uint8_t ds1338_get_date_time(struct date_time * date_time)
   uint8_t ret;
   ret = i2c_write(DS1338_I2C_ADDR,&addr,1);
   if(ret) return ret;
-  ret = i2c_read(DS1338_I2C_ADDR,date_time,sizeof(struct date_time));
+  ret = i2c_read(DS1338_I2C_ADDR,(uint8_t*)date_time,sizeof(struct date_time)-1);
   if(ret) return ret;
   if(date_time->hours&&(1<<DS1338_TIME_FORMAT))
   {
@@ -42,9 +64,6 @@ uint8_t ds1338_get_date_time(struct date_time * date_time)
   }
   return 0;
 }
-#define RTC_FORMAT_BCD		0x0
-#define RTC_FORMAT_12_24	0x1
-#define RTC_FORMAT_AM_PM	0x2
 
 uint8_t ds1338_set_date_time(struct date_time * date_time)
 {
@@ -61,7 +80,7 @@ uint8_t ds1338_set_date_time(struct date_time * date_time)
     else
       date_time->hours |= (1<<DS1338_TIME_PM_AM);
   }
-  ret = i2c_write(DS1338_I2C_ADDR,date_time,sizeof(struct date_time)-1);
+  ret = i2c_write(DS1338_I2C_ADDR,(uint8_t*)date_time,sizeof(struct date_time)-1);
   if(ret) return ret;
   return 0;
 }

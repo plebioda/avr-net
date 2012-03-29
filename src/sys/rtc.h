@@ -28,6 +28,13 @@ struct date_time
   uint8_t format;
 };
 
+#define rtc_get_date_time(x)		rtc_hal_get_date_time(x)
+#define rtc_set_date_time(x)		rtc_hal_set_date_time(x)
+#define rtc_stop()			rtc_hal_stop()
+#define rtc_start()			rtc_hal_start()
+#define rtc_set_format(format) 		rtc_hal_set_format(format)
+#define rtc_init(format)		rtc_hal_set_format(format)
+
 #include "rtc_config.h"
 
 #endif //_RTC_H

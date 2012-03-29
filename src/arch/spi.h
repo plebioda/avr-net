@@ -19,6 +19,6 @@
 #define SPI_ENABLE()            SPCR |= (1<<SPE)
 #define SPI_DISABLE()           SPCR &= ~(1<<SPE)
 
-void spi_init(uint8_t baud_rate);
+void spi_init(void);
 
 #endif //_SPI_H

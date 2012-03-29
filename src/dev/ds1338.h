@@ -82,12 +82,17 @@
 *	+-----+-----+-----+------------+------+
 */
 
-uint8_t ds1338_init(uint8_t format);
+uint8_t ds1338_init(void);
 uint8_t ds1338_get_date_time(struct date_time * datetime);
 uint8_t ds1338_set_date_time(struct date_time * datetime);
 uint8_t ds1338_stop(void);
 uint8_t ds1338_start(void);
 uint8_t ds1338_set_format(uint8_t format);
+
+
+#ifdef DEBUG_MODE
+void ds1338_print_time(struct date_time * dt);
+#endif 
 
 #endif //_DS1338_H
 

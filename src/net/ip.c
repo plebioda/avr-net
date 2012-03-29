@@ -172,11 +172,11 @@ uint8_t ip_handle_packet(struct ip_header * header, uint16_t packet_len,const et
   /* redirect packet to the proper upper layer */
   switch(header->protocol)
   {
-#if NET_ICMP    
+// #if NET_ICMP    
     case IP_PROTOCOL_ICMP:
       icmp_handle_packet((const ip_address*)&header->src,(const struct icmp_header*)((const uint8_t*)header + header_length),packet_length-header_length);
       break;
-#endif //NET_ICMP
+// #endif //NET_ICMP
 #if NET_UDP
     case IP_PROTOCOL_UDP:
       udp_handle_packet((const ip_address*)&header->src,(const struct udp_header*)((const uint8_t*)header + header_length),packet_length-header_length);

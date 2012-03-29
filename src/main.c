@@ -12,12 +12,18 @@
 #define DEBUG_MODE
 #include "debug.h"
 
+#include "arch/interrupts.h"
 #include "arch/exmem.h"
 #include "arch/spi.h"
 #include "arch/uart.h"
 #include "arch/i2c.h"
 
+#include "dev/ds1338.h"
+#include "dev/enc28j60.h"
+#include "dev/sd.h"
+
 #include "sys/timer.h"
+#include "sys/rtc.h"
 
 #include "util/fifo.h"
 
@@ -112,68 +118,72 @@
 // 
 void tcallback(timer_t timer,void * arg)
 {
-    PORTD ^= 1<<7;
-    timer_set(timer,10);
+
+  timer_set(timer,1000);
 }
 
 int main(void)
 {
-  timer_init();
-  DDRD |= 1<<7;
+  /* constants */
+  const ethernet_address my_mac = {'<','P','A','K','O','>'};
+  const ip_address my_ip = {192,168,1,200};
+  
+  /* init io */
   DDRB = 0xff;
   PORTB = 0xff;
-  DDRE = 0xff;
-  PORTE = 0xff;
-  DEBUG_INIT();
-  spi_init(0);
-  const ethernet_address my_mac = {'<','P','A','K','O','>'};
-//   const ip_address my_ip = {192,168,1,200};
-//   fifo_init();
-//   hal_init((const uint8_t*)my_mac);
-//   ethernet_init(&my_mac);
-//   ip_init(&my_ip);  
-//   arp_init();
-  TCNT0 = 0;
-  TCCR0 |= (1<<WGM01)|(0<<WGM00)|(0<<CS02)|(1<<CS01)|(1<<CS00);
-  OCR0 = 31;
-  TIMSK |= (1<<OCIE0)|(0<<TOIE0);
-  sei();
-  timer_t timer = timer_alloc(tcallback);  
-  timer_set(timer,100);
-//   const ip_address rem_ip = {192,168,1,16};
-  DEBUG_PRINT("Hello ATMega128!\n");
-//   DEBUG_PRINT("ENC28J60 rev %d\n",enc28j60_get_revision());
+  
+  /* init interrupts */
+  interrupt_timer0_init();
+  interrupt_exint_init();
+  
+  /* init arch */
+  uart_init();
+  spi_init();
   i2c_init();
-  uint8_t i2cbuff[13];
-  uint8_t rtc_addr=0;
-  DEBUG_PRINT("i2c twbr=%d\n",TWBR);
-  uint8_t i2cret;
-  i2cbuff[0]=7;
-  i2cbuff[1]=0x13;
-  i2cret = i2c_write(0xd0,i2cbuff,2);
+  
+  /* init utils */
+  fifo_init();
+  
+  /* init dev */
+  ds1338_init();
+  enc28j60_init((uint8_t*)&my_mac);
+
+  /* init sys */
+  timer_init();
+  rtc_init((0<<RTC_FORMAT_12_24)|(0<<RTC_FORMAT_AM_PM));
+  
+  /* init net */
+  ethernet_init(&my_mac);
+  ip_init(&my_ip);
+  arp_init();
+  udp_init();
+  tcp_init();
+  
+  /* global interrupt enable */
+  sei();
+  
+  DEBUG_PRINT("Hello ATMega128!\n");
+  DEBUG_PRINT("ENC28J60 rev %d\n",enc28j60_get_revision());
+  struct date_time dt;
+  ds1338_get_date_time(&dt);
+  ds1338_print_time(&dt);
   for(;;)
   {
-    i2cret = i2c_write(0xd0,&rtc_addr,1);
-    DEBUG_PRINT("i2c_write ret=%d\n",i2cret);
-    i2cret = i2c_read(0xd0,i2cbuff,12);
-    DEBUG_PRINT("i2c_read ret=%d\n",i2cret);
-    for(i2cret = 0 ; i2cret < 8 ; i2cret++)
-      DEBUG_PRINT("%x|",i2cbuff[i2cret]);
-    DEBUG_PRINT("\n");
-    _delay_ms(200);
-    _delay_ms(200);
-    _delay_ms(200);
-    _delay_ms(200);
-    _delay_ms(200);
-    _delay_ms(200);
-    
+
   }
   return 0;
 }
+
 SIGNAL(SIG_OUTPUT_COMPARE0)
 {
   //1ms
   timer_tick();
+}
+
+SIGNAL(SIG_INTERRUPT7)
+{
+  DEBUG_PRINT_COLOR(B_IYELLOW,"INT7\n");
+  ethernet_handle_packet();
 }
 
 

@@ -15,6 +15,6 @@
 #define rtc_hal_set_date_time(x)  	ds1338_set_date_time((x))
 #define rtc_hal_stop()			ds1338_stop();
 #define rtc_hal_start()			ds1338_start();
-#define rtc_hal_set_format(format)	ds1338_set_format();
+#define rtc_hal_set_format(format)	ds1338_set_format((format));
 
 #endif //_RTC_CONFIG_H

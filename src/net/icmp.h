@@ -8,6 +8,8 @@
 #ifndef _ICMP_H
 #define _ICMP_H
 
+#include "net_config.h"
+
 #include "ip.h"
 
 #include <stdint.h>

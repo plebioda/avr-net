@@ -55,6 +55,7 @@ uint8_t i2c_write_byte_ns(uint8_t addr,uint8_t data)
   i2c_wait();
   if(i2c_get_status() != I2C_SR_DATAW_ACK)
     return (I2C_ERR_WRITE|I2C_ERR_ACK);
+  return 0;
 }
 
 uint8_t i2c_write(uint8_t addr,uint8_t * data,uint16_t len)
