@@ -85,9 +85,13 @@ uint16_t fifo_size(struct fifo * fifo)
     return FIFO_SIZE;
 }
 uint16_t fifo_space(struct fifo * fifo)
-{
+{  
     if(!fifo_valid(fifo))
+    {
+      DEBUG_PRINT("fifo invalid\n");
       return 0;
+    }
+    DEBUG_PRINT("fifo valid\n");
     return (FIFO_SIZE-fifo->length);
 }
 

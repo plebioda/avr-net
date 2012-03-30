@@ -64,5 +64,7 @@ Tasks:
 	( ) tcp close handle remaining cases
 	( ) handle receiving data in fin-wait-2 state, there is ack from local host after last 
 	    FIN-ACK from remote, which cousing RST from remote host
+	( ) simultanously closing connection (debug with time server on HP-Compaq)
+	( ) debug tcp connection closing with time server of ip 192.53.103.108
 ( ) fifo with ability to set buffer size
 ------------------------------------------------------------

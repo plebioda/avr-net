@@ -1055,6 +1055,8 @@ uint8_t tcp_connect(tcp_socket_t socket,ip_address * ip,uint16_t port)
   /* if returned zero it means there are no free ports (in practice it's impossible)*/
   if(!tcb->port_local)
     return 0;
+  if(!tcp_tcb_alloc_fifo(tcb))
+    return 0;
   /* reset current TCB context */
   tcp_tcb_reset(tcb);
   /* set remote ip address */

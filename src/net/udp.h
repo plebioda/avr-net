@@ -24,11 +24,13 @@ struct udp_header;
 uint8_t udp_init(void);
 uint8_t udp_handle_packet(const ip_address * ip_remote,const struct udp_header * udp,uint16_t packet_len);
 
+#define UDP_PORT_ANY	0
+
 udp_socket_t udp_socket_alloc(uint16_t local_port,udp_socket_callback callback);
 void udp_socket_free(udp_socket_t socket);
 
 uint8_t udp_send(udp_socket_t socket,uint16_t length);
-uint8_t udp_bind_remote(udp_socket_t socket,uint16_t remote_port,ip_address * remote_ip);
+uint8_t udp_bind_remote(udp_socket_t socket,uint16_t remote_port,const ip_address * remote_ip);
 uint8_t udp_unbind_remote(udp_socket_t socket);
 uint8_t udp_bind_local(udp_socket_t socket,uint16_t local_port);
 

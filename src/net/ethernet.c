@@ -50,7 +50,7 @@ uint8_t ethernet_handle_packet()
   if(packet_size < 1)
     return 0;
  
-  DEBUG_PRINT("Packet size = %d\n",packet_size);
+//   DEBUG_PRINT("Packet size = %d\n",packet_size);
   
   /* get ethernet header */
   struct ethernet_header * header = (struct ethernet_header*)ethernet_rx_buffer;
@@ -65,6 +65,7 @@ uint8_t ethernet_handle_packet()
     case HTON16(ETHERNET_TYPE_IP):
       return ip_handle_packet((struct ip_header*)data,packet_size,(const ethernet_address*)&header->src);
     case HTON16(ETHERNET_TYPE_ARP):
+      DEBUG_PRINT("eth type arp\n");
       return arp_handle_packet((struct arp_header*)data,packet_size);
     default:
       return 0;
@@ -84,5 +85,10 @@ uint8_t ethernet_send_packet(ethernet_address * dst,uint16_t type,uint16_t len)
     memcpy(&header->dst,dst,sizeof(ethernet_address));
   memcpy(&header->src,&ethernet_mac,sizeof(ethernet_address));
   header->type = hton16(type);
+  uint16_t i=0;
+  DEBUG_PRINT("eth send packet:\n");
+  for(i=0;i<len+NET_HEADER_SIZE_ETHERNET;i++)
+    DEBUG_PRINT("%02x",ethernet_tx_buffer[i]);
+  DEBUG_PRINT("\n----------------------------------\n");
   return hal_send_packet(ethernet_tx_buffer,(len + NET_HEADER_SIZE_ETHERNET));			
 }

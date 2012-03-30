@@ -336,7 +336,7 @@ void enc28j60_init(const uint8_t * macaddr)
     enc28j60_write(MAADR0, macaddr[5]);
     // no loopback of transmitted frames
     enc28j60_phy_write(PHCON2, PHCON2_HDLDIS);
-    
+    // set PHY module control register
     enc28j60_phy_write(PHLCON,(PHLCON_LED_LS<<PHLCON_LEDB)|
 			      (PHLCON_LED_TRA<<PHLCON_LEDA)|
 			      (PHLCON_STRCH_TIME_139MS<<PHLCON_STRCH_TIME)|

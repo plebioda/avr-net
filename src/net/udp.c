@@ -77,10 +77,17 @@ udp_socket_t udp_socket_num(struct udp_socket * socket)
 
 udp_socket_t udp_socket_alloc(uint16_t local_port,udp_socket_callback callback)
 {
-  if(local_port == 0 || callback == 0)
+  if(!callback)
     return -1;
-  if(!udp_is_free_port(local_port))
-    return -1;
+  if(local_port != UDP_PORT_ANY)
+  {
+    if(!udp_is_free_port(local_port))
+      return -1;
+  }
+  else
+  {
+    local_port = udp_get_free_local_port();
+  }
   struct udp_socket * socket;
   udp_socket_t socket_num = -1;
   FOREACH_UDP_SOCKET(socket)
@@ -180,7 +187,7 @@ uint8_t udp_handle_packet(const ip_address * ip_remote,const struct udp_header *
     }
     return 0;
 }
-uint8_t udp_bind_remote(udp_socket_t socket,uint16_t remote_port,ip_address * remote_ip)
+uint8_t udp_bind_remote(udp_socket_t socket,uint16_t remote_port,const ip_address * remote_ip)
 {
     if(!udp_socket_is_valid(socket))
       return 0;
@@ -217,7 +224,8 @@ uint16_t udp_get_free_local_port(void)
 }
 uint8_t udp_send(udp_socket_t socket_num,uint16_t length)
 {
-    if(length < 1 || !udp_socket_is_valid(socket_num))
+    DEBUG_PRINT("udp send %d socket %d\n",length,socket_num);
+    if(length < 0 || !udp_socket_is_valid(socket_num))
       return 0;
     struct udp_socket * socket = &udp_sockets[socket_num];
     if(socket->port_remote < 1)
@@ -226,7 +234,6 @@ uint8_t udp_send(udp_socket_t socket_num,uint16_t length)
     if(length > packet_max_length )
       length = packet_max_length;
 
-    
     length += sizeof(struct udp_header);
     struct udp_header * udp = (struct udp_header*)ip_get_buffer();
     udp->length = hton16(length);

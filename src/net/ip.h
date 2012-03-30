@@ -24,7 +24,7 @@ typedef uint8_t ip_address[4];
 struct ip_header;
 
 
-void ip_init(const ip_address * addr);
+void ip_init(const ip_address * addr,const ip_address * netmask,const ip_address * gateway);
 const ip_address * ip_get_addr(void);
 const ip_address * ip_get_broadcast(void);
 
