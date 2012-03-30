@@ -47,24 +47,40 @@ struct ip_header
 };
 
 static ip_address ip_addr;
+static ip_address ip_netmask;
+static ip_address ip_gateway;
 static ip_address ip_broadcast;
 
 uint8_t ip_is_broadcast(const ip_address * ip);
+uint8_t ip_in_subnet(ip_address * ip_remote);
+
+const ip_address * ip_get_addr()	{return (const ip_address*)ip_addr;} 
+const ip_address * ip_get_netmask() 	{return (const ip_address*)ip_netmask;} 
+const ip_address * ip_get_broadcast()	{return (const ip_address*)ip_broadcast;} 
+const ip_address * ip_get_gateway()	{return (const ip_address*)ip_gateway;} 
+
+static void ip_set_broadcast(void);
+
 
 uint8_t ip_is_broadcast(const ip_address * ip)
 {
-    return (!memcmp(ip,&ip_broadcast,sizeof(ip_address)));
+  return (*((uint32_t*)ip) == 0xffffffff || memcmp(ip,ip_broadcast,4) == 0);
 }
 
-void ip_init(const ip_address * addr)
+void ip_init(const ip_address * addr,const ip_address * netmask,const ip_address * gateway)
 {
-  memset(&ip_broadcast,0xff,sizeof(ip_address));
-  memset(&ip_addr,0,sizeof(ip_address));
   if(addr)
     memcpy(&ip_addr,addr,sizeof(ip_address));
-  DEBUG_PRINT_COLOR(U_BLUE,"ip_init:");
-  DEBUG_PRINT("%d.%d.%d.%d",(*addr)[0],(*addr)[1],(*addr)[2],(*addr)[3]);
-  DEBUG_PRINT("\n");
+  if(netmask)
+    memcpy(&ip_netmask,netmask,sizeof(ip_address));
+  if(gateway)
+    memcpy(&ip_gateway,gateway,sizeof(ip_address));
+  ip_set_broadcast();
+  DEBUG_PRINT_COLOR(U_BLUE,"ip_init...");
+  DEBUG_PRINT("address  : %d.%d.%d.%d\n",(*addr)[0],(*addr)[1],(*addr)[2],(*addr)[3]);
+  DEBUG_PRINT("netmask  : %d.%d.%d.%d\n",(*netmask)[0],(*netmask)[1],(*netmask)[2],(*netmask)[3]);
+  DEBUG_PRINT("gateway  : %d.%d.%d.%d\n",(*gateway)[0],(*gateway)[1],(*gateway)[2],(*gateway)[3]);
+  DEBUG_PRINT("broadcast: %d.%d.%d.%d\n",(*ip_broadcast)[0],(*ip_broadcast)[1],(*ip_broadcast)[2],(*ip_broadcast)[3]);
 }
 
 const ip_address * ip_get_addr(void)
@@ -79,20 +95,29 @@ uint8_t ip_send_packet(const ip_address * ip_dst,uint8_t protocol,uint16_t lengt
   /* chech if ip dst address is broadcast */
   if(ip_is_broadcast(ip_dst))
   {
-      /* if so then get ip bradcast addr and set mac broadcast*/
-      memset(&mac,0xff,sizeof(ethernet_address));
+    /* if so then get ip bradcast addr and set mac broadcast*/
+    memset(&mac,0xff,sizeof(ethernet_address));
   }
   else
   {
-      /* otherwise try to get mac form arp table */
-      if(!arp_get_mac(ip_dst,&mac))
+    /* otherwise try to get mac form arp table */
+    ip_address * arp_target;
+    /* check if remote host is in the same subnet */
+    if(ip_in_subnet(ip_dst))
+      /* if so we will request for remote's host mac address */
+      arp_target=ip_dst;
+    else
+      /* otherwise request for gateway's  mac address */
+      arp_target=&ip_gateway;
+	
+    if(!arp_get_mac(arp_target,&mac))
       /* if there is no mac in arp table
 	 the request for this mac is send
 	 but we can't send this packet at this time
 	 so we return 0 which means that packet was not send
       */
-	return 0;
-	DEBUG_PRINT_COLOR(B_IMAGENTA,"ip mac ok\n");
+    return 0;
+    DEBUG_PRINT_COLOR(B_IMAGENTA,"ip mac ok\n");
   }
   struct ip_header * ip = (struct ip_header*)ethernet_get_buffer();
   
@@ -192,3 +217,20 @@ uint8_t ip_handle_packet(struct ip_header * header, uint16_t packet_len,const et
   return 0;
 }
 
+uint8_t ip_in_subnet(ip_address * ip_remote)
+{
+  uint8_t i;
+  for(i=0;i<sizeof(ip_address);i++)
+  {
+    if((ip_remote[i] & ip_netmask[i]) != (ip_address[i] & ip_netmask[i]))
+      return 0;
+  }
+  return 1;
+}
+
+void ip_set_broadcast(void)
+{
+  uint8_t i;
+  for(i=0;i<sizeof(ip_address);i++)
+    ip_broadcast[i] = (ip_addr[i] | ~ip_netmask[i]);
+}
