@@ -21,7 +21,70 @@
 
 
 /* 
-* RFC 868: The time is the number of seconds since 00:00 (midnight) 1 January 1900
+RFC 868: Time Protocol
+
+This RFC specifies a standard for the ARPA Internet community.  Hosts on
+the ARPA Internet that choose to implement a Time Protocol are expected
+to adopt and implement this standard.
+
+This protocol provides a site-independent, machine readable date and
+time.  The Time service sends back to the originating source the time in
+seconds since midnight on January first 1900.
+
+One motivation arises from the fact that not all systems have a
+date/time clock, and all are subject to occasional human or machine
+error.  The use of time-servers makes it possible to quickly confirm or
+correct a system's idea of the time, by making a brief poll of several
+independent sites on the network.
+
+This protocol may be used either above the Transmission Control Protocol
+(TCP) or above the User Datagram Protocol (UDP).
+
+When used via TCP the time service works as follows:
+
+   S: Listen on port 37 (45 octal).
+
+   U: Connect to port 37.
+
+   S: Send the time as a 32 bit binary number.
+
+   U: Receive the time.
+
+   U: Close the connection.
+
+   S: Close the connection.
+
+   The server listens for a connection on port 37.  When the connection
+   is established, the server returns a 32-bit time value and closes the
+   connection.  If the server is unable to determine the time at its
+   site, it should either refuse the connection or close it without
+   sending anything.
+
+RFC 868                                                         May 1983
+Time Protocol                                                           
+
+When used via UDP the time service works as follows:
+
+   S: Listen on port 37 (45 octal).
+
+   U: Send an empty datagram to port 37.
+
+   S: Receive the empty datagram.
+
+   S: Send a datagram containing the time as a 32 bit binary number.
+
+   U: Receive the time datagram.
+
+   The server listens for a datagram on port 37.  When a datagram
+   arrives, the server returns a datagram containing the 32-bit time
+   value.  If the server is unable to determine the time at its site, it
+   should discard the arriving datagram and make no reply.
+
+The Time
+
+The time is the number of seconds since 00:00 (midnight) 1 January 1900
+GMT, such that the time 1 is 12:00:01 am on 1 January 1900 GMT; this
+base will serve until the year 2036.
 */
 
 enum tp_state
@@ -246,7 +309,7 @@ void tp_rfc868_to_date_time(uint32_t timeval,struct date_time * dti)
 
     uint16_t years_leap = days / (366 + 3 * 365);
     days -= years_leap * (366 + 3 * 365);
-    year = 1980 + years_leap * 4;
+    year = 1900 + years_leap * 4;
     uint8_t leap = 0;
     if(days >= 366)
     {
