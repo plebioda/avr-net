@@ -6,8 +6,6 @@
  * published by the Free Software Foundation.
  */
 
-
-
 #include "icmp.h"
 
 #if NET_ICMP

@@ -11,8 +11,6 @@
 
 #include <stdint.h>
 
-
-
 #define NET_HEADER_SIZE_ETHERNET	14
 #define NET_HEADER_SIZE_IP		20
 #define NET_HEADER_SIZE_UDP		8

@@ -6,7 +6,10 @@
  * published by the Free Software Foundation.
  */
 
-#ifndef _ETHERNET_CONFIG_H
-#define _ETHERNET_CONFIG_H
+#ifndef _DS1338_CONFIG_H
+#define _DS1338_CONFIG_H
 
-#endif //_ETHERNET_CONFIG_H
+#define DS1338_RAM	1
+
+
+#endif //_DS1338_CONFIG_H

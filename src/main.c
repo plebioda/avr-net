@@ -197,6 +197,19 @@ int main(void)
   
   udp_socket_t udps;
   udps = udp_socket_alloc(12348,udp_callback);
+  
+  uint8_t data[56];
+  DEBUG_PRINT("ds1338_ram_read = %d\n",ds1338_ram_read(0,data,56));
+  uint8_t i;
+    for(i=0;i<56;i++)
+      DEBUG_PRINT("%02x: %02x\n",i,data[i]);
+  if(data[0] != 1)
+  {
+    for(i=0;i<56;i++)
+      data[i] = i+1;  
+    DEBUG_PRINT("ds1338_ram_write = %d\n",ds1338_ram_write(0,data,56));
+  }
+  
   for(;;)
   {
 

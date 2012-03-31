@@ -6,8 +6,6 @@
  * published by the Free Software Foundation.
  */
 
-
-
 #include "udp.h"
 
 #if NET_UDP

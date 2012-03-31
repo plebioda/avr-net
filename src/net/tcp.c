@@ -19,7 +19,6 @@
 #include <string.h>
 #include <stdint.h>
 
-
 /* TCP Flags:
 * URG:  Urgent Pointer field significant
 * ACK:  Acknowledgment field significant

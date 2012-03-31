@@ -6,7 +6,6 @@
  * published by the Free Software Foundation.
  */
 
-
 #include "ethernet.h"
 #include "hal.h"
 #include "../arch/exmem.h"

@@ -9,6 +9,8 @@
 #ifndef _DS1338_H
 #define _DS1338_H
 
+#include "ds1338_config.h"
+
 #include <stdint.h>
 #include "../sys/rtc.h"
 
@@ -88,6 +90,12 @@ uint8_t ds1338_set_date_time(struct date_time * datetime);
 uint8_t ds1338_stop(void);
 uint8_t ds1338_start(void);
 uint8_t ds1338_set_format(uint8_t format);
+#if DS1338_RAM
+
+int16_t ds1338_ram_write(uint16_t addr,uint8_t * data,int16_t len);
+int16_t ds1338_ram_read(uint16_t addr,uint8_t * data,int16_t len);
+
+#endif 
 
 #endif //_DS1338_H
 

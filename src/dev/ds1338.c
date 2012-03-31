@@ -138,3 +138,40 @@ uint8_t ds1338_set_format(uint8_t format)
   /* write time format register */
   return i2c_write(DS1338_I2C_ADDR,addr_sec,2); 
 }
+
+#if DS1338_RAM
+
+#define DS1338_RAM_SIZE		56
+#define DS1338_RAM_OFFSET	8
+
+int16_t ds1338_ram_write(uint16_t addr,uint8_t * data,int16_t len)
+{
+  if(addr >= DS1338_RAM_SIZE || len < 0)
+    return -1; 
+  int16_t ret = 0;
+  if(addr + len > DS1338_RAM_SIZE)
+  {
+    len = DS1338_RAM_SIZE - addr;
+    ret = len;
+  }
+  i2c_write_byte_ns(DS1338_I2C_ADDR,DS1338_RAM_OFFSET+(uint8_t)(addr&0xff));
+  i2c_write(DS1338_I2C_ADDR,data,len);
+  return ret;
+  
+}
+int16_t ds1338_ram_read(uint16_t addr,uint8_t * data,int16_t len)
+{
+  if(addr >= DS1338_RAM_SIZE || len < 0)
+    return -1; 
+  int16_t ret = 0;
+  if(addr + len > DS1338_RAM_SIZE)
+  {
+    len = DS1338_RAM_SIZE - addr;
+    ret = len;
+  }
+  i2c_write_byte_ns(DS1338_I2C_ADDR,DS1338_RAM_OFFSET+(uint8_t)(addr&0xff));
+  i2c_read(DS1338_I2C_ADDR,data,len);
+  return ret;
+}
+
+#endif 
