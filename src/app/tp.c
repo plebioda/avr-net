@@ -92,7 +92,8 @@ enum tp_state
   tp_state_idle=0,
   tp_state_wait_for_reply,
   tp_state_wait_for_conn,
-  tp_state_wait_for_data
+  tp_state_wait_for_data,
+  tp_state_wait_closing
 };
 
 static struct
@@ -181,6 +182,11 @@ void tp_timer_callback(timer_t timer,void * arg)
       tp_reset();
       break;
     }
+    tp_state_wait_closing:
+    {
+      tp_reset();
+      break;  
+    }
 #else
     case tp_state_wait_for_reply:
     {
@@ -223,14 +229,13 @@ static void tp_socket_callback(tcp_socket_t socket,enum tcp_event event)
     case tcp_event_data_received:
     {
       timer_stop();
-      uint8_t data[6];
-      int16_t len = tcp_read(socket,data,6);
-      DEBUG_PRINT_COLOR(B_IYELLOW,"tp rcv %d bytes:\n",len);
-      uint16_t i=0;
-      for(i=0;i<len;i++)
-	DEBUG_PRINT_COLOR(YELLOW,"%02x",data[i]);
-      DEBUG_PRINT("\n");
+      uint8_t data[4];
+      int16_t len = tcp_read(socket,data,4);
+      uint32_t timeval = ntoh32(*((uint32_t*)data));
+      tpc.callback(0,timeval);
       tcp_close(socket);
+      tpc.state = tp_state_wait_closing;
+      timer_set(tpc.timer,TP_RTX_TIMEOUT);
       break;
     }
     case tcp_event_connection_closed:
@@ -258,7 +263,6 @@ void tp_socket_callback(udp_socket_t socket,uint8_t * data,uint16_t len)
   uint32_t timeval = ntoh32(*((uint32_t*)data));
   tpc.callback(0,timeval);
   tp_reset();
-  
 }
 #endif //TP_USE_TCP
 void tp_reset(void)
