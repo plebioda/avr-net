@@ -35,6 +35,8 @@ struct date_time
 #define rtc_set_format(format) 		rtc_hal_set_format(format)
 #define rtc_init(format)		rtc_hal_set_format(format)
 
+void rtc_convert_date_time(uint32_t timeval,struct date_time * dti);
+
 #include "rtc_config.h"
 
 #endif //_RTC_H

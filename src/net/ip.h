@@ -31,6 +31,7 @@ const ip_address * ip_get_broadcast(void);
 uint8_t ip_send_packet(const ip_address * ip_dst,uint8_t protocol,uint16_t length);
 uint8_t ip_handle_packet(struct ip_header * header, uint16_t packet_len,const ethernet_address * mac );
 
+
 #define ip_get_buffer() (ethernet_get_buffer() + NET_HEADER_SIZE_IP)
 #define ip_get_buffer_size() (ethernet_get_buffer_size() - NET_HEADER_SIZE_IP)
 

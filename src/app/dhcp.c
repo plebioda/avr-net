@@ -12,6 +12,11 @@
 #include "../net/udp.h"
 #include "../sys/timer.h"
 
+#include <string.h>
+
+#define DEBUG_MODE
+#include "../debug.h"
+
 /*
    DHCP Header 
     
@@ -110,8 +115,8 @@
 #define DHCP_OPTION_MASK_SUPPLIER		30
 #define DHCP_OPTION_PERFORM_ROUTER_DISCOVERY	31
 #define DHCP_OPTION_ROUTER_SOLICITATION_ADDR	32
-#define DHCP_OPTION_STATIC_ROUTE		33
-#define DHCP_OPTION_TRAILER-ENCAPSULATION	34
+#define DHCP_OPTION_STATIC_ROUTE		33 
+#define DHCP_OPTION_TRAILER_ENCAPSULATION 	34
 #define DHCP_OPTION_ARP_CACHE_TIMEOUT		35
 #define DHCP_OPTION_ETH_ENCAPSULATION		36
 #define DHCP_OPTION_TCP_DEFAULT_TTL		37
@@ -258,14 +263,94 @@ struct dhcp_header
 
 enum dhcp_state
 {
-  dhcp_state_idle=0
+  dhcp_state_init=0,
+  dhcp_state_selecting,
+  dhcp_state_requesting,
+  dhcp_state_bound,
+  dhcp_state_rebinding,
+  dhcp_state_renewing,
+  dhcp_state_rebooting,
+  dhcp_state_init_reboot
 };
 
 
-struct dhcp_context
+static struct 
 {
+  enum dhcp_state state;
+  dhcp_callback callback;
   udp_socket_t socket;
   timer_t timer;
-  enum dhcp_state state;
-};
+  ip_address addr;
+  ip_address server;
+  ip_address gateway;
+  ip_address netmask;
+  uint8_t rtx;
+  
+} dhcp_client;
 
+
+static void dhcp_udp_callback(udp_socket_t socket,uint8_t * data,uint16_t len);
+static void dhcp_timer_callback(timer_t timer,void * arg);
+static void dhcp_free(void);
+
+uint8_t dhcp_start(dhcp_callback callback)
+{
+  if(dhcp_client.state != dhcp_state_init || !callback)
+    return DHCP_ERR_STATE;
+  memset(&dhcp_client,0,sizeof(dhcp_client));
+  /* allocate udp socket */
+  dhcp_client.socket = udp_socket_alloc(UDP_PORT_ANY,dhcp_udp_callback);
+  if(dhcp_client.socket < 0)
+    return DHCP_ERR_SOCKET_ALLOC;
+  /* allocate timer */
+  dhcp_client.timer = timer_alloc(dhcp_timer_callback);
+  if(dhcp_client.timer<0)
+  {
+    udp_socket_free(dhcp_client.socket);
+    return DHCP_ERR_TIMER_ALLOC;
+  }
+  
+  /* reset ip configuration */
+  ip_init((const ip_address*)&dhcp_client.addr,
+	  (const ip_address*)&dhcp_client.netmask,
+	  (const ip_address*)&dhcp_client.gateway);
+  
+  dhcp_client.state = dhcp_state_init;
+  dhcp_client.callback = callback;
+  /* start on the next timeout */
+  timer_set(dhcp_client.timer,100);
+  return 0;
+}
+
+uint8_t dhcp_stop(void)
+{
+  return 0;
+}
+
+static void dhcp_udp_callback(udp_socket_t socket,uint8_t * data,uint16_t len)
+{
+  
+}
+
+static void dhcp_timer_callback(timer_t timer,void * arg)
+{
+  if(timer != dhcp_client.timer)
+  {
+    dhcp_client.callback(dhcp_event_error);
+    dhcp_free();
+  }
+  DEBUG_PRINT_COLOR(B_IGREEN,"dhcp_timer_callback\n");
+  switch(dhcp_client.state)
+  {
+   
+    default:
+//       DEBUG_PRINT_
+      break;
+  }
+}
+
+void dhcp_free(void)
+{
+  udp_socket_free(dhcp_client.socket);
+  timer_free(dhcp_client.timer);
+}

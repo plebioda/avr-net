@@ -59,6 +59,8 @@ const ip_address * ip_get_netmask(void) 	{return (const ip_address*)&ip_netmask;
 const ip_address * ip_get_broadcast(void)	{return (const ip_address*)&ip_broadcast;} 
 const ip_address * ip_get_gateway(void)		{return (const ip_address*)&ip_gateway;} 
 
+
+
 static void ip_set_broadcast(void);
 
 

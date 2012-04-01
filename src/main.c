@@ -125,11 +125,14 @@ void tcallback(timer_t timer,void * arg)
 
 void udp_callback(udp_socket_t socket,uint8_t * data,uint16_t len);
 void ds1338_print_time(struct date_time * dt);
-void tpcallback(uint8_t status,struct date_time * date_time)
+void tpcallback(uint8_t status,uint32_t timeval)
 {
+  static struct date_time date_time;
   DEBUG_PRINT("tp callback status = %02x\n",status);
-  if(date_time)
-    ds1338_print_time(date_time);
+  if(status)
+    return;
+  rtc_convert_date_time(timeval,&date_time);
+  ds1338_print_time(&date_time);
 }
 
 static char * days[7] = {"Mon","Tue","Wed","Thu","Fri","Sat","Sun"};
@@ -192,24 +195,24 @@ int main(void)
   ds1338_get_date_time(&dt);
   ds1338_print_time(&dt);
   
-  uint8_t tpret = tp_get_time(tpcallback,&dt);
+  uint8_t tpret = tp_get_time(tpcallback);
   DEBUG_PRINT("tpret=%d\n",tpret);
   
   udp_socket_t udps;
   udps = udp_socket_alloc(12348,udp_callback);
-  
+  cli();
   uint8_t data[56];
   DEBUG_PRINT("ds1338_ram_read = %d\n",ds1338_ram_read(0,data,56));
   uint8_t i;
-    for(i=0;i<56;i++)
-      DEBUG_PRINT("%02x: %02x\n",i,data[i]);
+  for(i=0;i<56;i++)
+    DEBUG_PRINT("%02x: %02x\n",i,data[i]);
   if(data[0] != 1)
   {
     for(i=0;i<56;i++)
       data[i] = i+1;  
     DEBUG_PRINT("ds1338_ram_write = %d\n",ds1338_ram_write(0,data,56));
   }
-  
+  sei();
   for(;;)
   {
 

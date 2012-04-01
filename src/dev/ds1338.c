@@ -154,7 +154,9 @@ int16_t ds1338_ram_write(uint16_t addr,uint8_t * data,int16_t len)
     len = DS1338_RAM_SIZE - addr;
     ret = len;
   }
-  i2c_write_byte_ns(DS1338_I2C_ADDR,DS1338_RAM_OFFSET+(uint8_t)(addr&0xff));
+  addr = DS1338_RAM_OFFSET + (addr);
+  uint8_t a = (uint8_t)(addr&0xff);
+  i2c_write(DS1338_I2C_ADDR,&a,1);
   i2c_write(DS1338_I2C_ADDR,data,len);
   return ret;
   
@@ -169,7 +171,10 @@ int16_t ds1338_ram_read(uint16_t addr,uint8_t * data,int16_t len)
     len = DS1338_RAM_SIZE - addr;
     ret = len;
   }
-  i2c_write_byte_ns(DS1338_I2C_ADDR,DS1338_RAM_OFFSET+(uint8_t)(addr&0xff));
+  addr = DS1338_RAM_OFFSET + (addr);
+  uint8_t a = (uint8_t)(addr&0xff);
+  DEBUG_PRINT("ds1338 read ram addr = %x, len = %d\n",a,len);
+  i2c_write(DS1338_I2C_ADDR,&a,1);
   i2c_read(DS1338_I2C_ADDR,data,len);
   return ret;
 }
