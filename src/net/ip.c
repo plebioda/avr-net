@@ -16,7 +16,7 @@
 #include "udp.h"
 #include "tcp.h"
 
-#define DEBUG_MODE
+// #define DEBUG_MODE
 #include "../debug.h"
 
 #define IP_V4		0x4

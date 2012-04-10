@@ -13,90 +13,81 @@
 * RFC 868: The time is the number of seconds since 00:00 (midnight) 1 January 1900
 */
 
-uint8_t tp_make_bcd(uint16_t val)
+uint8_t make_bcd(uint16_t val)
 {
   return (uint8_t)((val/10)<<4)|(uint8_t)(val%10);
+}
+uint8_t isleap(uint16_t year)
+{
+    return (((year%4) == 0 && (year%100) != 0) || (year%400) == 0);
 }
 
 void rtc_convert_date_time(uint32_t timeval,struct date_time * dti)
 {
-    uint16_t year,month,day,hours,minutes,seconds;
-    uint16_t days = timeval / (24 * 3600UL);
-    timeval -= days * (24 * 3600UL);
-
-    uint16_t years_leap = days / (366 + 3 * 365);
-    days -= years_leap * (366 + 3 * 365);
-    year = 1900 + years_leap * 4;
-    uint8_t leap = 0;
-    if(days >= 366)
+  uint16_t seconds,minutes,hours,date,month,year,day;
+  
+  /* number of days since 00:00 (midnight) 1 January 1900 GMT*/
+//   timeval += GMT_SECS_OFFSET;
+  uint16_t days = timeval / (24 * 3600UL); 
+  timeval -= days * (24 * 3600UL);
+  
+  year=1900;
+  
+  while(days>366)
+  {
+    if(isleap(year))
+      days-=366;
+    else
+      days-=365;
+    year++;
+  }
+  day=days%7;
+  uint16_t cur_month=1;
+  uint8_t leap = isleap(year);
+  while(days>28)
+  {
+    if(cur_month==2)
     {
-        days -= 366;
-        ++year;
-
-        if(days >= 365)
-        {
-            days -= 365;
-            ++year;
-        }
-        if(days >= 365)
-        {
-            days -= 365;
-            ++year;
-        }
+	days -= leap?29:28;
+    }
+    else if(cur_month <= 7)
+    {
+      if((cur_month & 1) == 1)
+	days -= 31;
+      else
+	days -= 30;
     }
     else
     {
-        leap = 1;
+      if((cur_month & 1) == 1)
+	days -= 30;
+      else
+	days -= 31;
     }
-
-    month = 1;
-    while(1)
-    {
-        uint8_t month_days;
-        if(month == 2)
-        {
-            month_days = leap ? 29 : 28;
-        }
-        else if(month <= 7)
-        {
-            if((month & 1) == 1)
-                month_days = 31;
-            else
-                month_days = 30;
-        }
-        else
-        {
-            if((month & 1) == 1)
-                month_days = 30;
-            else
-                month_days = 31;
-        }
-
-        if(days >= month_days)
-        {
-            ++month;
-            days -= month_days;
-        }
-        else
-        {
-            break;
-        }
-    }
-
-    day = days + 1;
-
-    hours= timeval / 3600;
-    timeval -= hours * 3600UL;
-
-    minutes = timeval / 60;
-    timeval -= minutes * 60;
-
-    seconds = timeval;
-    
-    dti->seconds = tp_make_bcd(seconds);
-    dti->minutes = tp_make_bcd(minutes);
-    dti->hours = tp_make_bcd(hours);
-    dti->date = tp_make_bcd(day);
-    dti->month = tp_make_bcd(month);
-    dti->year= tp_make_bcd(year);   
+    cur_month++;
+  }
+  
+  if(cur_month == 13)
+    cur_month = 1;
+  
+  month = cur_month;
+  
+  date = days+1;
+  
+  
+  hours = timeval / 3600UL;
+  timeval -= hours * 3600UL;
+  
+  minutes = timeval / 60;
+  timeval-= minutes*60;
+  
+  seconds = timeval;
+  
+  dti->day=day;
+  dti->seconds = make_bcd(seconds);
+  dti->minutes = make_bcd(minutes);
+  dti->hours = make_bcd(hours);
+  dti->date = make_bcd(date);
+  dti->month = make_bcd(month);
+  dti->year= make_bcd(year%100);
 }

@@ -13,7 +13,7 @@ module board containing PHY/MAC ENC28J60.
 Next goal is to implement tftp, dhcp, ftp, http application layers and implement FAT16 file system on SD card.
 
 
-Features now available:
+Features already available:
 
 (+) - sending/receiving packets via enc28j60
 (+) - handling ethernet packets

@@ -11,7 +11,7 @@
 #include "../arch/exmem.h"
 #include "ip.h"
 #include "arp.h"
-#define DEBUG_MODE
+// #define DEBUG_MODE
 #include "../debug.h"
 
 #include <string.h>
@@ -84,10 +84,5 @@ uint8_t ethernet_send_packet(ethernet_address * dst,uint16_t type,uint16_t len)
     memcpy(&header->dst,dst,sizeof(ethernet_address));
   memcpy(&header->src,&ethernet_mac,sizeof(ethernet_address));
   header->type = hton16(type);
-  uint16_t i=0;
-  DEBUG_PRINT("eth send packet:\n");
-  for(i=0;i<len+NET_HEADER_SIZE_ETHERNET;i++)
-    DEBUG_PRINT("%02x",ethernet_tx_buffer[i]);
-  DEBUG_PRINT("\n----------------------------------\n");
   return hal_send_packet(ethernet_tx_buffer,(len + NET_HEADER_SIZE_ETHERNET));			
 }

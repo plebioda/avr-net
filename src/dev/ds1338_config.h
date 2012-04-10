@@ -9,7 +9,7 @@
 #ifndef _DS1338_CONFIG_H
 #define _DS1338_CONFIG_H
 
-#define DS1338_RAM	1
+#define DS1338_RAM	0
 
 
 #endif //_DS1338_CONFIG_H
