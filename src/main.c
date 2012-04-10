@@ -39,6 +39,7 @@
 #include "app/app_config.h"
 #include "app/tftp.h"
 #include "app/tp.h"
+#include "app/dhcp.h"
 
 // uint8_t data[1500];
  // 	len = tcp_write_string_P(socket,
@@ -136,8 +137,10 @@ void ds1338_print_time(struct date_time * dt);
 void tpcallback(uint8_t status,uint32_t timeval)
 {
   static struct date_time date_time;
+  DEBUG_PRINT_COLOR(B_IYELLOW,"tp status = %d\n",status);
   if(status)
     return;
+  DEBUG_PRINT_COLOR(B_IYELLOW,"tp time sync\n");
   rtc_convert_date_time(timeval,&date_time);
   ds1338_set_date_time(&date_time);
   ds1338_print_time(&date_time);
@@ -156,7 +159,29 @@ void ds1338_print_time(struct date_time * dt)
   DEBUG_PRINT(" format = %02x\n",dt->format);
 }
 
-
+void dhcpcallback(enum dhcp_event event)
+{
+  DEBUG_PRINT_COLOR(B_IGREEN,"[dhcp]: ");
+  switch(event)
+  {
+    case dhcp_event_lease_acquired:
+      DEBUG_PRINT_COLOR(GREEN,"lease acquired\n");
+      break;
+    case dhcp_event_lease_denied:
+      DEBUG_PRINT_COLOR(RED,"lease denied\n");
+      break;
+    case dhcp_event_lease_expired:
+      DEBUG_PRINT_COLOR(B_IRED,"lease expired\n");
+      break;
+    case dhcp_event_lease_expiring:
+      DEBUG_PRINT_COLOR(GREEN,"lease expiring\n");
+      break;
+    case dhcp_event_error:
+    default:
+      DEBUG_PRINT_COLOR(B_IRED,"error\n");
+      break;
+  }
+}
 int main(void)
 {
   /* constants */
@@ -200,13 +225,17 @@ int main(void)
   DEBUG_PRINT("Hello ATMega128!\n");
   DEBUG_PRINT("ENC28J60 rev %d\n",enc28j60_get_revision());
   
-  tp_get_time(tpcallback);
-
-  timer_t rtc_timer = timer_alloc(tcallback);
-  timer_set(rtc_timer,1000);
   
-  udp_socket_t udps;
-  udps = udp_socket_alloc(12348,udp_callback);
+
+//   timer_t rtc_timer = timer_alloc(tcallback);
+//   timer_set(rtc_timer,1000);
+  
+  uint8_t ret = dhcp_start(dhcpcallback);
+  DEBUG_PRINT("dhcp start ret=  %d\n",ret);
+  tp_get_time(tpcallback);
+//   udp_socket_t udps;
+//   udps = udp_socket_alloc(12348,udp_callback);
+  
   for(;;)
   {
 

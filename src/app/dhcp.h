@@ -11,15 +11,22 @@
 
 #include <stdint.h>
 
+#include "dhcp_config.h"
+
 enum dhcp_event
 {
-  dhcp_event_error=0
+  dhcp_event_error=0,
+  dhcp_event_timeout,
+  dhcp_event_lease_acquired,
+  dhcp_event_lease_expiring,
+  dhcp_event_lease_expired,
+  dhcp_event_lease_denied
 };
 
 typedef void (*dhcp_callback)(enum dhcp_event event);
 
 uint8_t dhcp_start(dhcp_callback callback);
-uint8_t dhcp_stop(void);
+void dhcp_stop(void);
 
 #define DHCP_ERR_STATE			1
 #define DHCP_ERR_SOCKET_ALLOC		2

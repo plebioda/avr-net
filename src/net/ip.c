@@ -16,7 +16,7 @@
 #include "udp.h"
 #include "tcp.h"
 
-// #define DEBUG_MODE
+#define DEBUG_MODE
 #include "../debug.h"
 
 #define IP_V4		0x4
@@ -62,7 +62,6 @@ const ip_address * ip_get_gateway(void)		{return (const ip_address*)&ip_gateway;
 
 
 static void ip_set_broadcast(void);
-
 
 uint8_t ip_is_broadcast(const ip_address * ip)
 {
@@ -176,12 +175,14 @@ uint8_t ip_handle_packet(struct ip_header * header, uint16_t packet_len,const et
   /* check destination ip address */
   if(memcmp(&header->dst,ip_get_addr(),sizeof(ip_address)))
   {
+    DEBUG_PRINT_COLOR(B_IMAGENTA,"ip handle: check broadcast\n");
       /* check if this is broadcast packet */
       if(header->dst[0] != 0xff ||
 	header->dst[1] != 0xff ||
 	header->dst[2] != 0xff ||
 	header->dst[3] != 0xff)
 	return 0;
+      DEBUG_PRINT_COLOR(B_IMAGENTA,"ip handle: broadcast\n");
   }
 
   /* check checksum */
@@ -233,6 +234,11 @@ uint8_t ip_in_subnet(const ip_address * ip_remote)
 void ip_set_broadcast(void)
 {
   uint8_t i;
-  for(i=0;i<sizeof(ip_address);i++)
-    ip_broadcast[i] = (ip_addr[i] | ~ip_netmask[i]);
+  if((ip_netmask[0] | ip_netmask[1] | ip_netmask[2] | ip_netmask[3]) == 0)
+    memset(&ip_broadcast,0,sizeof(ip_broadcast));
+  else
+  {
+    for(i=0;i<sizeof(ip_address);i++)
+      ip_broadcast[i] = (ip_addr[i] | ~ip_netmask[i]);
+  }
 }

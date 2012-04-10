@@ -302,12 +302,21 @@ void enc28j60_init(const uint8_t * macaddr)
     // 06 08 -- ff ff ff ff ff ff -> ip checksum for theses bytes=f7f9
     // in binary these poitions are:11 0000 0011 1111
     // This is hex 303F->EPMM0=0x3f,EPMM1=0x30
-    enc28j60_write(ERXFCON, ERXFCON_UCEN|ERXFCON_CRCEN|ERXFCON_PMEN);
-    enc28j60_write(EPMM0, 0x3f);
-    enc28j60_write(EPMM1, 0x30);
-    enc28j60_write(EPMCSL, 0xf9);
-    enc28j60_write(EPMCSH, 0xf7);
-    
+//     enc28j60_write(ERXFCON, ERXFCON_UCEN|ERXFCON_CRCEN|ERXFCON_PMEN);
+//     enc28j60_write(EPMM0, 0x3f);
+//     enc28j60_write(EPMM1, 0x30);
+//     enc28j60_write(EPMCSL, 0xf9);
+//     enc28j60_write(EPMCSH, 0xf7);
+//   /* configure frame filters */
+  enc28j60_write(ERXFCON, (ERXFCON_UCEN)  | /* accept unicast packets */
+			  (ERXFCON_CRCEN) | /* accept packets with valid CRC only */
+// 			  (0 << ERXFCON_PMEN)  | /* no pattern matching */
+// 			  (0 << ERXFCON_MPEN)  | /* ignore magic packets */
+// 			  (0 << ERXFCON_HTEN)  | /* disable hash table filter */
+// 			  (0 << ERXFCON_MCEN)  | /* ignore multicast packets */
+			  (ERXFCON_BCEN)   /* accept broadcast packets */
+// 			  (0 << ERXFCON_ANDOR)   /* packets must meet at least one criteria */
+    );
     // BANK 2 STUFF
     // enable MAC receive
     enc28j60_write(MACON1, MACON1_MARXEN|MACON1_TXPAUS|MACON1_RXPAUS);

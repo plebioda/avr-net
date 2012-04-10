@@ -25,6 +25,9 @@ uint8_t udp_init(void);
 uint8_t udp_handle_packet(const ip_address * ip_remote,const struct udp_header * udp,uint16_t packet_len);
 
 #define UDP_PORT_ANY	0
+#define UDP_PORT_BOOTPS	67
+#define UDP_PORT_BOOTPC	68
+
 
 udp_socket_t udp_socket_alloc(uint16_t local_port,udp_socket_callback callback);
 void udp_socket_free(udp_socket_t socket);
