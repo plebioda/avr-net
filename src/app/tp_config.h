@@ -9,13 +9,15 @@
 #ifndef _TP_CONFIG_H
 #define _TP_CONFIG_H
 
-#define TP_USE_TCP	0
+#define TP_USE_TCP	1
 
 /* local and remote UDP ports */
 #define TP_REMOTE_PORT		37
 /* ip address of time server */
-#define TP_SERVER_IP		/*{192,168,1,11}*/{192,53,103,108}
-/* waiting for connection and data timeout */
+#define TP_SERVER_IP		/*{192,168,1,12}*/{192,53,103,108}
+/* waiting for connection an */
+#define TP_CONN_TIMEOUT		500
+/* data timeout */
 #define TP_RTX_TIMEOUT		100
 /* number of max retransmissions */
 #define TP_RTX_MAX		4

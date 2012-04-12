@@ -230,8 +230,8 @@ int main(void)
 //   timer_t rtc_timer = timer_alloc(tcallback);
 //   timer_set(rtc_timer,1000);
   
-  uint8_t ret = dhcp_start(dhcpcallback);
-  DEBUG_PRINT("dhcp start ret=  %d\n",ret);
+//   uint8_t ret = dhcp_start(dhcpcallback);
+//   DEBUG_PRINT("dhcp start ret=  %d\n",ret);
   tp_get_time(tpcallback);
 //   udp_socket_t udps;
 //   udps = udp_socket_alloc(12348,udp_callback);

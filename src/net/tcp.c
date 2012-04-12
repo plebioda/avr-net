@@ -352,6 +352,7 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
   at the beggining of the fifo_rx last pointer, it means that 
   we do not support packets that arrive out of order */
   DEBUG_PRINT_COLOR(B_IRED,"tcp->seq=%lx,tcp->ack=%lu,tcb->ack=%lx,tcb->seq=%lu\n",ntoh32(tcp->seq),ntoh32(tcp->ack),tcb->ack,tcb->seq);
+  DEBUG_PRINT_COLOR(B_IRED,"tcp->state=%d\n",tcb->state);
   if(ntoh32(tcp->seq) != tcb->ack)
   {
       /* if we received packet out of order send packet to tell 
@@ -489,7 +490,7 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
 	else if(tcb->state == tcp_state_closing)
 	{
 	    DEBUG_PRINT_COLOR(B_IYELLOW,"state closing fin acked\n");
-	    tcb->state = tcp_state_close_wait;
+	    tcb->state = tcp_state_time_wait;
 	    timer_set(tcb->timer,TCP_TIMEOUT_TIME_WAIT);
 	    return 1;	  
 	}
@@ -511,15 +512,21 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
 	return 1;
       }
       return 0;
-    }
+    }    
     case tcp_state_time_wait:
     {
-      if(!tcp_send_packet(tcb,TCP_FLAG_ACK,1))
-      {
-	tcp_tcb_close(tcb,socket,tcp_event_error);
-	return 0;
-      }
-      timer_set(tcb->timer,TCP_TIMEOUT_GENERIC);
+//       if(!tcp_send_packet(tcb,TCP_FLAG_ACK,1))
+//       {
+// 	tcp_tcb_close(tcb,socket,tcp_event_error);
+// 	return 0;
+//       }
+//       timer_set(tcb->timer,TCP_TIMEOUT_GENERIC);
+      /*
+	RFC 793:
+	The only thing that can arrive in this state is a
+	retransmission of the remote FIN.  Acknowledge it, and restart
+	the 2 MSL timeout.
+      */
       break;
     }
     default: 
@@ -574,13 +581,17 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
   /* process the FIN bit */
   if(tcp->flags & TCP_FLAG_FIN)
   {
-//     DEBUG_PRINT_COLOR(B_IBLUE,"FIN received\n");
+    DEBUG_PRINT_COLOR(B_IBLUE,"FIN received\n");
     switch(tcb->state)
     {
       case tcp_state_closed:
       case tcp_state_listen:
       case tcp_state_syn_sent:
 	return 0;
+      case tcp_state_fin_wait_1:
+	tcb->seq++;
+	tcb->state = tcp_state_time_wait;
+	break;
       default:
 	break;
     }
@@ -597,12 +608,12 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
 	tcb->state = tcp_state_close_wait;
 	timer_set(tcb->timer,1);
 	break;
-      case tcp_state_fin_wait_1:
-	 DEBUG_PRINT_COLOR(IGREEN,"FIN: 1\n");
-	tcb->state = tcp_state_closing;
-	timer_set(tcb->timer,TCP_TIMEOUT_GENERIC);
-	tcb->rtx = 5;
-	break;
+//       case tcp_state_fin_wait_1:
+// 	 DEBUG_PRINT_COLOR(IGREEN,"FIN: 1\n");
+// 	tcb->state = tcp_state_closing;
+// 	timer_set(tcb->timer,TCP_TIMEOUT_GENERIC);
+// 	tcb->rtx = 5;
+// 	break;
       case tcp_state_fin_wait_2:
 	DEBUG_PRINT_COLOR(IGREEN,"FIN: 2\n");
 	tcb->state = tcp_state_time_wait;
@@ -626,6 +637,7 @@ void tcp_timeout(timer_t timer,void * arg)
       return;
     if(timer != tcb->timer)
       return;
+    DEBUG_PRINT_COLOR(B_IYELLOW,"tcp_timeout state = %d\n",tcb->state);
     int32_t tset = -1;
     if(--tcb->rtx < 0)
     {
@@ -844,7 +856,7 @@ uint8_t tcp_send_packet(struct tcp_tcb * tcb,uint8_t flags,uint8_t send_data)
     if(packet_sent)
     {
       
-      DEBUG_PRINT_COLOR(B_ICYAN,"sent len=%d, seq = %u\n",data_length,packet_seq);
+      DEBUG_PRINT_COLOR(B_ICYAN,"sent len=%d, seq = %lx, ack=%lx\n",data_length,packet_seq,tcb->ack);
       if(tcp->flags & TCP_FLAG_FIN)
 	DEBUG_PRINT_COLOR(B_ICYAN,"FIN sent\n");
       counter++;

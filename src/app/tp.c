@@ -16,7 +16,7 @@
 
 #include <string.h>
 
-// #define DEBUG_MODE
+#define DEBUG_MODE
 #include "../debug.h"
 
 
@@ -135,14 +135,21 @@ uint8_t tp_get_time(tp_callback callback)
     return TP_ERR_SOCKET;
   timer_t timer = timer_alloc(tp_timer_callback);
   if(timer < 0)
+  {
+ #if TP_USE_TCP
+    tcp_socket_free(socket);
+#else
+    udp_socket_free(socket);
+#endif   
     return TP_ERR_TIMER;
+  }
   tpc.callback = callback;
   tpc.socket = socket;
   tpc.timer = timer;
 #if TP_USE_TCP
-  tcp_connect(tpc.socket,&tp_server_ip,37);
+  tcp_connect(tpc.socket,&tp_server_ip,TP_REMOTE_PORT);
   tpc.state = tp_state_wait_for_conn;
-  timer_set(timer,TP_RTX_TIMEOUT);
+  timer_set(timer,TP_CONN_TIMEOUT);
 #else
   udp_bind_remote(tpc.socket,TP_REMOTE_PORT,(const ip_address*)&tp_server_ip);
   udp_send(tpc.socket,0);
@@ -228,7 +235,7 @@ static void tp_socket_callback(tcp_socket_t socket,enum tcp_event event)
       break;
     case tcp_event_data_received:
     {
-      timer_stop();
+      timer_stop(tpc.timer);
       uint8_t data[4];
       int16_t len = tcp_read(socket,data,4);
       uint32_t timeval = ntoh32(*((uint32_t*)data));

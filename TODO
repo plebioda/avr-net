@@ -66,6 +66,7 @@ Tasks:
 	    FIN-ACK from remote, which cousing RST from remote host
 	( ) simultanously closing connection (debug with time server on HP-Compaq)
 	( ) debug tcp connection closing with time server of ip 192.53.103.108
+	( ) compare with connection between pc and server
 ( ) fifo with ability to set buffer size
 ( ) rtc convert time value form rfc868 to date time
 ( ) ds1338 ram write/read
