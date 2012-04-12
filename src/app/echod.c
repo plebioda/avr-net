@@ -67,13 +67,6 @@ uint8_t echod_stop(void)
 void echo_incoming(tcp_socket_t socket,enum tcp_event event)
 {
   DEBUG_PRINT_COLOR(B_IRED,"echo incoming event = %d\n",event);
-//   if(socket != echod.socket)
-//   {
-//     /*TODO*/
-//     DEBUG_PRINT_COLOR(B_IRED,"echo: socket(%d) != echod.socket(%d)\n",socket,echod.socket);
-//     echod.callback(echo_event_error);
-//     return;
-//   }
   switch(event)
   {
     case tcp_event_connection_incoming:
