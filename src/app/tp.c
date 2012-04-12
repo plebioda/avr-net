@@ -189,7 +189,7 @@ void tp_timer_callback(timer_t timer,void * arg)
       tp_reset();
       break;
     }
-    tp_state_wait_closing:
+    case tp_state_wait_closing:
     {
       tp_reset();
       break;  
@@ -237,7 +237,7 @@ static void tp_socket_callback(tcp_socket_t socket,enum tcp_event event)
     {
       timer_stop(tpc.timer);
       uint8_t data[4];
-      int16_t len = tcp_read(socket,data,4);
+      tcp_read(socket,data,4);
       uint32_t timeval = ntoh32(*((uint32_t*)data));
       tpc.callback(0,timeval);
       tcp_close(socket);

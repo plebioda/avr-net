@@ -54,7 +54,7 @@ uint8_t ds1338_get_date_time(struct date_time * date_time)
 
 uint8_t ds1338_set_date_time(struct date_time * date_time)
 {
-  uint8_t format = date_time->format;
+//   uint8_t format = date_time->format;
   /* convert RTC time format to ds1338 time format */
 //   if(format&&(1<<RTC_FORMAT_12_24))
 //   {

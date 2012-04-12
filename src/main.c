@@ -40,6 +40,7 @@
 #include "app/tftp.h"
 #include "app/tp.h"
 #include "app/dhcp.h"
+#include "app/echod.h"
 
 // uint8_t data[1500];
  // 	len = tcp_write_string_P(socket,
@@ -182,6 +183,12 @@ void dhcpcallback(enum dhcp_event event)
       break;
   }
 }
+
+void echocallback(enum echo_event event)
+{
+ DEBUG_PRINT_COLOR(B_IBLUE,"Echo callback: event = %d\n",event); 
+}
+
 int main(void)
 {
   /* constants */
@@ -218,6 +225,9 @@ int main(void)
   arp_init();
   udp_init();
   tcp_init();
+  
+  uint8_t ret = echod_start(echocallback);
+  DEBUG_PRINT_COLOR(B_IRED,"echo ret=%d\n",ret);
   
   /* global interrupt enable */
   sei();
