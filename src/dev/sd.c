@@ -7,11 +7,13 @@
  */
 
 #include "sd.h"
+#include "../arch/spi.h"
 
 #define DEBUG_MODE
 #include "../debug.h"
 
 #include <string.h>
+#include <avr/pgmspace.h>
 
 #define SD_CS_ACTIVE()		(SD_CS_PORT&=~(1<<SD_CS))
 #define SD_CS_INACTIVE()	(SD_CS_PORT|=(1<<SD_CS))
@@ -35,10 +37,7 @@
 #define SD_MORE_DATA		0x01
 
 
-#define SD_CMD_TIMEOUT		10
-#define SD_IDLE_WAIT_MAX	0xfff
-#define SD_READ_CSDCID_TIMEOUT	0x2ff
-#define SD_READ_BLK_TIMEOUT	0x2fff
+
 
 #define SD_GET_CSD_STRUCTURE(sdc)		(((sdc)->CSD.field[0]>>6)&3)
 #define SD_GET_CSD_TAAC(sdc)			((sdc)->CSD.field[1])
@@ -154,6 +153,32 @@ enum
   sdcmd_CRC_ON_OFF
 } sccmd;
 
+const uint8_t sdcmd_tab[23][4] PROGMEM = 
+{
+  {SDC_GO_IDLE_STATE,		0x95,	SD_R1,	SD_NO_DATA},
+  {SDC_SEND_OP_COND,		0xF9,	SD_R1,	SD_NO_DATA},
+  {SDC_SEND_CSD,		0xAF,	SD_R1,	SD_MORE_DATA},
+  {SDC_SEND_CID,		0x1B,	SD_R1,	SD_MORE_DATA},
+  {SDC_STOP_TRANSMISSION,	0xC3,	SD_R1,	SD_NO_DATA},
+  {SDC_SEND_STATUS,		0xAF,	SD_R2,	SD_NO_DATA},
+  {SDC_SET_BLOCKLEN,		0xFF,	SD_R1,	SD_NO_DATA},
+  {SDC_READ_SINGLE_BLOCK,	0xFF,	SD_R1,	SD_MORE_DATA},
+  {SDC_READ_MULTI_BLOCK,	0xFF,	SD_R1,	SD_MORE_DATA},
+  {SDC_WRITE_SINGLE_BLOCK,	0xFF,	SD_R1,	SD_MORE_DATA},
+  {SDC_WRITE_MULTI_BLOCK,	0xFF,	SD_R1,	SD_MORE_DATA},
+  {SDC_TAG_SECTOR_START,	0xFF,	SD_R1,	SD_NO_DATA},
+  {SDC_TAG_SECTOR_END,		0xFF,	SD_R1,	SD_NO_DATA},
+  {SDC_UNTAG_SECTOR,		0xFF,	SD_R1,	SD_NO_DATA},
+  {SDC_TAG_ERASE_GRP_START,	0xFF,	SD_R1,	SD_NO_DATA},
+  {SDC_TAG_ERASE_GRP_END,	0xFF,	SD_R1,	SD_NO_DATA},
+  {SDC_UNTAG_ERASE_GRP,		0xFF,	SD_R1,	SD_NO_DATA},
+  {SDC_ERASE,			0xDF,	SD_R1b,	SD_NO_DATA},
+  {SDC_LOCK_UNLOCK,		0x89,	SD_R1b,	SD_NO_DATA},
+  {SDC_APP_OP_COND,		0xE5,	SD_R1,	SD_NO_DATA},
+  {SDC_APP_CMD,			0x73,	SD_R1,	SD_NO_DATA},
+  {SDC_READ_OCR,		0x25,	SD_R3,	SD_NO_DATA},
+  {SDC_CRC_ON_OFF,		0x25,	SD_R1,	SD_NO_DATA}
+};
 
 struct sd_cid
 {
@@ -171,10 +196,6 @@ struct sd_csd
   uint8_t	field[16];
 };
 
-struct sd_csd
-{
-  uint8_t	field[16];
-};
 
 static struct
 {
@@ -190,9 +211,24 @@ static struct
   
   uint16_t 	block_addr;
   uint8_t 	block[SD_BLOCK_SIZE];
+  
+  uint16_t errno;
 } sd;
 
 static uint8_t sd_init_card(void);
+static void sd_enable(void);
+static void sd_disable(void);
+static void sd_delay(uint8_t n);
+static uint8_t sd_send_cmd(uint8_t cmd,uint32_t addr);
+static uint8_t sd_get_cmd(uint8_t sd_cmd);
+static uint8_t sd_get_crc(uint8_t sd_cmd);
+static uint8_t sd_get_resp(uint8_t sd_cmd);
+static uint8_t sd_get_tdata(uint8_t sd_cmd);
+
+uint16_t sd_errno(void)
+{
+    return sd.errno;
+}
 
 uint8_t sd_init(sd_callback callback)
 {
@@ -226,6 +262,7 @@ void sd_interrupt(void)
 {
   if(!sd.callback)
     return;
+  sd.errno=0;
   if(SD_DETECT_PIN & (1<<SD_DETECT))
   {
     sd.status &= ~(1<<SD_STATUS_INSERTED) & ~(1<<SD_STATUS_WP);
@@ -243,14 +280,163 @@ void sd_interrupt(void)
     {
       sd.callback(sd_event_inserted);
     }
+    uint8_t ret = sd_init_card();
+    if(ret)
+    {
+      /*TODO*/
+      sd.errno = SD_ERR_INIT;
+      sd.callback(sd_event_error);
+    }
+    else
+      sd.callback(sd_event_initialized);
   }
 }
 
 uint8_t sd_init_card(void)
 {
-  
+//   uint32_t i;
+//   uint8_t retval;
+//   g_sd_context.state = SD_STATE_INACTIVE;
+//   sd_spi_init();
+//   SD_SPI_ENABLE();
+//   SD_CS_INACTIVE();
+//   _delay_ms(100);
+//   sd_delay(10);
+//     _delay_ms(10); //10
+//     retval = sd_send_cmd(sdcmd_GO_IDLE_STATE,0x0);
+//     if(retval != 0)
+//     {
+//      goto init_error;
+//     }
+// //     DEBUG(fprintf_P(fRS,PSTR("GO_IDLE_STATE R1 = %x\n"),sdc->R1));
+//     if(g_sd_context.R1 != 0x01)
+//     {
+// 	retval = sderr_CardInit_NotInIdleState;
+// 	goto init_error;
+//     }
+//     i = SD_IDLE_WAIT_MAX;
+//     do
+//     {
+// // 	retval = sd_send_cmd(sdc,sdcmd_APP_CMD,0x00);
+// 	retval = sd_send_cmd(sdcmd_SEND_OP_COND,0x00);
+// 	i--;
+// 	if(retval)
+// 	  i = 0;
+//     }while((g_sd_context.R1 && 0x01) != 0 && i > 0);
+// //     DEBUG_PRINT("sdcmd_APP_CMD retval = %x, R1 = %x\n",retval,sdc->R1);
+//     //     DEBUG(fprintf_P(fRS,PSTR("SEND_OP_COND R1 = %x\n"),sdc->R1));  
+//     if(i==0)
+//     {
+// 	retval = sderr_CardInit_Timeout;
+// 	goto init_error;
+//     }
+//     i = SD_IDLE_WAIT_MAX;
+//     do
+//     {
+// 	retval = sd_send_cmd(sdcmd_READ_OCR,0x0);
+// 	i--;
+// 	if(retval)
+// 	  i=0;
+//     }while(((g_sd_context.R1 && 0x01) != 0  && i > 0));
+// //     DEBUG(fprintf_P(fRS,PSTR("SEND_OP_COND R1 = %x\n"),sdc->R1));  
+//     if(i==0)
+//     {
+// 	retval = sderr_CardInit_Timeout;
+// 	goto init_error;
+//     }    
+//     if(retval)
+//       retval = sderr_CardInit_ReadOCR;
+//     retval = sd_read_cid();
+//     retval = sd_read_csd();
+//     if(retval)
+//       goto init_error;
+//     g_sd_context.state = SD_STATE_ACTIVE;
+// init_error:
+//     SD_CS_INACTIVE();
+//     return retval;
+  return 0;
 }
+uint8_t sd_get_cmd(uint8_t sd_cmd)
+{
+    return pgm_read_byte(&sdcmd_tab[sd_cmd][0]);
+}
+uint8_t sd_get_crc(uint8_t sd_cmd)
+{
+    return pgm_read_byte(&sdcmd_tab[sd_cmd][1]);
+}
+uint8_t sd_get_resp(uint8_t sd_cmd)
+{
+    return pgm_read_byte(&sdcmd_tab[sd_cmd][2]);
+}
+uint8_t sd_get_tdata(uint8_t sd_cmd)
+{
+    return pgm_read_byte(&sdcmd_tab[sd_cmd][3]);
+}
+uint8_t sd_send_cmd(uint8_t cmd,uint32_t addr)
+{
+    uint8_t resp_type;
+    uint8_t resp;
+    uint8_t i;
+    uint32_t timeout;
+    resp_type = sd_get_resp(cmd);
+    SD_CS_ACTIVE();
+    spi_write(sd_get_cmd(cmd));
+    spi_write(addr>>24);
+    spi_write(addr>>16);
+    spi_write(addr>>8);
+    spi_write(addr);
+    spi_write(sd_get_crc(cmd));
+    timeout = SD_CMD_RTX;
+    do
+    {
+	resp = spi_read(0xff);
+	timeout--;
+    }while((resp&0x80)!=0 && timeout > 0);
+    if(timeout == 0)
+      return sderr_CardReadCmd_Timeout;
+    switch(resp_type)
+    {
+      case SD_R1:
+	sd.R1 = resp;
+	break;
+      case SD_R1b:
+	sd.R1 = resp;
+	break;
+      case SD_R2:
+	sd.R1 = resp;
+	sd.R2 = spi_read(0xff);
+	break;
+      case SD_R3:
+	sd.OCR[0] = resp;
+	for(i=1;i<4;i++)
+	  sd.OCR[i] = spi_read(0xff);
+	sd.R1 = spi_read(0xff);
+	break;
+    }
+    sd_delay(2);
+    return 0;
+}
+
 uint8_t sd_status(void)
 {
   return sd.status;
+}
+
+void sd_enable(void)
+{
+  SPI_ENABLE();
+  SD_CS_ACTIVE();
+}
+
+void sd_disable(void)
+{
+  SD_CS_INACTIVE();
+  SPI_DISABLE();
+}
+
+void sd_delay(uint8_t n)
+{
+    SD_CS_INACTIVE();
+    while(n--)
+      spi_write(0xff);
 }

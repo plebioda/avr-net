@@ -22,3 +22,15 @@ void spi_init(void)
     
     SPI_DISABLE();	
 }
+
+void spi_write(uint8_t data)
+{
+  SPI_DATA = data;
+  SPI_WAIT();
+}
+uint8_t spi_read(uint8_t data)
+{
+  SPI_DATA = data;
+  SPI_WAIT();
+  return (uint8_t)SPI_DATA;
+}

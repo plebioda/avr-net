@@ -204,6 +204,12 @@ void sdcallback(enum sd_event event)
     case sd_event_removed:
       DEBUG_PRINT_COLOR(IBLUE,"card removed");
       break;
+    case sd_event_initialized:
+      DEBUG_PRINT_COLOR(IBLUE,"card initialized");
+      break;
+    case sd_event_error:
+      DEBUG_PRINT_COLOR(B_IRED,"error %x",sd_errno());
+      break;
     default:
       DEBUG_PRINT_COLOR(B_IRED,"unknown event");
       break;
@@ -251,6 +257,7 @@ int main(void)
   tcp_init();
   
   sd_init(sdcallback);
+  sd_interrupt();
   
   uint8_t ret = echod_start(echocallback);
   DEBUG_PRINT_COLOR(B_IRED,"echo ret=%d\n",ret);

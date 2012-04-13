@@ -33,4 +33,9 @@
 /* Checking CRC checksum for readed block */
 #define SD_CRC_SUPPORT		0
 
+#define SD_CMD_RTX		10
+#define SD_IDLE_WAIT_MAX	0xfff
+#define SD_READ_CSDCID_RTX	0x2ff
+#define SD_READ_BLK_RTX	0x2fff
+
 #endif //_SD_CONFIG_H

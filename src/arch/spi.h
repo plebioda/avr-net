@@ -20,5 +20,8 @@
 #define SPI_DISABLE()           SPCR &= ~(1<<SPE)
 
 void spi_init(void);
+void spi_write(uint8_t data);
+uint8_t spi_read(uint8_t data);
+
 
 #endif //_SPI_H

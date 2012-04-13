@@ -17,7 +17,9 @@ enum sd_event
 {
   sd_event_inserted,
   sd_event_inserted_wp,
-  sd_event_removed
+  sd_event_removed,
+  sd_event_initialized,
+  sd_event_error
 };
 
 typedef void (*sd_callback)(enum sd_event event);
@@ -25,10 +27,13 @@ typedef void (*sd_callback)(enum sd_event event);
 uint8_t sd_init(sd_callback callback);
 void sd_interrupt(void);
 uint8_t sd_status(void);
+uint16_t sd_errno(void);
 
 #define SD_STATUS_INSERTED	1
 #define SD_STATUS_WP		2
 
-#define SD_ERR_CALLBACK		1
+#define SD_ERR_CALLBACK		(1<<0)
+#define SD_ERR_INIT		(1<<1)
+  
 
 #endif //_SD_H
