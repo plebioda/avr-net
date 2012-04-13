@@ -269,7 +269,9 @@ uint8_t          enc28j60_get_revision   (void);
 #define PKTCTRL_PPADEN   0x04
 #define PKTCTRL_PCRCEN   0x02
 #define PKTCTRL_POVERRIDE 0x01
-
+//PHIE - PHY interrupt enable registers
+#define PHIE_PLNKIE		4	//PHY Link Change Interrupt Enable bit
+#define PHIE_PGEIE		1	//PHY Global Interrupt Enable bit
 // PHLCON - PHY module LED control register
 #define PHLCON_STRCH		1
 #define PHLCON_STRCH_TIME	2

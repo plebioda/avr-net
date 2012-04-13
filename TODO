@@ -24,7 +24,8 @@ Tasks:
 	( ) choosing baud rate during initiation 
 (*) external memory
 ( ) enc28j60 procedures
-	( ) init procedure: max pakcet len, full duplex and so on	
+	( ) init procedure: max pakcet len, full duplex and so on
+	( ) link status interrupt (enc28j60 datasheet page 67)
 (*) ethernet layer - all procedures
 ( ) ip layer - all procedures
 	(*) handling packets

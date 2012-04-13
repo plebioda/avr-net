@@ -355,7 +355,8 @@ void enc28j60_init(const uint8_t * macaddr)
     // switch to bank 0
     enc28j60_set_bank(ECON1);
     // enable interrutps
-    enc28j60_write_op(ENC28J60_OPC_BFS, EIE, EIE_INTIE|EIE_PKTIE);
+    enc28j60_phy_write(PHIE,(1<<PHIE_PLNKIE)|(1<<PHIE_PGEIE));
+    enc28j60_write_op(ENC28J60_OPC_BFS, EIE, EIE_INTIE|EIE_PKTIE|EIE_LINKIE);
     // enable packet reception
     enc28j60_write_op(ENC28J60_OPC_BFS, ECON1, ECON1_RXEN);
 }

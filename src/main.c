@@ -189,6 +189,28 @@ void echocallback(enum echo_event event)
  DEBUG_PRINT_COLOR(B_IBLUE,"Echo callback: event = %d\n",event); 
 }
 
+void sdcallback(enum sd_event event)
+{
+  DEBUG_PRINT_COLOR(B_IBLUE,"[sd]: ");
+  switch(event)
+  {
+    case sd_event_inserted:
+      DEBUG_PRINT_COLOR(IBLUE,"card inserted");
+      break;
+    case sd_event_inserted_wp:
+      DEBUG_PRINT_COLOR(IBLUE,"card inserted");
+      DEBUG_PRINT_COLOR(IRED," (Write Protection)");
+      break;
+    case sd_event_removed:
+      DEBUG_PRINT_COLOR(IBLUE,"card removed");
+      break;
+    default:
+      DEBUG_PRINT_COLOR(B_IRED,"unknown event");
+      break;
+  }
+  DEBUG_PRINT("\n");
+}
+
 int main(void)
 {
   /* constants */
@@ -198,7 +220,9 @@ int main(void)
   /* init io */
   DDRB = 0xff;
   PORTB = 0xff;
-  
+  DDRE &= ~(1<<7) & ~(1<<6) & ~(1<<2);
+//   PORTE |= (1<<6) | (1<<2);
+  PORTE &= ~(1<<6)/* & ~(1<<2)*/;
   /* init interrupts */
   interrupt_timer0_init();
   interrupt_exint_init();
@@ -226,9 +250,10 @@ int main(void)
   udp_init();
   tcp_init();
   
+  sd_init(sdcallback);
+  
   uint8_t ret = echod_start(echocallback);
   DEBUG_PRINT_COLOR(B_IRED,"echo ret=%d\n",ret);
-  
   /* global interrupt enable */
   sei();
   
@@ -248,7 +273,6 @@ int main(void)
   
   for(;;)
   {
-
   }
   return 0;
 }
@@ -261,7 +285,13 @@ SIGNAL(SIG_OUTPUT_COMPARE0)
 
 SIGNAL(SIG_INTERRUPT7)
 {
-  ethernet_handle_packet();
+  DEBUG_PRINT_COLOR(B_IYELLOW,"ETH_INT\n");
+  while(ethernet_handle_packet());
+}
+
+ISR(INT6_vect)
+{
+  sd_interrupt();
 }
 
 void udp_callback(udp_socket_t socket,uint8_t * data,uint16_t len)

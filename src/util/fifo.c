@@ -6,7 +6,7 @@
  * published by the Free Software Foundation.
  */
 
-#define DEBUG_MODE
+// #define DEBUG_MODE
 #include "../debug.h"
 
 #include "fifo.h"
@@ -87,11 +87,7 @@ uint16_t fifo_size(struct fifo * fifo)
 uint16_t fifo_space(struct fifo * fifo)
 {  
     if(!fifo_valid(fifo))
-    {
-      DEBUG_PRINT("fifo invalid\n");
       return 0;
-    }
-    DEBUG_PRINT("fifo valid\n");
     return (FIFO_SIZE-fifo->length);
 }
 
