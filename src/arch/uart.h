@@ -8,7 +8,18 @@
 
 #ifndef _UART_H
 #define _UART_H
-
+/**
+* \addtogroup arch
+* @{
+*/
+/**
+* \addtogroup uart
+* @{
+*/
+/**
+* \file UART Header
+* \author Paweł Lebioda <pawel.lebioda89@gmail.com>
+*/
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 #include <stdint.h>
@@ -49,5 +60,10 @@ void            uart_init(void);
 int             uart_putc         (char data,FILE*);
 int             uart_getc         (FILE*);
 
-
+/**
+* @}
+*/
+/**
+* @}
+*/
 #endif //_UART_H

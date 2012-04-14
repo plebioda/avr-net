@@ -8,7 +8,10 @@
 
 #ifndef _EXMEM_H
 #define _EXMEM_H
-
+/**
+* \addtogroup arch
+* @{
+*/
 #include "exmem_config.h"
 #include <avr/io.h>
 
@@ -19,5 +22,7 @@
 // #endif
 
 void before_main(void) __attribute__((naked)) __attribute__((section(".init3")));
-
+/**
+* @}
+*/
 #endif //_EXMEM_H

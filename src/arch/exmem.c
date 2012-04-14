@@ -6,7 +6,10 @@
  * published by the Free Software Foundation.
  */
 
-
+/**
+* \addtogroup arch
+* @{
+*/
 #include "exmem.h"
 
 #include <avr/io.h>
@@ -19,3 +22,6 @@ void before_main(void)
     PORTC &= ~(1<<7);
     SP = 0xffff;
 }
+/**
+* @}
+*/

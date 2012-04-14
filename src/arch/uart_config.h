@@ -8,7 +8,33 @@
 
 #ifndef _UART_CONFIG_H
 #define _UART_CONFIG_H
-
+/**
+* \addtogroup arch
+* @{
+*/
+/**
+* \addtogroup uart
+* @{
+*/
+/**
+* \file UART Configuration
+* \author Paweł Lebioda <pawel.lebioda89@gmail.com>
+*/
+/**
+* \name Configuration
+* @{
+*/
+/**
+* Baud rate
+*/
 #define UART_BAUD_RATE 9600UL
-
+/**
+* @}
+*/
+/**
+* @}
+*/
+/**
+* @}
+*/
 #endif //_UART_CONFIG_H

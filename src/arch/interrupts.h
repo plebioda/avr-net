@@ -7,7 +7,10 @@
  */
 #ifndef _INTERRUPTS_H
 #define _INTERRUPTS_H
-
+/**
+* \addtogroup arch
+* @{
+*/
 #define interrupt_timer0_init() \
   TCNT0 = 0; \
   TCCR0 |= (1<<WGM01)|(0<<WGM00)|(0<<CS02)|(1<<CS01)|(1<<CS00); \
@@ -32,5 +35,7 @@
 	    (0<<INT1)|\
 	    (0<<INT0)
 
-
+/**
+* @}
+*/
 #endif //_INTERRUPTS_H

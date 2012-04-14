@@ -44,7 +44,6 @@ void timer_init(void)
 
 void timer_tick()
 {
-//     DEBUG_PRINT("timer tick\n");
     struct timer_core * timer;
     FOREACH_TIMER(timer)
     {
@@ -59,9 +58,7 @@ void timer_tick()
 	if(timer->ms_left < 0)
 	{
 	  timer->state = TIMER_STATE_STOPPED;
-// 	  DEBUG_PRINT("timer %d\n",timer_number(timer));
 	  timer->callback(timer_number(timer),timer->arg);
-	  
 	}
 	
     }
