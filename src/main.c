@@ -29,6 +29,7 @@
 
 #include "sys/timer.h"
 #include "sys/rtc.h"
+#include "sys/partition.h"
 
 #include "net/hal.h"
 #include "net/ethernet.h"
@@ -140,16 +141,30 @@ void sdcallback(enum sd_event event)
   }
   DEBUG_PRINT("\n");
 }
-void netstat_callback(timer_t timer,void * arg)
+// void netstat_callback(timer_t timer,void * arg)
+// {
+//   netstat(stdout,NETSTAT_OPT_ALL);
+//   timer_set(timer,5000);
+// }
+// void sdtimer_callback(timer_t timer,void * arg)
+// {
+//   sd_interrupt();
+//   timer_set(timer,2000);
+// }
+
+
+void print_partition(struct partition * p)
 {
-  netstat(stdout,NETSTAT_OPT_ALL);
-  timer_set(timer,5000);
+    DEBUG_PRINT_COLOR(B_IMAGENTA,"Partition:\n");
+    DEBUG_SET_COLOR(IMAGENTA);
+    DEBUG_PRINT("State: %s\n",(p->state==0x80 ? "ACTIVE" : (p->state==0 ? "INACTIVE":"?")));
+    DEBUG_PRINT("Type: %d\n",(p->type));
+    DEBUG_PRINT("Offset: %d\n",(p->offset));
+    DEBUG_PRINT("Length: %d\n",(p->length));
+    DEBUG_CLR_COLOR();
 }
-void sdtimer_callback(timer_t timer,void * arg)
-{
-  sd_interrupt();
-  timer_set(timer,2000);
-}
+
+struct partition partition;
 
 int main(void)
 {
@@ -190,8 +205,6 @@ int main(void)
   udp_init();
   tcp_init();
   
-
-  
   uint8_t ret = echod_start(echocallback);
   DEBUG_PRINT_COLOR(B_IRED,"echo ret=%d\n",ret);
   /* global interrupt enable */
@@ -199,16 +212,11 @@ int main(void)
   
   stdout = DEBUG_FH;
   
-  DEBUG_PRINT("Hello ATMega128!\n");
-  DEBUG_PRINT("ENC28J60 rev %d\n",enc28j60_get_revision());
-  
+    
   sd_init(sdcallback);
   sd_interrupt();
   
-  timer_t sd_timer = timer_alloc(sdtimer_callback);
-  timer_set(sd_timer,2000);
-  timer_t netstat_timer = timer_alloc(netstat_callback);
-  timer_set(netstat_timer,1);
+  
   
 //   timer_t rtc_timer = timer_alloc(tcallback);
 //   timer_set(rtc_timer,1000);
@@ -218,7 +226,13 @@ int main(void)
 //   tp_get_time(tpcallback);
   udp_socket_t udps;
   udps = udp_socket_alloc(12348,udp_callback);
+
+  partition_open(&partition,sd_read,0,0);
+  print_partition(&partition);
   
+  DEBUG_PRINT("Hello ATMega128!\n");
+  DEBUG_PRINT("ENC28J60 rev %d\n",enc28j60_get_revision());
+
   for(;;)
   {
     

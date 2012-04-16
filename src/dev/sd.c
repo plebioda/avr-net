@@ -36,7 +36,7 @@
 #define SD_NO_DATA		0x00
 #define SD_MORE_DATA		0x01
 
-
+#define SD_BLOCK_MASK		~(SD_BLOCK_SIZE-1)
 
 
 #define SD_GET_CSD_STRUCTURE(csd)		(((csd).field[0]>>6)&3)
@@ -209,7 +209,11 @@ static struct
   
   struct sd_cid cid;
   struct sd_csd csd;
-  
+
+#define SD_BLOCK_STATE_EMPTY	0
+#define SD_BLOCK_STATE_INVALID	1
+#define SD_BLOCK_STATE_VALID	2
+  uint8_t 	block_state;
   uint16_t 	block_addr;
   uint8_t 	block[SD_BLOCK_SIZE];
   
@@ -224,12 +228,18 @@ static uint8_t sd_send_cmd(uint8_t cmd,uint32_t addr);
 static uint8_t sd_get_cmd(uint8_t sd_cmd);
 static uint8_t sd_get_crc(uint8_t sd_cmd);
 static uint8_t sd_get_resp(uint8_t sd_cmd);
-static uint8_t sd_get_tdata(uint8_t sd_cmd);
-void print_csd(void);
-void print_cid(void);
-uint8_t	sd_read_reg(uint8_t cmd);
+// static uint8_t sd_get_tdata(uint8_t sd_cmd);
+
+static uint8_t	sd_read_reg(uint8_t cmd);
 #define sd_read_csd()	sd_read_reg(sdcmd_SEND_CSD)
 #define sd_read_cid()	sd_read_reg(sdcmd_SEND_CID)
+static uint8_t sd_read_block(uint32_t addr);
+
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+static void print_csd(void);
+static void print_cid(void);
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+
 uint16_t sd_errno(void)
 {
     return sd.errno;
@@ -289,7 +299,6 @@ void sd_interrupt(void)
     uint8_t ret = sd_init_card();
     if(ret)
     {
-      /*TODO*/
       sd.errno = ((uint16_t)ret<<8)|SD_ERR_INIT;
       sd.callback(sd_event_error);
     }
@@ -313,7 +322,7 @@ uint8_t sd_init_card(void)
   sd_enable();
   _delay_ms(100);
   sd_delay(10);
-  _delay_ms(10); //10
+  _delay_ms(10);
   retval = sd_send_cmd(sdcmd_GO_IDLE_STATE,0x0);
   if(retval != 0)
     goto init_error;
@@ -372,10 +381,10 @@ uint8_t sd_get_resp(uint8_t sd_cmd)
 {
     return pgm_read_byte(&sdcmd_tab[sd_cmd][2]);
 }
-uint8_t sd_get_tdata(uint8_t sd_cmd)
-{
-    return pgm_read_byte(&sdcmd_tab[sd_cmd][3]);
-}
+// /*uint8_t sd_get_tdata(uint8_t sd_cmd)
+// {
+//     return pgm_read_byte(&sdcmd_tab[sd_cmd][3]);
+// }*/
 uint8_t sd_send_cmd(uint8_t cmd,uint32_t addr)
 {
     uint8_t resp_type;
@@ -450,61 +459,86 @@ uint8_t	sd_read_reg(uint8_t cmd)
 }
 uint8_t sd_read_block(uint32_t addr)
 {
-//     uint8_t retval;
-//     uint16_t i;	
-// #if SD_CRC_SUPPORT    
-//     uint16_t	crc;
-// #endif
-//     if((sd.status&SD_STATUS_INITIALIZED)==0)
-//     {
-// 	retval = sderr_Inactive;
-// 	goto sd_read_blk_err;
-//     }
-//     retval = sd_send_cmd(sdcmd_READ_SNGLE_BLOCK,addr);
-//     if(retval)
-//      goto sd_read_blk_err;
-//     i = SD_READ_BLK_RTX;
-//     SD_CS_ACTIVE();
-//     do
-//     {
-//       retval = spi_read(0xff);
-//       i--;
-//     }while((retval != SDC_READ_TOKEN) && (i>0));
-//     sd.R1 = retval;
-//     if(i==0)
-//     {
-// 	retval = sderr_ReadBlock_Timeout;
-// 	goto sd_read_blk_err;
-//     }
-//     for(i=0;i<512;i++)
-//       sd.block[i] = spi_read(0xff);
-// #if SD_CRC_SUPPORT
-//     crc = sd_spi_read();
-//     crc = crc<<8;
-//     crc = crc | sp_spi_read();
-//     if(sd_check_crc(crc))
-//     {
-// 	retval = sderr_ReadBlock_CRC;
-// 	g_sd_context.block_state = SD_BLOCK_STATE_INVALID;
-//     }
-//     else
-//     {
-// 	retval = 0;
-// 	g_sd_context.block_addr = addr;
-// 	g_sd_context.block_state = SD_BLOCK_STATE_VALID;
-//     }
-// #else
-//     sd_spi_read();
-//     sd_spi_read();
-//     g_sd_context.block_addr = addr;
-//     g_sd_context.block_state = SD_BLOCK_STATE_VALID;
-//     retval = 0;
-// #endif
-// sd_read_blk_err:
-//     sd_delay(2);
-//     return retval;
-return 0;
+  uint8_t retval;
+  uint16_t i;	
+#if SD_CRC_SUPPORT    
+  uint16_t	crc;
+#endif
+  if((sd.status&SD_STATUS_INITIALIZED)==0)
+  {
+    retval = sderr_Inactive;
+    goto sd_read_blk_err;
+  }
+  retval = sd_send_cmd(sdcmd_READ_SNGLE_BLOCK,addr);
+  if(retval)
+    goto sd_read_blk_err;
+  i = SD_READ_BLK_RTX;
+  SD_CS_ACTIVE();
+  do
+  {
+    retval = spi_read(0xff);
+    i--;
+  }while((retval != SDC_READ_TOKEN) && (i>0));
+  sd.R1 = retval;
+  if(i==0)
+  {
+    retval = sderr_ReadBlock_Timeout;
+    goto sd_read_blk_err;
+  }
+  spi_read_block(sd.block,SD_BLOCK_SIZE,0xff);
+#if SD_CRC_SUPPORT
+  crc = sd_spi_read();
+  crc = crc<<8;
+  crc = crc | sp_spi_read();
+  if(sd_check_crc(crc))
+  {
+    retval = sderr_ReadBlock_CRC;
+    g_sd_context.block_state = SD_BLOCK_STATE_INVALID;
+  }
+  else
+  {
+    retval = 0;
+    g_sd_context.block_addr = addr;
+    g_sd_context.block_state = SD_BLOCK_STATE_VALID;
+  }
+#else
+  spi_read(0xff);
+  spi_read(0xff);
+  sd.block_addr = addr;
+  sd.block_state = SD_BLOCK_STATE_VALID;
+  retval = 0;
+#endif
+sd_read_blk_err:
+  sd_delay(2);
+  return retval;
 }
+
+uint32_t sd_read(uint32_t addr,uint8_t * buff,uint32_t length)
+{
+    uint32_t block_addr;
+    uint16_t block_offset;
+    uint32_t temp_length;
+    uint32_t temp_addr = addr;
+    uint32_t retval = 0;
+    while(retval < length)
+    {
+	temp_length = length - retval;
+	block_addr = temp_addr & SD_BLOCK_MASK;
+	if(sd.block_state != SD_BLOCK_STATE_VALID || block_addr != sd.block_addr)
+	{
+	    if(sd_read_block(block_addr))
+	      return retval;
+	}
+	block_offset = temp_addr & ~(SD_BLOCK_MASK);
+	if(block_offset + temp_length > SD_BLOCK_SIZE)
+	  temp_length = SD_BLOCK_SIZE - block_offset;
+	memcpy(&buff[retval],&sd.block[block_offset],temp_length);
+	retval += temp_length;
+	temp_addr += temp_length;
+    }
+    return retval;
+}
+
 uint8_t sd_status(void)
 {
   return sd.status;
