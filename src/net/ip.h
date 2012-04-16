@@ -25,8 +25,11 @@ struct ip_header;
 
 void ip_init(const ip_address * addr,const ip_address * netmask,const ip_address * gateway);
 const ip_address * ip_get_addr(void);
-const ip_address * ip_get_broadcast(void);
-
+const ip_address * ip_get_netmask(void);
+const ip_address * ip_get_broadcast(void); 
+const ip_address * ip_get_gateway(void);
+const char * ip_addr_str(const ip_address * addr);
+const char * ip_addr_port_str(const ip_address * addr,uint16_t portno);
 uint8_t ip_send_packet(const ip_address * ip_dst,uint8_t protocol,uint16_t length);
 uint8_t ip_handle_packet(struct ip_header * header, uint16_t packet_len,const ethernet_address * mac );
 

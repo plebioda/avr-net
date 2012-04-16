@@ -13,6 +13,8 @@
 #include "ip.h"
 
 #include <stdint.h>
+#include <stdio.h>
+
 #include <avr/pgmspace.h>
 
 enum tcp_event
@@ -56,6 +58,8 @@ int16_t tcp_write_string_P(tcp_socket_t socket,const prog_char * string);
 
 uint16_t tcp_get_remote_port(tcp_socket_t socket);
 const ip_address * tcp_get_remote_ip(tcp_socket_t socket);
+
+void tcp_print_stat(FILE * fh);
 
 #define tcp_get_buffer_size() 	(ip_get_buffer_size() - sizeof(struct tcp_header))
 

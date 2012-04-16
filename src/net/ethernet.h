@@ -21,13 +21,19 @@
 
 extern uint8_t ethernet_tx_buffer[];
 
-
+struct ethernet_stats
+{
+  uint32_t rx_packets;
+  uint32_t tx_packets;
+};
 
 typedef uint8_t ethernet_address[6];
 
 void ethernet_init(const ethernet_address * mac);
 
 const ethernet_address * ethernet_get_mac(void);
+const char * ethernet_addr_str(const ethernet_address * addr);
+const struct ethernet_stats * ethernet_get_stats(void);
 
 uint8_t ethernet_handle_packet(void);
 uint8_t ethernet_send_packet(ethernet_address * dst,uint16_t type,uint16_t len);

@@ -10,13 +10,14 @@
 
 #define DEBUG_MODE
 #include "../debug.h"
-
+#include <avr/io.h>
+#include <avr/interrupt.h>
 static uint8_t  enc28j60_bank;
 static uint16_t enc28j60_next_packet_ptr;
 
 uint8_t enc28j60_read_op(uint8_t op,uint8_t addr)
 {
-    SPI_ENABLE();
+//     SPI_ENABLE();
     ENC28J60_CS_ACTIVE();
     //write command
     SPI_DATA = (op | (addr & ENC28J60_ADDR_MASK));
@@ -31,14 +32,14 @@ uint8_t enc28j60_read_op(uint8_t op,uint8_t addr)
         SPI_WAIT();
     }
     ENC28J60_CS_INACTIVE();
-    SPI_DISABLE();
+//     SPI_DISABLE();
     return (SPI_DATA);
 }
 
 
 void enc28j60_write_op(uint8_t op,uint8_t addr,uint8_t data)
 {
-    SPI_ENABLE();
+//     SPI_ENABLE();
     ENC28J60_CS_ACTIVE();
     //write command
     SPI_DATA = (op | (addr & ENC28J60_ADDR_MASK));
@@ -48,12 +49,12 @@ void enc28j60_write_op(uint8_t op,uint8_t addr,uint8_t data)
     SPI_WAIT();
     
     ENC28J60_CS_INACTIVE();
-    SPI_DISABLE();
+//     SPI_DISABLE();
 }
 
 void            enc28j60_read_buffer(uint16_t len,uint8_t * data)
 {
-    SPI_ENABLE();
+//     SPI_ENABLE();
     ENC28J60_CS_ACTIVE();
     //read buffer memory
     SPI_DATA = ENC28J60_OPC_RBM;
@@ -71,12 +72,12 @@ void            enc28j60_read_buffer(uint16_t len,uint8_t * data)
     *data = '\0';
     
     ENC28J60_CS_INACTIVE();
-    SPI_DISABLE();
+//     SPI_DISABLE();
 }
 
 void            enc28j60_write_buffer    (uint16_t len,uint8_t * data)
 {       
-    SPI_ENABLE();
+//     SPI_ENABLE();
     ENC28J60_CS_ACTIVE();
     
     SPI_DATA = ENC28J60_OPC_WBM;
@@ -92,7 +93,7 @@ void            enc28j60_write_buffer    (uint16_t len,uint8_t * data)
     }
     
     ENC28J60_CS_INACTIVE();
-    SPI_DISABLE();
+//     SPI_DISABLE();
 }
 
 void            enc28j60_set_bank        (uint8_t addr)
@@ -263,7 +264,6 @@ void enc28j60_init(const uint8_t * macaddr)
     DEBUG_PRINT_COLOR(U_RED,"enc28j60t init:");
     DEBUG_PRINT("%c:%c:%c:%c:%c:%c",(macaddr)[0],(macaddr)[1],(macaddr)[2],(macaddr)[3],(macaddr)[4],(macaddr)[5]);
     DEBUG_PRINT("\n");
-    
     enc28j60_io_init();
     enc28j60_reset();
     ENC28J60_CS_INACTIVE();
@@ -348,15 +348,15 @@ void enc28j60_init(const uint8_t * macaddr)
     // set PHY module control register
     enc28j60_phy_write(PHLCON,(PHLCON_LED_LS<<PHLCON_LEDB)|
 			      (PHLCON_LED_TRA<<PHLCON_LEDA)|
-			      (PHLCON_STRCH_TIME_139MS<<PHLCON_STRCH_TIME)|
+			      (PHLCON_STRCH_TIME_73MS<<PHLCON_STRCH_TIME)|
 			      (1<<PHLCON_STRCH)
 			      );
     
     // switch to bank 0
     enc28j60_set_bank(ECON1);
     // enable interrutps
-    enc28j60_phy_write(PHIE,(1<<PHIE_PLNKIE)|(1<<PHIE_PGEIE));
-    enc28j60_write_op(ENC28J60_OPC_BFS, EIE, EIE_INTIE|EIE_PKTIE|EIE_LINKIE);
+//     enc28j60_phy_write(PHIE,(1<<PHIE_PLNKIE)|(1<<PHIE_PGEIE));
+    enc28j60_write_op(ENC28J60_OPC_BFS, EIE, EIE_INTIE|EIE_PKTIE/*|EIE_LINKIE*/);
     // enable packet reception
     enc28j60_write_op(ENC28J60_OPC_BFS, ECON1, ECON1_RXEN);
 }
@@ -392,13 +392,14 @@ uint8_t         enc28j60_send_packet    (uint8_t * packet,uint16_t len)
 uint16_t        enc28j60_receive_packet  (uint8_t * packet,uint16_t maxlen)
 {
     uint16_t rxstatus;
-    uint16_t rxlen;
-    
+    uint16_t rxlen=0;
     // check if a packet has been received and buffered
     //if( !(enc28j60Read(EIR) & EIR_PKTIF) ){
     // The above does not work. See Rev. B4 Silicon Errata point 6.
     if( !enc28j60_read(EPKTCNT) )
-      return 0;
+    {
+      goto enc28j60_receive_packet_no_packet;
+    }
     
     // Set the read pointer to the start of the received packet
     enc28j60_write(ERDPTL,enc28j60_next_packet_ptr&0xff);
@@ -445,6 +446,7 @@ uint16_t        enc28j60_receive_packet  (uint8_t * packet,uint16_t maxlen)
     }
     // decrement the packet counter indicate we are done with this packet
     enc28j60_write_op(ENC28J60_OPC_BFS, ECON2, ECON2_PKTDEC);
+enc28j60_receive_packet_no_packet:
     return rxlen;
   
 }

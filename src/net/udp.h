@@ -10,6 +10,7 @@
 #define _UDP_H
 
 #include <stdint.h>
+#include <stdio.h>
 
 #include "udp_config.h"
 #include "ip.h"
@@ -36,6 +37,8 @@ uint8_t udp_send(udp_socket_t socket,uint16_t length);
 uint8_t udp_bind_remote(udp_socket_t socket,uint16_t remote_port,const ip_address * remote_ip);
 uint8_t udp_unbind_remote(udp_socket_t socket);
 uint8_t udp_bind_local(udp_socket_t socket,uint16_t local_port);
+
+void udp_print_stat(FILE * fh);
 
 #define udp_get_buffer() (ip_get_buffer() + NET_HEADER_SIZE_UDP)
 #define udp_get_buffer_size() (ip_get_buffer_size() - NET_HEADER_SIZE_UDP)

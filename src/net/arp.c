@@ -13,6 +13,7 @@
 #include "../debug.h"
 
 #include <string.h>
+#include <avr/pgmspace.h>
 
 struct arp_header
 {
@@ -27,9 +28,10 @@ struct arp_header
     ip_address 		target_protocol_addr;
 };
 
-#define ARP_TABLE_ENTRY_STATUS_EMPTY	0 
-#define ARP_TABLE_ENTRY_STATUS_REQUEST	1
-#define ARP_TABLE_ENTRY_STATUS_TIMEOUT	2
+#define ARP_TABLE_ENTRY_STATUS_REQUEST	0
+#define ARP_TABLE_ENTRY_STATUS_TIMEOUT	1
+#define ARP_TABLE_ENTRY_STATUS_EMPTY	0xff 
+
 
 struct arp_table_entry
 {
@@ -49,7 +51,32 @@ uint8_t arp_send_reply(const struct arp_header * header);
 void arp_timer_tick(timer_t timer,void * arg);
 uint8_t arp_send_request(const ip_address * ip_addr);
 
+static const char arp_state_char_request[] PROGMEM = "REQUEST";
+static const char arp_state_char_timeout[] PROGMEM = "TIMEOUT";
+static const char * arp_state_chars[] = {
+  arp_state_char_request,
+  arp_state_char_timeout
+};
 
+void arp_print_stat(FILE * fh)
+{
+
+  struct arp_table_entry * entry;
+  fprintf_P(fh,PSTR("%-15S %-17S %-7S %S\n"),PSTR("IP addr"),PSTR("HW addr"),PSTR("Timeout"),PSTR("State"));
+  FOREACH_ARP_ENTRY(entry)
+  {
+    if(entry->status != ARP_TABLE_ENTRY_STATUS_EMPTY)
+    {
+      fprintf(fh,
+	      "%-15s %-17s %7d",
+	      ip_addr_str((const ip_address*)&entry->ip_addr),
+	      ethernet_addr_str((const ethernet_address*)&entry->ethernet_addr),
+	      entry->timeout
+	      );    
+       fprintf_P(fh,PSTR(" %S \n"),arp_state_chars[entry->status]);
+    }
+  }
+}
 #ifdef DEBUG_MODE
 void print_arp_table(void)
 {

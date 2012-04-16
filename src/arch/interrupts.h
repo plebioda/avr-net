@@ -18,7 +18,7 @@
   TIMSK |= (1<<OCIE0)|(0<<TOIE0)
 
 #define interrupt_exint_init() \
-  EICRB |=  (1<<ISC71)|(0<<ISC70) | \
+  EICRB |=  (0<<ISC71)|(0<<ISC70) | \
 	    (0<<ISC61)|(1<<ISC60) | \
 	    (0<<ISC51)|(0<<ISC50) | \
 	    (0<<ISC41)|(0<<ISC40); \
@@ -27,7 +27,7 @@
 	    (0<<ISC11)|(0<<ISC10) | \
 	    (0<<ISC01)|(0<<ISC00); \
   EIMSK |=  (1<<INT7)|\
-	    (1<<INT6)|\
+	    (0<<INT6)|\
 	    (0<<INT5)|\
 	    (0<<INT4)|\
 	    (0<<INT3)|\

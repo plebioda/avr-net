@@ -7,6 +7,7 @@
  */
 
 #include <string.h>
+#include <stdio.h>
 
 #include "ethernet.h"
 #include "ip.h"
@@ -16,7 +17,7 @@
 #include "udp.h"
 #include "tcp.h"
 
-// #define DEBUG_MODE
+#define DEBUG_MODE
 #include "../debug.h"
 
 #define IP_V4		0x4
@@ -51,6 +52,9 @@ static ip_address ip_netmask = NET_IP_NETMASK;
 static ip_address ip_gateway = NET_IP_GATEWAY;
 static ip_address ip_broadcast;
 
+/*                      A.B.C.D = 3*4 + 3 dots +  : + port number + NULL*/
+static char ip_addr_char[3*sizeof(ip_address) + 3 + 1 + 5 + 1];
+
 uint8_t ip_is_broadcast(const ip_address * ip);
 uint8_t ip_in_subnet(const ip_address * ip_remote);
 
@@ -62,6 +66,18 @@ const ip_address * ip_get_gateway(void)		{return (const ip_address*)&ip_gateway;
 
 
 static void ip_set_broadcast(void);
+
+const char * ip_addr_str(const ip_address * addr)
+{
+  sprintf(ip_addr_char,"%d.%d.%d.%d",*((uint8_t*)addr+0),*((uint8_t*)addr+1),*((uint8_t*)addr+2),*((uint8_t*)addr+3));
+  return (const char*)ip_addr_char;
+}
+
+const char * ip_addr_port_str(const ip_address * addr,uint16_t portno)
+{
+  sprintf(ip_addr_char,"%d.%d.%d.%d:%u",*((uint8_t*)addr+0),*((uint8_t*)addr+1),*((uint8_t*)addr+2),*((uint8_t*)addr+3),portno);
+  return (const char*)ip_addr_char;
+}
 
 uint8_t ip_is_broadcast(const ip_address * ip)
 {
@@ -77,11 +93,6 @@ void ip_init(const ip_address * addr,const ip_address * netmask,const ip_address
   if(gateway)
     memcpy(&ip_gateway,gateway,sizeof(ip_address));
   ip_set_broadcast();
-  DEBUG_PRINT_COLOR(U_BLUE,"ip_init...\n");
-  DEBUG_PRINT("address  : %d.%d.%d.%d\n",ip_addr[0],ip_addr[1],ip_addr[2],ip_addr[3]);
-  DEBUG_PRINT("netmask  : %d.%d.%d.%d\n",ip_netmask[0],ip_netmask[1],ip_netmask[2],ip_netmask[3]);
-  DEBUG_PRINT("gateway  : %d.%d.%d.%d\n",ip_gateway[0],ip_gateway[1],ip_gateway[2],ip_gateway[3]);
-  DEBUG_PRINT("broadcast: %d.%d.%d.%d\n",ip_broadcast[0],ip_broadcast[1],ip_broadcast[2],ip_broadcast[3]);
 }
 
 uint8_t ip_send_packet(const ip_address * ip_dst,uint8_t protocol,uint16_t length)

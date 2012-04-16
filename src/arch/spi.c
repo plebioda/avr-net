@@ -32,13 +32,12 @@ void spi_init(void)
     SPSR = (1<<SPI2X);
 
     /* CS, MOSI, SCK outputs */
-    SPI_DDR |= (1<<SPI_MOSI)|(1<<SPI_SCK);
+//     SPI_DDR |= (1<<SPI_MOSI)|(1<<SPI_SCK);
     /* MISO input */
-    SPI_DDR &= ~(1<<SPI_MISO);
-    /* MOSI, SCK low */
-    SPI_PORT &= ~(1<<SPI_MOSI) & ~(1<<SPI_SCK);
+//     SPI_DDR &= ~(1<<SPI_MISO);
+//     SPI_PORT |= (1<<SPI_MISO)|(1<<SPI_MOSI);
     
-    SPI_DISABLE();	
+    SPI_ENABLE();	
 }
 /**
 * Sends a byte over the SPI bus
@@ -59,6 +58,38 @@ uint8_t spi_read(uint8_t data)
   SPI_DATA = data;
   SPI_WAIT();
   return (uint8_t)SPI_DATA;
+}
+/**
+* Writess a block of bytes to the SPI bus
+* \param[in] data Pointer to data to write
+* \param[in] len Length of data
+* \returns 0 on success
+*/
+uint8_t spi_write_block(uint8_t * data,uint16_t len)
+{
+  while(len--)
+  {
+    SPI_DATA = *(data++);
+    SPI_WAIT();
+  }
+  return 0;
+}
+/**
+* Reads a block of bytes from the SPI bus
+* \param[in] data Pointer to data to write
+* \param[in] len Length of data
+* \param[in] bus Value which will be on the MOSI bus while reading
+* \returns 0 on success
+*/
+uint8_t spi_read_block(uint8_t * data,uint16_t len,uint8_t bus)
+{
+  while(len--)
+  {
+    SPI_DATA = bus;
+    SPI_WAIT();
+    *(data++) = (uint8_t)SPI_DATA;
+  }
+  return 0;
 }
 /**
 * @}

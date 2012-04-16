@@ -10,6 +10,7 @@
 #include <avr/interrupt.h>
 
 #include <string.h>
+#include <stdio.h>
 
 #define DEBUG_MODE
 #include "debug.h"
@@ -41,89 +42,13 @@
 #include "app/tp.h"
 #include "app/dhcp.h"
 #include "app/echod.h"
-
-// uint8_t data[1500];
- // 	len = tcp_write_string_P(socket,
-// 				 PSTR("HTTP/1.1 200 OK\r\n"
-// 				 "Content-Type: text/html\r\n"
-// // 				 "Content-Length: 65\r\n"
-// 				 "<html>"
-// 				 "<body"
-// 				 "><h1>Hello avr-net!</h1>"
-// 				 "<p>ATMega162</p>"
-// 				 "</body>"
-// 				 "</html>"));
-
-
-// void tcp_callback(tcp_socket_t socket,enum tcp_event event)
-// {
-//     static uint16_t counter = 0;
-// //     DEBUG_PRINT("tcpcallbck:soc%d event:",socket);
-//     int16_t len;
-//     uint8_t * ptr;
-//     switch(event)
-//     {
-//       case tcp_event_nop:
-// 	break;
-//       case tcp_event_connection_established:
-// 	counter = 0;
-// 	DEBUG_PRINT("Con.est.,port=%u\n",tcp_get_remote_port(socket));
-// 	break;
-//       case tcp_event_connection_incoming:
-// 	DEBUG_PRINT("Con.inc.,port=%u\n",tcp_get_remote_port(socket));
-// 	tcp_accept(socket);
-// 	break;
-//       case tcp_event_error:
-// 	DEBUG_PRINT("Error\n");
-// 	tcp_socket_free(socket);
-// 	break;
-//       case tcp_event_timeout:
-// 	DEBUG_PRINT("Timeout\n");
-// // 	tcp_connect(socket,&ip_remote,80);
-// // 	tcp_socket_free(socket);
-// 	break;
-//       case tcp_event_data_received:
-//       {
-// 	len = tcp_read(socket,data,1500);
-// 	DEBUG_PRINT("Data received len = %d:\n",len);
-// 	if(len <= 0)
-// 	  break;	
-// 	ptr = data;
-// 	if(*ptr == 0xff)
-// 	  break;
-// 	counter += len;
-// 	uint16_t i = len;
-// 	while(i--)
-// 	{
-// // 	    DEBUG_PRINT("%c",*(ptr));
-// 	    if(*ptr >= 'a' && *ptr <= 'z')
-// 	      *ptr -= 0x20;
-// 	    ptr++;
-// 	}
-// 	tcp_write(socket,data,len);
-// 	if(counter > 2000)
-// 	  tcp_close(socket);
-// 	break;
-//       }
-//       case tcp_event_connection_closing:
-// 	DEBUG_PRINT("connection closing\n");
-// 	break;
-//       case tcp_event_connection_closed:
-// 	DEBUG_PRINT("connection closed\n");
-// 	tcp_socket_free(socket);
-// 	break;
-//       case tcp_event_data_acked:
-// 	DEBUG_PRINT("data acked\n");
-// 	break;
-//       default:
-// 	DEBUG_PRINT("event=%d\n",event);
-// 	break;
-//     }
-// }
-// 
-
+#include "app/netstat.h"
 
 void ds1338_print_time(struct date_time * dt);
+void udp_callback(udp_socket_t socket,uint8_t * data,uint16_t length)
+{
+  
+}
 void tcallback(timer_t timer,void * arg)
 {
   static struct date_time dt;
@@ -133,8 +58,7 @@ void tcallback(timer_t timer,void * arg)
   timer_set(timer,30000);
 }
 
-void udp_callback(udp_socket_t socket,uint8_t * data,uint16_t len);
-void ds1338_print_time(struct date_time * dt);
+
 void tpcallback(uint8_t status,uint32_t timeval)
 {
   static struct date_time date_time;
@@ -216,6 +140,16 @@ void sdcallback(enum sd_event event)
   }
   DEBUG_PRINT("\n");
 }
+void netstat_callback(timer_t timer,void * arg)
+{
+  netstat(stdout,NETSTAT_OPT_ALL);
+  timer_set(timer,5000);
+}
+void sdtimer_callback(timer_t timer,void * arg)
+{
+  sd_interrupt();
+  timer_set(timer,2000);
+}
 
 int main(void)
 {
@@ -226,9 +160,9 @@ int main(void)
   /* init io */
   DDRB = 0xff;
   PORTB = 0xff;
-  DDRE &= ~(1<<7) & ~(1<<6) & ~(1<<2);
-//   PORTE |= (1<<6) | (1<<2);
-  PORTE &= ~(1<<6)/* & ~(1<<2)*/;
+  DDRE &= ~(1<<7);
+  PORTE |= (1<<7);
+  
   /* init interrupts */
   interrupt_timer0_init();
   interrupt_exint_init();
@@ -243,8 +177,8 @@ int main(void)
   
   /* init dev */
   ds1338_init();
-  enc28j60_init((uint8_t*)&my_mac);
-
+  enc28j60_init((uint8_t*)&my_mac); 
+  
   /* init sys */
   timer_init();
   rtc_init((0<<RTC_FORMAT_12_24)|(0<<RTC_FORMAT_AM_PM));
@@ -256,62 +190,54 @@ int main(void)
   udp_init();
   tcp_init();
   
-  sd_init(sdcallback);
-  sd_interrupt();
+
   
   uint8_t ret = echod_start(echocallback);
   DEBUG_PRINT_COLOR(B_IRED,"echo ret=%d\n",ret);
   /* global interrupt enable */
   sei();
   
+  stdout = DEBUG_FH;
+  
   DEBUG_PRINT("Hello ATMega128!\n");
   DEBUG_PRINT("ENC28J60 rev %d\n",enc28j60_get_revision());
   
+  sd_init(sdcallback);
+  sd_interrupt();
   
-
+  timer_t sd_timer = timer_alloc(sdtimer_callback);
+  timer_set(sd_timer,2000);
+  timer_t netstat_timer = timer_alloc(netstat_callback);
+  timer_set(netstat_timer,1);
+  
 //   timer_t rtc_timer = timer_alloc(tcallback);
 //   timer_set(rtc_timer,1000);
   
 //   uint8_t ret = dhcp_start(dhcpcallback);
 //   DEBUG_PRINT("dhcp start ret=  %d\n",ret);
-  tp_get_time(tpcallback);
-//   udp_socket_t udps;
-//   udps = udp_socket_alloc(12348,udp_callback);
+//   tp_get_time(tpcallback);
+  udp_socket_t udps;
+  udps = udp_socket_alloc(12348,udp_callback);
   
   for(;;)
   {
+    
   }
   return 0;
 }
 
-SIGNAL(SIG_OUTPUT_COMPARE0)
+ISR(TIMER0_COMP_vect)
 {
   //1ms
   timer_tick();
 }
 
-SIGNAL(SIG_INTERRUPT7)
+ISR(INT7_vect)
 {
-  DEBUG_PRINT_COLOR(B_IYELLOW,"ETH_INT\n");
   while(ethernet_handle_packet());
 }
 
 ISR(INT6_vect)
 {
-  sd_interrupt();
-}
-
-void udp_callback(udp_socket_t socket,uint8_t * data,uint16_t len)
-{
-    uint16_t i;
-    uint8_t * tx_buffer = udp_get_buffer();
-    DEBUG_PRINT("Socket: %d\nResponse:\n",socket);
-    for(i=0;i<len;i++)
-    {
-      data[i] -= 0x20;
-      tx_buffer[i] = data[i];
-      DEBUG_PRINT("%c",data[i]);
-    }
-    DEBUG_PRINT("\n");
-    udp_send(socket,len);
+//   sd_interrupt();
 }

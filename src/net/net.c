@@ -75,4 +75,3 @@ uint16_t net_get_checksum(uint16_t checksum,const uint8_t * data,uint16_t len,ui
     return (uint16_t)sum;
 #endif
 }
-

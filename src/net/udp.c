@@ -54,6 +54,24 @@ udp_socket_t 	udp_socket_num(struct udp_socket * socket);
 uint8_t 	udp_socket_is_valid(udp_socket_t socket);
 uint16_t 	udp_get_free_local_port(void);
 
+void udp_print_stat(FILE * fh)
+{
+  struct udp_socket * socket;
+  FOREACH_UDP_SOCKET(socket)
+  {
+    if(socket->callback!=0)
+    {
+      fprintf_P(fh,PSTR("%-5S "),PSTR("udp"));
+      fprintf(fh,"%5u %5u ",0,0);
+      fprintf(fh,"%-21s ",ip_addr_port_str(ip_get_addr(),socket->port_local));
+      fprintf(fh,"%-21s ",ip_addr_port_str((const ip_address*)&socket->ip_remote,socket->port_remote));
+      if(socket->port_remote)
+	fprintf_P(fh,PSTR("Connected"));
+      fprintf_P(fh,PSTR("\n"));
+    }
+  }
+}
+
 uint8_t udp_init(void)
 {
     memset(udp_sockets,0,sizeof(udp_sockets));

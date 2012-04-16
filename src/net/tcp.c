@@ -13,11 +13,12 @@
 #include "../sys/timer.h"
 #include "../util/fifo.h"
 
-// #define DEBUG_MODE
+#define DEBUG_MODE
 #include "../debug.h"
 
 #include <string.h>
 #include <stdint.h>
+#include <avr/pgmspace.h>
 
 /* TCP Flags:
 * URG:  Urgent Pointer field significant
@@ -112,6 +113,36 @@ enum tcp_state
     tcp_state_start_close
 };
 
+static const char tcp_state_char_1[] PROGMEM = "LISTEN";
+static const char tcp_state_char_2[] PROGMEM = "SYN-SENT";
+static const char tcp_state_char_3[] PROGMEM = "SYN-RECV";
+static const char tcp_state_char_4[] PROGMEM = "ESTABLISHED";
+static const char tcp_state_char_5[] PROGMEM = "FIN-WAIT-1";
+static const char tcp_state_char_6[] PROGMEM = "FIN-WAIT-2";
+static const char tcp_state_char_7[] PROGMEM = "CLOSE-WAIT";
+static const char tcp_state_char_8[] PROGMEM = "CLOSING";
+static const char tcp_state_char_9[] PROGMEM = "LAST-ACK";
+static const char tcp_state_char_10[] PROGMEM = "TIME-WAIT";
+static const char tcp_state_char_11[] PROGMEM = "CLOSED";
+
+#define TCP_STATE_NCHARS	12
+
+static const char * tcp_state_chars[] = {
+  tcp_state_char_1,
+  tcp_state_char_2,
+  tcp_state_char_3,
+  tcp_state_char_4,
+  tcp_state_char_5,
+  tcp_state_char_6,
+  tcp_state_char_7,
+  tcp_state_char_8,
+  tcp_state_char_9,
+  tcp_state_char_10,
+  tcp_state_char_11,
+};
+
+
+
 /* TCP Connection State Diagram:
 *
 *                              +---------+ ---------\      active OPEN
@@ -202,6 +233,22 @@ static uint8_t tcp_tcb_alloc_fifo(struct tcp_tcb * tcb);
 static void tcp_tcb_free_fifo(struct tcp_tcb * tcb);
 static void tcp_tcb_close(struct tcp_tcb * tcb,tcp_socket_t socket,enum tcp_event event);
 
+void tcp_print_stat(FILE * fh)
+{
+  struct tcp_tcb * tcb;
+  FOREACH_TCB(tcb)
+  {
+    if(tcb->state != tcp_state_unused)
+    {
+      fprintf_P(fh,PSTR("%-5S "),PSTR("tcp"));
+      fprintf(fh,"%5u %5u ",fifo_length(tcb->fifo_rx),fifo_length(tcb->fifo_rx));
+      fprintf(fh,"%-21s ",ip_addr_port_str(ip_get_addr(),tcb->port_local));
+      fprintf(fh,"%-21s ",ip_addr_port_str((const ip_address*)&tcb->ip_remote,tcb->port_remote));
+      if(tcb->state < 12)
+	fprintf_P(fh,PSTR("%S \n"),tcp_state_chars[tcb->state-1]);
+    }
+  }
+}
 
 uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,const struct tcp_header * tcp,uint16_t length)
 {

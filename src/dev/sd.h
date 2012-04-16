@@ -29,8 +29,9 @@ void sd_interrupt(void);
 uint8_t sd_status(void);
 uint16_t sd_errno(void);
 
-#define SD_STATUS_INSERTED	1
-#define SD_STATUS_WP		2
+#define SD_STATUS_INSERTED	0
+#define SD_STATUS_WP		1
+#define SD_STATUS_INITIALIZED	2
 
 #define SD_ERR_CALLBACK		(1<<0)
 #define SD_ERR_INIT		(1<<1)

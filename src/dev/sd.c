@@ -14,7 +14,7 @@
 
 #include <string.h>
 #include <avr/pgmspace.h>
-
+#include <util/delay.h>
 #define SD_CS_ACTIVE()		(SD_CS_PORT&=~(1<<SD_CS))
 #define SD_CS_INACTIVE()	(SD_CS_PORT|=(1<<SD_CS))
 
@@ -39,35 +39,35 @@
 
 
 
-#define SD_GET_CSD_STRUCTURE(sdc)		(((sdc)->CSD.field[0]>>6)&3)
-#define SD_GET_CSD_TAAC(sdc)			((sdc)->CSD.field[1])
-#define SD_GET_CSD_NSAC(sdc)			((sdc)->CSD.field[2])
-#define SD_GET_CSD_TRANS_SPEED(sdc)		((sdc)->CSD.field[3])
-#define SD_GET_CSD_CCC(sdc)			(((sdc)->CSD.field[4]<<4)|((sdc)->CSD.field[5]>>4))
-#define SD_GET_CSD_READ_BL_LEN(sdc)		((sdc)->CSD.field[5]&0xf)
-#define SD_GET_CSD_READ_BL_PARTIAL(sdc)		(((sdc)->CSD.field[6]>>7)&0x1)
-#define SD_GET_CSD_WRITE_BLK_MISSALIGN(sdc)	(((sdc)->CSD.field[6]>>6)&0x1)
-#define SD_GET_CSD_READ_BLK_MISSALIGN(sdc)	(((sdc)->CSD.field[6]>>5)&0x1)
-#define SD_GET_CSD_DSR_IMP(sdc)			(((sdc)->CSD.field[6]>>4)&0x1)
-#define SD_GET_CSD_C_SIZE(sdc)			(((uint16_t)(sdc->CSD.field[6]&0x3)<<10)|(((uint16_t)sdc->CSD.field[7])<<2)|(sdc->CSD.field[8]&0x3))	
-#define SD_GET_CSD_VDD_R_CURR_MIN(sdc)		(((sdc)->CSD.field[8]>>3)&0x7)
-#define SD_GET_CSD_VDD_R_CURR_MAX(sdc)		(((sdc)->CSD.field[8])&0x7)
-#define SD_GET_CSD_VDD_W_CURR_MIN(sdc)		(((sdc)->CSD.field[9]>>5)&0x7)
-#define SD_GET_CSD_VDD_W_CURR_MAX(sdc)		(((sdc)->CSD.field[9]>>2)&0x7)
-#define SD_GET_CSD_C_SIZE_MULT(sdc)		((((sdc)->CSD.field[9]&0x3)<<1)|((sdc)->CSD.field[10]>>7))
-#define SD_GET_CSD_ERASE_BLK_EN(sdc)		(((sdc)->CSD.field[10]>>6)&0x1)
-#define SD_GET_CSD_SECTOR_SIZE(sdc)		((((sdc)->CSD.field[10]&0x3f)<<1)|((sdc)->CSD.field[11]>>7))
-#define SD_GET_CSD_WP_GRP_SIZE(sdc)		(((sdc)->CSD.field[11]&0x7f))
-#define SD_GET_CSD_WP_GRP_ENABLE(sdc)		(((sdc)->CSD.field[12]>>7)&0x1)
-#define SD_GET_CSD_R2W_FACTOR(sdc)		(((sdc)->CSD.field[12]>>2)&0x7)
-#define SD_GET_CSD_WRITE_BL_LEN(sdc)		((((sdc)->CSD.field[12]&0x3)<<2)|(((sdc)->CSD.field[13]>>6)&0x3))
-#define SD_GET_CSD_WRITE_BL_PARTIAL(sdc)	(((sdc)->CSD.field[13]>>5)&0x1)
-#define SD_GET_CSD_FILE_FORMAT_GRP(sdc)		(((sdc)->CSD.field[14]>>7)&0x1)
-#define SD_GET_CSD_COPY(sdc)			(((sdc)->CSD.field[14]>>6)&0x1)
-#define SD_GET_CSD_PERM_WRITE_PROTECT(sdc)	(((sdc)->CSD.field[14]>>5)&0x1)
-#define SD_GET_CSD_TMP_WRITE_PROTECT(sdc)	(((sdc)->CSD.field[14]>>4)&0x1)
-#define SD_GET_CSD_FILE_FORMAT(sdc)		(((sdc)->CSD.field[14]>>2)&0x3)
-#define SD_GET_CSD_CRC(sdc)			((sdc)->CSD.field[15]>>1)
+#define SD_GET_CSD_STRUCTURE(csd)		(((csd).field[0]>>6)&3)
+#define SD_GET_CSD_TAAC(csd)			((csd).field[1])
+#define SD_GET_CSD_NSAC(csd)			((csd).field[2])
+#define SD_GET_CSD_TRANS_SPEED(csd)		((csd).field[3])
+#define SD_GET_CSD_CCC(csd)			(((csd).field[4]<<4)|((csd).field[5]>>4))
+#define SD_GET_CSD_READ_BL_LEN(csd)		((csd).field[5]&0xf)
+#define SD_GET_CSD_READ_BL_PARTIAL(csd)		(((csd).field[6]>>7)&0x1)
+#define SD_GET_CSD_WRITE_BLK_MISSALIGN(csd)	(((csd).field[6]>>6)&0x1)
+#define SD_GET_CSD_READ_BLK_MISSALIGN(csd)	(((csd).field[6]>>5)&0x1)
+#define SD_GET_CSD_DSR_IMP(csd)			(((csd).field[6]>>4)&0x1)
+#define SD_GET_CSD_C_SIZE(csd)			(((uint16_t)(csd.field[6]&0x3)<<10)|(((uint16_t)csd.field[7])<<2)|(csd.field[8]&0x3))	
+#define SD_GET_CSD_VDD_R_CURR_MIN(csd)		(((csd).field[8]>>3)&0x7)
+#define SD_GET_CSD_VDD_R_CURR_MAX(csd)		(((csd).field[8])&0x7)
+#define SD_GET_CSD_VDD_W_CURR_MIN(csd)		(((csd).field[9]>>5)&0x7)
+#define SD_GET_CSD_VDD_W_CURR_MAX(csd)		(((csd).field[9]>>2)&0x7)
+#define SD_GET_CSD_C_SIZE_MULT(csd)		((((csd).field[9]&0x3)<<1)|((csd).field[10]>>7))
+#define SD_GET_CSD_ERASE_BLK_EN(csd)		(((csd).field[10]>>6)&0x1)
+#define SD_GET_CSD_SECTOR_SIZE(csd)		((((csd).field[10]&0x3f)<<1)|((csd).field[11]>>7))
+#define SD_GET_CSD_WP_GRP_SIZE(csd)		(((csd).field[11]&0x7f))
+#define SD_GET_CSD_WP_GRP_ENABLE(csd)		(((csd).field[12]>>7)&0x1)
+#define SD_GET_CSD_R2W_FACTOR(csd)		(((csd).field[12]>>2)&0x7)
+#define SD_GET_CSD_WRITE_BL_LEN(csd)		((((csd).field[12]&0x3)<<2)|(((csd).field[13]>>6)&0x3))
+#define SD_GET_CSD_WRITE_BL_PARTIAL(csd)	(((csd).field[13]>>5)&0x1)
+#define SD_GET_CSD_FILE_FORMAT_GRP(csd)		(((csd).field[14]>>7)&0x1)
+#define SD_GET_CSD_COPY(csd)			(((csd).field[14]>>6)&0x1)
+#define SD_GET_CSD_PERM_WRITE_PROTECT(csd)	(((csd).field[14]>>5)&0x1)
+#define SD_GET_CSD_TMP_WRITE_PROTECT(csd)	(((csd).field[14]>>4)&0x1)
+#define SD_GET_CSD_FILE_FORMAT(csd)		(((csd).field[14]>>2)&0x3)
+#define SD_GET_CSD_CRC(csd)			((csd).field[15]>>1)
 
 struct sd_scr
 {
@@ -93,7 +93,8 @@ enum
   sderr_ReadCSDCID_BadToken,
   sderr_CardReadCmd_Timeout,
   sderr_ReadBlock_Timeout,
-  sderr_ReadBlock_CRC
+  sderr_ReadBlock_CRC,
+  sderr_CardNotInserted
 } sd_err;
 
 
@@ -224,7 +225,11 @@ static uint8_t sd_get_cmd(uint8_t sd_cmd);
 static uint8_t sd_get_crc(uint8_t sd_cmd);
 static uint8_t sd_get_resp(uint8_t sd_cmd);
 static uint8_t sd_get_tdata(uint8_t sd_cmd);
-
+void print_csd(void);
+void print_cid(void);
+uint8_t	sd_read_reg(uint8_t cmd);
+#define sd_read_csd()	sd_read_reg(sdcmd_SEND_CSD)
+#define sd_read_cid()	sd_read_reg(sdcmd_SEND_CID)
 uint16_t sd_errno(void)
 {
     return sd.errno;
@@ -237,17 +242,18 @@ uint8_t sd_init(sd_callback callback)
   /* Init IO Ports*/
   /* SD CS output*/
   SD_CS_DDR |= (1<<SD_CS);
-  
-  /* SD DET input, no pull-up*/
-  SD_DETECT_DDR &= ~(1<<SD_DETECT);
-  SD_DETECT_PORT &= ~(1<<SD_DETECT);
-  
-  /* SD WP input, no pull-up*/
-  SD_WP_DDR &= ~(1<<SD_WP);
-  SD_WP_PORT &= ~(1<<SD_WP);
-  
   /*Deselect SD*/
   SD_CS_INACTIVE();
+  
+  /* SD DET input*/
+  SD_DETECT_DDR &= ~(1<<SD_DETECT);
+  SD_DETECT_PORT |= (1<<SD_DETECT);
+  
+  /* SD WP input*/
+  SD_WP_DDR &= ~(1<<SD_WP);
+  SD_WP_PORT |= (1<<SD_WP);
+  
+
   
   /* Clear sd struct */
   memset(&sd,0,sizeof(sd));
@@ -265,7 +271,7 @@ void sd_interrupt(void)
   sd.errno=0;
   if(SD_DETECT_PIN & (1<<SD_DETECT))
   {
-    sd.status &= ~(1<<SD_STATUS_INSERTED) & ~(1<<SD_STATUS_WP);
+    sd.status = 0;
     sd.callback(sd_event_removed);
   }
   else
@@ -284,77 +290,75 @@ void sd_interrupt(void)
     if(ret)
     {
       /*TODO*/
-      sd.errno = SD_ERR_INIT;
+      sd.errno = ((uint16_t)ret<<8)|SD_ERR_INIT;
       sd.callback(sd_event_error);
     }
     else
+    {
       sd.callback(sd_event_initialized);
+      print_cid();
+      print_csd();
+    }
   }
 }
 
 uint8_t sd_init_card(void)
 {
-//   uint32_t i;
-//   uint8_t retval;
-//   g_sd_context.state = SD_STATE_INACTIVE;
-//   sd_spi_init();
-//   SD_SPI_ENABLE();
-//   SD_CS_INACTIVE();
-//   _delay_ms(100);
-//   sd_delay(10);
-//     _delay_ms(10); //10
-//     retval = sd_send_cmd(sdcmd_GO_IDLE_STATE,0x0);
-//     if(retval != 0)
-//     {
-//      goto init_error;
-//     }
-// //     DEBUG(fprintf_P(fRS,PSTR("GO_IDLE_STATE R1 = %x\n"),sdc->R1));
-//     if(g_sd_context.R1 != 0x01)
-//     {
-// 	retval = sderr_CardInit_NotInIdleState;
-// 	goto init_error;
-//     }
-//     i = SD_IDLE_WAIT_MAX;
-//     do
-//     {
-// // 	retval = sd_send_cmd(sdc,sdcmd_APP_CMD,0x00);
-// 	retval = sd_send_cmd(sdcmd_SEND_OP_COND,0x00);
-// 	i--;
-// 	if(retval)
-// 	  i = 0;
-//     }while((g_sd_context.R1 && 0x01) != 0 && i > 0);
-// //     DEBUG_PRINT("sdcmd_APP_CMD retval = %x, R1 = %x\n",retval,sdc->R1);
-//     //     DEBUG(fprintf_P(fRS,PSTR("SEND_OP_COND R1 = %x\n"),sdc->R1));  
-//     if(i==0)
-//     {
-// 	retval = sderr_CardInit_Timeout;
-// 	goto init_error;
-//     }
-//     i = SD_IDLE_WAIT_MAX;
-//     do
-//     {
-// 	retval = sd_send_cmd(sdcmd_READ_OCR,0x0);
-// 	i--;
-// 	if(retval)
-// 	  i=0;
-//     }while(((g_sd_context.R1 && 0x01) != 0  && i > 0));
-// //     DEBUG(fprintf_P(fRS,PSTR("SEND_OP_COND R1 = %x\n"),sdc->R1));  
-//     if(i==0)
-//     {
-// 	retval = sderr_CardInit_Timeout;
-// 	goto init_error;
-//     }    
-//     if(retval)
-//       retval = sderr_CardInit_ReadOCR;
-//     retval = sd_read_cid();
-//     retval = sd_read_csd();
-//     if(retval)
-//       goto init_error;
-//     g_sd_context.state = SD_STATE_ACTIVE;
-// init_error:
-//     SD_CS_INACTIVE();
-//     return retval;
-  return 0;
+  if((sd.status&(1<<SD_STATUS_INSERTED))==0)
+    return sderr_CardNotInserted;
+  memset(&sd.cid,0,sizeof(sd.cid));
+  memset(&sd.csd,0,sizeof(sd.csd));
+  uint32_t i;
+  uint8_t retval;
+  sd_enable();
+  _delay_ms(100);
+  sd_delay(10);
+  _delay_ms(10); //10
+  retval = sd_send_cmd(sdcmd_GO_IDLE_STATE,0x0);
+  if(retval != 0)
+    goto init_error;
+  if(sd.R1 != 0x01)
+  {
+    retval = sderr_CardInit_NotInIdleState;
+    goto init_error;
+  }
+  i = SD_IDLE_WAIT_MAX;
+  do
+  {
+//     retval = sd_send_cmd(sdc,sdcmd_APP_CMD,0x00);
+    retval = sd_send_cmd(sdcmd_SEND_OP_COND,0x00);
+    i--;
+    if(retval)
+      i = 0;
+  }while((sd.R1 && 0x01) != 0 && i > 0);
+  if(i==0)
+  {
+    retval = sderr_CardInit_Timeout;
+    goto init_error;
+  }
+  i = SD_IDLE_WAIT_MAX;
+  do
+  {
+    retval = sd_send_cmd(sdcmd_READ_OCR,0x0);
+    i--;
+    if(retval)
+      i=0;
+  }while(((sd.R1 && 0x01) != 0  && i > 0));
+  if(i==0)
+  {
+    retval = sderr_CardInit_Timeout;
+    goto init_error;
+  }
+  if(retval)
+    retval = sderr_CardInit_ReadOCR;
+  retval = sd_read_cid();
+  retval = sd_read_csd();
+  if(retval)
+    goto init_error;
+  sd.status |= (1<<SD_STATUS_INITIALIZED);
+init_error:
+  sd_disable();
+  return retval;
 }
 uint8_t sd_get_cmd(uint8_t sd_cmd)
 {
@@ -376,15 +380,11 @@ uint8_t sd_send_cmd(uint8_t cmd,uint32_t addr)
 {
     uint8_t resp_type;
     uint8_t resp;
-    uint8_t i;
     uint32_t timeout;
     resp_type = sd_get_resp(cmd);
     SD_CS_ACTIVE();
     spi_write(sd_get_cmd(cmd));
-    spi_write(addr>>24);
-    spi_write(addr>>16);
-    spi_write(addr>>8);
-    spi_write(addr);
+    spi_write_block((uint8_t*)&addr,4);
     spi_write(sd_get_crc(cmd));
     timeout = SD_CMD_RTX;
     do
@@ -408,8 +408,7 @@ uint8_t sd_send_cmd(uint8_t cmd,uint32_t addr)
 	break;
       case SD_R3:
 	sd.OCR[0] = resp;
-	for(i=1;i<4;i++)
-	  sd.OCR[i] = spi_read(0xff);
+	spi_read_block(&sd.OCR[1],3,0xff);
 	sd.R1 = spi_read(0xff);
 	break;
     }
@@ -417,6 +416,95 @@ uint8_t sd_send_cmd(uint8_t cmd,uint32_t addr)
     return 0;
 }
 
+uint8_t	sd_read_reg(uint8_t cmd)
+{
+    uint8_t retval;
+    uint32_t rtx;
+    uint8_t * ret;
+    rtx = SD_IDLE_WAIT_MAX;
+    do
+    {
+      retval = sd_send_cmd(cmd,0x00);
+      rtx--;
+    }while(sd.R1 != 0 && rtx > 0);
+    if(retval)
+      return sderr_ReadCSDCID;
+    rtx = SD_READ_CSDCID_RTX;
+    SD_CS_ACTIVE();
+    do
+    {
+      retval = spi_read(0xff);
+      rtx--;
+    }while(retval == SDC_FLOATING_BUS && rtx > 0);
+    if(rtx==0)
+      return sderr_ReadCSDCID_Timeout;
+    if(retval != 0xFE)
+      return sderr_ReadCSDCID_BadToken;
+    if(cmd == sdcmd_SEND_CID)
+      ret = (uint8_t*)&sd.cid;
+    else
+      ret = (uint8_t*)&sd.csd;
+    spi_read_block(ret,16,0xff);
+    sd_delay(2);
+    return 0;
+}
+uint8_t sd_read_block(uint32_t addr)
+{
+//     uint8_t retval;
+//     uint16_t i;	
+// #if SD_CRC_SUPPORT    
+//     uint16_t	crc;
+// #endif
+//     if((sd.status&SD_STATUS_INITIALIZED)==0)
+//     {
+// 	retval = sderr_Inactive;
+// 	goto sd_read_blk_err;
+//     }
+//     retval = sd_send_cmd(sdcmd_READ_SNGLE_BLOCK,addr);
+//     if(retval)
+//      goto sd_read_blk_err;
+//     i = SD_READ_BLK_RTX;
+//     SD_CS_ACTIVE();
+//     do
+//     {
+//       retval = spi_read(0xff);
+//       i--;
+//     }while((retval != SDC_READ_TOKEN) && (i>0));
+//     sd.R1 = retval;
+//     if(i==0)
+//     {
+// 	retval = sderr_ReadBlock_Timeout;
+// 	goto sd_read_blk_err;
+//     }
+//     for(i=0;i<512;i++)
+//       sd.block[i] = spi_read(0xff);
+// #if SD_CRC_SUPPORT
+//     crc = sd_spi_read();
+//     crc = crc<<8;
+//     crc = crc | sp_spi_read();
+//     if(sd_check_crc(crc))
+//     {
+// 	retval = sderr_ReadBlock_CRC;
+// 	g_sd_context.block_state = SD_BLOCK_STATE_INVALID;
+//     }
+//     else
+//     {
+// 	retval = 0;
+// 	g_sd_context.block_addr = addr;
+// 	g_sd_context.block_state = SD_BLOCK_STATE_VALID;
+//     }
+// #else
+//     sd_spi_read();
+//     sd_spi_read();
+//     g_sd_context.block_addr = addr;
+//     g_sd_context.block_state = SD_BLOCK_STATE_VALID;
+//     retval = 0;
+// #endif
+// sd_read_blk_err:
+//     sd_delay(2);
+//     return retval;
+return 0;
+}
 uint8_t sd_status(void)
 {
   return sd.status;
@@ -424,14 +512,12 @@ uint8_t sd_status(void)
 
 void sd_enable(void)
 {
-  SPI_ENABLE();
   SD_CS_ACTIVE();
 }
 
 void sd_disable(void)
 {
   SD_CS_INACTIVE();
-  SPI_DISABLE();
 }
 
 void sd_delay(uint8_t n)
@@ -439,4 +525,48 @@ void sd_delay(uint8_t n)
     SD_CS_INACTIVE();
     while(n--)
       spi_write(0xff);
+}
+
+void print_cid(void)
+{
+    DEBUG_PRINT("MID = %02x\n",sd.cid.MID);
+    DEBUG_PRINT("OID = %c%c\n",sd.cid.OID[0],sd.cid.OID[1]);
+    DEBUG_PRINT("Product Revision = %02x\n",sd.cid.MID);
+    DEBUG_PRINT("PSN = %02x%02x%02x%02x\n",sd.cid.PSN[0],sd.cid.PSN[1],sd.cid.PSN[2],sd.cid.PSN[3]);
+    DEBUG_PRINT("PNM = %c%c%c%c%c\n",sd.cid.PNM[0],sd.cid.PNM[1],sd.cid.PNM[2],sd.cid.PNM[3],sd.cid.PNM[4]);
+    DEBUG_PRINT("MDT = %d.20%d%d\n",(sd.cid.MDT>>8)&0xf,(sd.cid.MDT)&0xf,(sd.cid.MDT>>4)&0xf);
+}
+
+void print_csd(void)
+{
+    DEBUG_PRINT("CSD:\n");
+    DEBUG_PRINT("CSD structure: %x\n",SD_GET_CSD_STRUCTURE(sd.csd));
+    DEBUG_PRINT("TAAC: %x\n",SD_GET_CSD_TAAC(sd.csd));
+    DEBUG_PRINT("NSAC: %x\n",SD_GET_CSD_NSAC(sd.csd));
+    DEBUG_PRINT("TRANS_SPEED: %x\n",SD_GET_CSD_TRANS_SPEED(sd.csd));
+    DEBUG_PRINT("CCC: %x\n",SD_GET_CSD_CCC(sd.csd));
+    DEBUG_PRINT("READ_BL_LEN: %x\n",SD_GET_CSD_READ_BL_LEN(sd.csd));
+    DEBUG_PRINT("READ_BL_PARTIAL: %x\n",SD_GET_CSD_READ_BL_PARTIAL(sd.csd));
+    DEBUG_PRINT("WRITE_BLK_MISSALIGN: %x\n",SD_GET_CSD_WRITE_BLK_MISSALIGN(sd.csd));
+    DEBUG_PRINT("READ_BLK_MISSALIGN: %x\n",SD_GET_CSD_READ_BLK_MISSALIGN(sd.csd));
+    DEBUG_PRINT("DSR_IMP: %x\n",SD_GET_CSD_DSR_IMP(sd.csd));
+    DEBUG_PRINT("C_SIZE: %x\n",SD_GET_CSD_C_SIZE(sd.csd));
+    DEBUG_PRINT("VDD_R_CURR_MIN: %x\n",SD_GET_CSD_VDD_R_CURR_MIN(sd.csd));
+    DEBUG_PRINT("VDD_R_CURR_MAX: %x\n",SD_GET_CSD_VDD_R_CURR_MAX(sd.csd));
+    DEBUG_PRINT("VDD_W_CURR_MIN: %x\n",SD_GET_CSD_VDD_W_CURR_MIN(sd.csd));
+    DEBUG_PRINT("VDD_W_CURR_MAX: %x\n",SD_GET_CSD_VDD_W_CURR_MAX(sd.csd));
+    DEBUG_PRINT("C_SIZE_MULT: %x\n",SD_GET_CSD_C_SIZE_MULT(sd.csd));
+    DEBUG_PRINT("ERASE_BLK_EN: %x\n",SD_GET_CSD_ERASE_BLK_EN(sd.csd));
+    DEBUG_PRINT("SECTOR_SIZE: %x\n",SD_GET_CSD_SECTOR_SIZE(sd.csd));
+    DEBUG_PRINT("WP_GRP_SIZE: %x\n",SD_GET_CSD_WP_GRP_SIZE(sd.csd));
+    DEBUG_PRINT("WP_GRP_ENABLE: %x\n",SD_GET_CSD_WP_GRP_ENABLE(sd.csd));
+    DEBUG_PRINT("R2W_FACTOR: %x\n",SD_GET_CSD_R2W_FACTOR(sd.csd));
+    DEBUG_PRINT("WRITE_BL_LEN: %x\n",SD_GET_CSD_WRITE_BL_LEN(sd.csd));
+    DEBUG_PRINT("WRITE_BL_PARTIAL: %x\n",SD_GET_CSD_WRITE_BL_PARTIAL(sd.csd));
+    DEBUG_PRINT("FILE_FORMAT_GRP: %x\n",SD_GET_CSD_FILE_FORMAT_GRP(sd.csd));
+    DEBUG_PRINT("COPY: %x\n",SD_GET_CSD_COPY(sd.csd));
+    DEBUG_PRINT("PERM_WRITE_PROTECT: %x\n",SD_GET_CSD_PERM_WRITE_PROTECT(sd.csd));
+    DEBUG_PRINT("TMP_WRITE_PROTECT: %x\n",SD_GET_CSD_TMP_WRITE_PROTECT(sd.csd));
+    DEBUG_PRINT("FILE_FORMAT: %x\n",SD_GET_CSD_FILE_FORMAT(sd.csd));
+    DEBUG_PRINT("CRC: %x\n",SD_GET_CSD_CRC(sd.csd));   
 }
