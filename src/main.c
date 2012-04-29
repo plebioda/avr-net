@@ -30,6 +30,7 @@
 #include "sys/timer.h"
 #include "sys/rtc.h"
 #include "sys/partition.h"
+#include "sys/fat.h"
 
 #include "net/hal.h"
 #include "net/ethernet.h"
@@ -163,9 +164,22 @@ void print_partition(struct partition * p)
     DEBUG_PRINT("Length: %d\n",(p->length));
     DEBUG_CLR_COLOR();
 }
-
+void print_fat_header(struct fat_header * fh)
+{
+    DEBUG_PRINT_COLOR(B_IYELLOW,"Fat header: \n");
+    DEBUG_SET_COLOR(IYELLOW);
+    DEBUG_PRINT("Size: %lx\n",fh->size);
+    DEBUG_PRINT("Fat offset: %lx\n",fh->fat_offset);
+    DEBUG_PRINT("Fat size: %lx\n",fh->fat_size);
+    DEBUG_PRINT("Sector size: %x\n",fh->sector_size);
+    DEBUG_PRINT("Cluster size: %x\n",fh->cluster_size);
+    DEBUG_PRINT("Root dir offset: %lx\n",fh->root_dir_offset);
+    DEBUG_PRINT("Cluster 0 offset: %lx\n",fh->cluster_zero_offset);
+    DEBUG_CLR_COLOR();
+}
 struct partition partition;
-
+struct fat_fs fatfs;
+struct fat_dir_entry fat_dir_entry;
 int main(void)
 {
   /* constants */
@@ -179,8 +193,8 @@ int main(void)
   PORTE |= (1<<7);
   
   /* init interrupts */
-  interrupt_timer0_init();
-  interrupt_exint_init();
+//   interrupt_timer0_init();
+//   interrupt_exint_init();
   
   /* init arch */
   uart_init();
@@ -191,22 +205,22 @@ int main(void)
   fifo_init();
   
   /* init dev */
-  ds1338_init();
-  enc28j60_init((uint8_t*)&my_mac); 
+//   ds1338_init();
+//   enc28j60_init((uint8_t*)&my_mac); 
   
   /* init sys */
-  timer_init();
-  rtc_init((0<<RTC_FORMAT_12_24)|(0<<RTC_FORMAT_AM_PM));
+//   timer_init();
+//   rtc_init((0<<RTC_FORMAT_12_24)|(0<<RTC_FORMAT_AM_PM));
   
   /* init net */
-  ethernet_init(&my_mac);
-  ip_init(0,0,0);
-  arp_init();
-  udp_init();
-  tcp_init();
+//   ethernet_init(&my_mac);
+//   ip_init(0,0,0);
+//   arp_init();
+//   udp_init();
+//   tcp_init();
   
-  uint8_t ret = echod_start(echocallback);
-  DEBUG_PRINT_COLOR(B_IRED,"echo ret=%d\n",ret);
+//   uint8_t ret = echod_start(echocallback);
+//   DEBUG_PRINT_COLOR(B_IRED,"echo ret=%d\n",ret);
   /* global interrupt enable */
   sei();
   
@@ -215,7 +229,7 @@ int main(void)
     
   sd_init(sdcallback);
   sd_interrupt();
-  
+
   
   
 //   timer_t rtc_timer = timer_alloc(tcallback);
@@ -224,14 +238,20 @@ int main(void)
 //   uint8_t ret = dhcp_start(dhcpcallback);
 //   DEBUG_PRINT("dhcp start ret=  %d\n",ret);
 //   tp_get_time(tpcallback);
-  udp_socket_t udps;
-  udps = udp_socket_alloc(12348,udp_callback);
+//   udp_socket_t udps;
+//   udps = udp_socket_alloc(12348,udp_callback);
 
+
+  
+//   DEBUG_PRINT("Hello ATMega128!\n");
+//   DEBUG_PRINT("ENC28J60 rev %d\n",enc28j60_get_revision());
   partition_open(&partition,sd_read,0,0);
   print_partition(&partition);
   
-  DEBUG_PRINT("Hello ATMega128!\n");
-  DEBUG_PRINT("ENC28J60 rev %d\n",enc28j60_get_revision());
+  fat_open(&fatfs,&partition);
+  print_fat_header(&fatfs.header);
+  
+  fat_get_dir_entry(&fatfs,&fat_dir_entry,"/ROOT/FOO/..");    
 
   for(;;)
   {

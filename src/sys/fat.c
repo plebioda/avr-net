@@ -21,8 +21,7 @@ uint8_t	fat_close(struct fat_fs * fs)
 {
     if(!fs)
       return 0;
-    /* !!!!!!!!!!!!!!!!!!!!!!!!!!! WTF ????????????*/
-    fs->partition = (struct partition*)1;
+    fs->partition = 0;
     return 1;
 }
 
@@ -132,13 +131,14 @@ uint8_t fat_get_dir_entry(struct fat_fs * fs,struct fat_dir_entry * dir_entry,co
       path++;
     }
     struct fat_dir dir;
-
+    
     while(1)
     {
 	DEBUG_PRINT("Path = %s\n",path);
 	if(path[0] == '\0')
 	  return 1;
 	const char * sub_path = strchr(path,'/');
+	DEBUG_PRINT("subPath = %s\n",sub_path);
 	uint8_t length_to_sep;
 	if(sub_path)
 	{
@@ -152,13 +152,14 @@ uint8_t fat_get_dir_entry(struct fat_fs * fs,struct fat_dir_entry * dir_entry,co
 	    length_to_sep = strlen(path);
 	    sub_path = path + length_to_sep;
 	}
-	
-	if(!fat_dir_open(&dir,dir_entry))
-	  return 0;
 	DEBUG_PRINT("Opened dir %s\n",dir_entry->filename);
 	DEBUG_PRINT("Dir entry first_cluster: %x\n",dir_entry->first_cluster);
 	DEBUG_PRINT("Dir entry size: %x\n",dir_entry->file_size);
 	DEBUG_PRINT("Dir entry offset: %lx\n",dir_entry->entry_offset);
+	DEBUG_PRINT("Dir entry name: %s\n",dir_entry->filename);
+	DEBUG_PRINT("Dire entry attr = %x\n",dir_entry->attributes);
+	if(!fat_dir_open(&dir,dir_entry))
+	  return 0;
 	while(fat_read_dir(&dir,dir_entry))
 	{
 	    DEBUG_PRINT("File name = %s, length = %d\n",dir_entry->filename,strlen(dir_entry->filename));
@@ -199,8 +200,10 @@ uint8_t fat_dir_close(struct fat_dir * fat_dir)
 
 uint8_t fat_dir_open(struct fat_dir * fat_dir,struct fat_dir_entry * dir_entry)
 {
+    DEBUG_PRINT("fat_dir=%x dir_entry=%x,attr=%x\n",fat_dir,dir_entry,dir_entry->attributes);
     if(!fat_dir || !dir_entry || !(dir_entry->attributes == FAT_ATTR_DIR || dir_entry->attributes == FAT_ATTR_VOLUME))
       return 0;
+    DEBUG_PRINT("here\n");
     fat_dir->fs = dir_entry->fs;
     memcpy(&fat_dir->dir_entry,dir_entry,sizeof(*dir_entry));
     fat_dir->current_cluster = dir_entry->first_cluster;

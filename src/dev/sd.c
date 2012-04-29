@@ -297,6 +297,7 @@ void sd_interrupt(void)
       sd.callback(sd_event_inserted);
     }
     uint8_t ret = sd_init_card();
+      sd_send_cmd(sdcmd_SEND_STATUS,0x00);
     if(ret)
     {
       sd.errno = ((uint16_t)ret<<8)|SD_ERR_INIT;
@@ -367,6 +368,7 @@ uint8_t sd_init_card(void)
   sd.status |= (1<<SD_STATUS_INITIALIZED);
 init_error:
   sd_disable();
+  sd_delay(2);
   return retval;
 }
 uint8_t sd_get_cmd(uint8_t sd_cmd)
@@ -464,7 +466,7 @@ uint8_t sd_read_block(uint32_t addr)
 #if SD_CRC_SUPPORT    
   uint16_t	crc;
 #endif
-  if((sd.status&SD_STATUS_INITIALIZED)==0)
+  if((sd.status&(1<<SD_STATUS_INITIALIZED))==0)
   {
     retval = sderr_Inactive;
     goto sd_read_blk_err;
@@ -510,6 +512,7 @@ uint8_t sd_read_block(uint32_t addr)
 #endif
 sd_read_blk_err:
   sd_delay(2);
+  DEBUG_PRINT_COLOR(B_IBLUE,"sd read block retval=%d\n",retval);
   return retval;
 }
 
@@ -520,14 +523,18 @@ uint32_t sd_read(uint32_t addr,uint8_t * buff,uint32_t length)
     uint32_t temp_length;
     uint32_t temp_addr = addr;
     uint32_t retval = 0;
+    uint8_t ret;
     while(retval < length)
     {
 	temp_length = length - retval;
 	block_addr = temp_addr & SD_BLOCK_MASK;
 	if(sd.block_state != SD_BLOCK_STATE_VALID || block_addr != sd.block_addr)
 	{
-	    if(sd_read_block(block_addr))
+	    if((ret=sd_read_block(block_addr)))
+	    {
+	      DEBUG_PRINT_COLOR(B_IRED,"error: sd_read_block %x\n",ret);
 	      return retval;
+	    }
 	}
 	block_offset = temp_addr & ~(SD_BLOCK_MASK);
 	if(block_offset + temp_length > SD_BLOCK_SIZE)

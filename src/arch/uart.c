@@ -41,9 +41,11 @@ void uart_init(void)
 */
 int uart_putc(char data,FILE* fh)
 {
-    while(!((1<<UDRE1) & UCSR1A));
-    UDR1 = data;
-    return 0;
+  if(data =='\n')
+    uart_putc('\r',fh);
+  while(!((1<<UDRE1) & UCSR1A));
+  UDR1 = data;
+  return 0;
 }
 /**
 * Receives a byte from UART
