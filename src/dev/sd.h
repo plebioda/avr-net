@@ -30,7 +30,6 @@ uint8_t sd_status(void);
 uint16_t sd_errno(void);
 uint32_t sd_read(uint32_t addr,uint8_t * buff,uint32_t length);
 
-uint8_t sd_init_card(void);
 
 #define SD_STATUS_INSERTED	0
 #define SD_STATUS_WP		1

@@ -18,10 +18,6 @@
 #define SD_CS_ACTIVE()		(SD_CS_PORT&=~(1<<SD_CS))
 #define SD_CS_INACTIVE()	(SD_CS_PORT|=(1<<SD_CS))
 
-// #define SDC_GOOD_CMD		0x00
-// #define SDC_ILLEGAL_CMD		0x04
-// #define SDC_FLOATING_BUS	0xff
-// #define SDC_BAD_RESPONSE	SDC_FLOATING_BUS
 #define SD_READ_TOKEN		0xfe
 
 #define SD_POWERON_DELAY	10
@@ -163,68 +159,7 @@ enum
 #define SDC_CRC_ON_OFF		SD_CMD(59)
 
 #define SD_CRC_GO_IDLE_STATE	0x95
-
-// enum  sccmdno
-// {
-//   sdcmdno_GO_IDLE_STATE,
-//   sdcmdno_SEND_OP_COND,
-//   sdcmdno_SEND_CSD,
-//   sdcmdno_SEND_CID,
-//   sdcmdno_STOP_TRANSMISSION,
-//   sdcmdno_SEND_STATUS,
-//   sdcmdno_SET_BLOCKLEN,
-//   sdcmdno_READ_SNGLE_BLOCK,
-//   sdcmdno_READ_MULTI_BLOCK,
-//   sdcmdno_WRITE_SINGLE_BLOCK,
-//   sdcmdno_WRITE_MULTI_BLOCK,
-//   sdcmdno_TAG_SECTOR_START,
-//   sdcmdno_TAG_SECTOR_END,
-//   sdcmdno_UNTAG_SECTOR,
-//   sdcmdno_TAG_ERASE_GRP_START,
-//   sdcmdno_TAG_ERASE_GRP_END,
-//   sdcmdno_UNTAG_ERASE_GRP,
-//   sdcmdno_ERASE,
-//   sdcmdno_LOCK_UNLOCK,
-//   sdcmdno_APP_OP_COND,
-//   sdcmdno_APP_CMD,
-//   sdcmdno_READ_OCR,
-//   sdcmdno_CRC_ON_OFF
-// };
-
-// struct sdcmd_format
-// {
-//   uint8_t cmd;		// command code
-//   uint8_t crc;		// crc for command
-//   uint8_t resmd;	// response type and more data flag
-// };
 #define SD_NOCRC	0xff
-// const struct sdcmd_format sdcmd_tab[] PROGMEM = 
-// {
-//   {SDC_GO_IDLE_STATE,		0x95,		(SD_R1 | SD_NO_DATA)},
-//   {SDC_SEND_OP_COND,		0xF9,		(SD_R1 | SD_NO_DATA)},
-//   {SDC_SEND_CSD,		0xAF,		(SD_R1 | SD_MORE_DATA)},
-//   {SDC_SEND_CID,		0x1B,		(SD_R1 | SD_MORE_DATA)},
-//   {SDC_STOP_TRANSMISSION,	0xC3,		(SD_R1 | SD_NO_DATA)},
-//   {SDC_SEND_STATUS,		0xAF,		(SD_R2 | SD_NO_DATA)},
-//   {SDC_SET_BLOCKLEN,		SD_NOCRC,	(SD_R1 | SD_NO_DATA)},
-//   {SDC_READ_SINGLE_BLOCK,	SD_NOCRC,	(SD_R1 | SD_MORE_DATA)},
-//   {SDC_READ_MULTI_BLOCK,	SD_NOCRC,	(SD_R1 | SD_MORE_DATA)},
-//   {SDC_WRITE_SINGLE_BLOCK,	SD_NOCRC,	(SD_R1 | SD_MORE_DATA)},
-//   {SDC_WRITE_MULTI_BLOCK,	SD_NOCRC,	(SD_R1 | SD_MORE_DATA)},
-//   {SDC_TAG_SECTOR_START,	SD_NOCRC,	(SD_R1 | SD_NO_DATA)},
-//   {SDC_TAG_SECTOR_END,		SD_NOCRC,	(SD_R1 | SD_NO_DATA)},
-//   {SDC_UNTAG_SECTOR,		SD_NOCRC,	(SD_R1 | SD_NO_DATA)},
-//   {SDC_TAG_ERASE_GRP_START,	SD_NOCRC,	(SD_R1 | SD_NO_DATA)},
-//   {SDC_TAG_ERASE_GRP_END,	SD_NOCRC,	(SD_R1 | SD_NO_DATA)},
-//   {SDC_UNTAG_ERASE_GRP,		SD_NOCRC,	(SD_R1 | SD_NO_DATA)},
-//   {SDC_ERASE,			0xDF,		(SD_R1b| SD_NO_DATA)},
-//   {SDC_LOCK_UNLOCK,		0x89,		(SD_R1b| SD_NO_DATA)},
-//   {SDC_APP_OP_COND,		0xE5,		(SD_R1 | SD_NO_DATA)},
-//   {SDC_APP_CMD,			0x73,		(SD_R1 | SD_NO_DATA)},
-//   {SDC_READ_OCR,		0x25,		(SD_R3 | SD_NO_DATA)},
-//   {SDC_CRC_ON_OFF,		0x25,		(SD_R1 | SD_NO_DATA)}
-// };
-
 #define SDCMD_TAB_SIZE		sizeof(sdcmd_tab)/sizeof(struct sdcmd_format)
 
 struct sd_cid
@@ -251,16 +186,13 @@ static struct
   sd_callback 	callback;
   uint8_t 	status;
   
-/*  uint8_t 	R1;
-  uint8_t	R2;*/
   uint8_t	OCR[4];
   
   struct sd_cid cid;
   struct sd_csd csd;
 
-#define SD_BLOCK_STATE_EMPTY	0
-#define SD_BLOCK_STATE_INVALID	1
-#define SD_BLOCK_STATE_VALID	2
+#define SD_BLOCK_STATE_INVALID	0
+#define SD_BLOCK_STATE_VALID	1
   uint8_t 	block_state;
   uint16_t 	block_addr;
   uint8_t 	block[SD_BLOCK_SIZE];
@@ -274,7 +206,7 @@ static struct
 #define sd_valid_block_addr(addr)	(sd_block_addr((addr)) == sd.block_addr)
 
 
-//static uint8_t sd_init_card(void);
+static uint8_t sd_init_card(void);
 static void sd_delay(uint8_t n);
 
 uint8_t sd_send_cmd_r1_crc(uint8_t cmd,uint32_t arg,uint8_t crc);
@@ -293,6 +225,7 @@ static uint8_t sd_read_block(uint32_t addr);
 #define sd_card_removed()	(SD_DETECT_PIN & (1<<SD_DETECT))
 #define sd_card_inserted()	(!sd_card_removed())
 
+#define sd_card_protected() 	(SD_WP_PIN & (1<<SD_WP))
 
 
 /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
@@ -319,7 +252,7 @@ uint8_t sd_init(sd_callback callback)
   /* SD CS output*/
   SD_CS_DDR |= (1<<SD_CS);
   /*Deselect SD*/
-  SD_CS_INACTIVE();
+  sd_unselect();
   
   /* SD DET input*/
   SD_DETECT_DDR &= ~(1<<SD_DETECT);
@@ -424,8 +357,7 @@ static uint8_t sd_read_block(uint32_t addr)
 {
   uint8_t ret;
   addr &= SD_BLOCK_MASK;
-  if(sd.block_state == SD_BLOCK_STATE_VALID && 
-     sd.block_addr == addr)
+  if(sd_valid_block() && sd_valid_block_addr(addr))
     return 0;
   ret = _sd_read(SDC_READ_SINGLE_BLOCK,addr,sd.block,sizeof(sd.block));
   if(!ret)
@@ -434,7 +366,7 @@ static uint8_t sd_read_block(uint32_t addr)
     sd.block_addr=0;
   }
   else
-    sd.block_state = SD_BLOCK_STATE_EMPTY;
+    sd.block_state = SD_BLOCK_STATE_INVALID;
   return ret;
 }
 static uint8_t	_sd_read(uint8_t cmd,uint32_t arg,uint8_t * reg,uint16_t size)
@@ -497,47 +429,42 @@ uint32_t sd_read(uint32_t addr,uint8_t * buff,uint32_t length)
   return length;
 }
 
-// 
-// void sd_interrupt(void)
-// {
-//   if(!sd.callback)
-//     return;
-//   sd.errno=0;
-//   if(SD_DETECT_PIN & (1<<SD_DETECT))
-//   {
-//     sd.status = 0;
-//     sd.callback(sd_event_removed);
-//   }
-//   else
-//   {
-//     sd.status |= (1<<SD_STATUS_INSERTED);
-//     if(SD_WP_PIN & (1<<SD_WP))
-//     {
-//       sd.status |= (1<<SD_STATUS_WP);
-//       sd.callback(sd_event_inserted_wp);
-//     }
-//     else
-//     {
-//       sd.callback(sd_event_inserted);
-//     }
-//     uint8_t ret = sd_init_card();
-//       //sd_send_cmd(sdcmd_SEND_STATUS,0x00);
-//     if(ret)
-//     {
-//       sd.errno = ((uint16_t)ret<<8)|SD_ERR_INIT;
-//       sd.callback(sd_event_error);
-//     }
-//     else
-//     {
-//       sd.callback(sd_event_initialized);
-//       print_cid();
-//       print_csd();
-//     }
-//   }
-// }
-// 
-
-
+void sd_interrupt(void)
+{
+  if(!sd.callback)
+    return;
+  sd.errno=0;
+  if(sd_card_removed())
+  {
+    sd.status = 0;
+    sd.callback(sd_event_removed);
+  }
+  else
+  {
+    sd.status |= (1<<SD_STATUS_INSERTED);
+    if(sd_card_protected())
+    {
+      sd.status |= (1<<SD_STATUS_WP);
+      sd.callback(sd_event_inserted_wp);
+    }
+    else
+    {
+      sd.callback(sd_event_inserted);
+    }
+    uint8_t ret = sd_init_card();
+    if(ret)
+    {
+      sd.errno = ((uint16_t)ret<<8)|SD_ERR_INIT;
+      sd.callback(sd_event_error);
+    }
+    else
+    {
+      sd.callback(sd_event_initialized);
+      print_cid();
+      print_csd();
+    }
+  }
+}
 
 void print_cid(void)
 {
