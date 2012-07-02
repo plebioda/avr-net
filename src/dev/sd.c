@@ -18,11 +18,16 @@
 #define SD_CS_ACTIVE()		(SD_CS_PORT&=~(1<<SD_CS))
 #define SD_CS_INACTIVE()	(SD_CS_PORT|=(1<<SD_CS))
 
-#define SDC_GOOD_CMD		0x00
-#define SDC_ILLEGAL_CMD		0x04
-#define SDC_FLOATING_BUS	0xff
-#define SDC_BAD_RESPONSE	SDC_FLOATING_BUS
-#define SDC_READ_TOKEN		0xfe
+// #define SDC_GOOD_CMD		0x00
+// #define SDC_ILLEGAL_CMD		0x04
+// #define SDC_FLOATING_BUS	0xff
+// #define SDC_BAD_RESPONSE	SDC_FLOATING_BUS
+#define SD_READ_TOKEN		0xfe
+
+#define SD_POWERON_DELAY	10
+#define SD_SEND_CMD_TIMEOUT 	16
+#define SD_WAIT_READY_TIMEOUT	0x7fff
+#define SD_TIMEOUT_GENERIC	0x1fff
 
 #define SD_BLOCK_LEN_64		0x0040
 #define SD_BLOCK_LEN_128	0x0080
@@ -34,7 +39,35 @@
 #define SD_R2			0x02
 #define SD_R3			0x03
 #define SD_NO_DATA		0x00
-#define SD_MORE_DATA		0x01
+#define SD_MORE_DATA		0x80
+
+#define SD_R1_IDLE_STATE	0
+#define SD_R1_ERASE_RESET	1
+#define SD_R1_ILLEGAL_CMD	2
+#define SD_R1_COM_CRC_ERR	3
+#define SD_R1_ERASE_SEQ_ERR	4
+#define SD_R1_ADDRESS_ERR	5
+#define SD_R1_PARAM_ERR		6
+
+#define SD_R2_CARD_LOCKED	0
+#define SD_R2_WP_ERASE_SKIP	1
+#define SD_R2_LOCK_UNLOCK_CMD	1
+#define SD_R2_ERROR		2
+#define SD_R2_CC_ERROR		3
+#define SD_R2_CARD_ECC_FAILED	4
+#define SD_R2_WP_VIOLATION	5
+#define SD_R2_ERASE_PARAM	6
+#define SD_R2_OUT_OF_RANGE	7
+#define SD_R2_CSD_OVERWRITE	7
+#define SD_R2_IDLE_STATE	(8+SD_R1_IDLE_STATE)
+#define SD_R2_ERASE_RESET	(8+SD_R1_ERASE_RESET)
+#define SD_R2_ILLEGAL_CMD	(8+SD_R1_ILLEGAL_CMD)
+#define SD_R2_COM_CRC_ERR	(8+SD_R1_COM_CRC_ERR)
+#define SD_R2_ERASE_SEQ_ERR	(8+SD_R1_ERASE_SEQ_ERR)
+#define SD_R2_ADDRESS_ERR	(8+SD_R1_ADDRESS_ERR)
+#define SD_R2_PARAM_ERR		(8+SD_R1_PARAM_ERR)
+
+#define SD_RES_MASK		0x7f
 
 #define SD_BLOCK_MASK		~(SD_BLOCK_SIZE-1)
 
@@ -91,10 +124,12 @@ enum
   sderr_ReadCSDCID,
   sderr_ReadCSDCID_Timeout,
   sderr_ReadCSDCID_BadToken,
-  sderr_CardReadCmd_Timeout,
+  sderr_CmdResp_Timeout,
   sderr_ReadBlock_Timeout,
   sderr_ReadBlock_CRC,
-  sderr_CardNotInserted
+  sderr_CardNotInserted,
+  sderr_InvalidCommand,
+  sderr_ReadBlock,
 } sd_err;
 
 
@@ -127,59 +162,70 @@ enum
 #define SDC_READ_OCR		SD_CMD(58)
 #define SDC_CRC_ON_OFF		SD_CMD(59)
 
-enum
-{
-  sdcmd_GO_IDLE_STATE,
-  sdcmd_SEND_OP_COND,
-  sdcmd_SEND_CSD,
-  sdcmd_SEND_CID,
-  sdcmd_STOP_TRANSMISSION,
-  sdcmd_SEND_STATUS,
-  sdcmd_SET_BLOCKLEN,
-  sdcmd_READ_SNGLE_BLOCK,
-  sdcmd_READ_MULTI_BLOCK,
-  sdcmd_WRITE_SINGLE_BLOCK,
-  sdcmd_WRITE_MULTI_BLOCK,
-  sdcmd_TAG_SECTOR_START,
-  sdcmd_TAG_SECTOR_END,
-  sdcmd_UNTAG_SECTOR,
-  sdcmd_TAG_ERASE_GRP_START,
-  sdcmd_TAG_ERASE_GRP_END,
-  sdcmd_UNTAG_ERASE_GRP,
-  sdcmd_ERASE,
-  sdcmd_LOCK_UNLOCK,
-  sdcmd_APP_OP_COND,
-  sdcmd_APP_CMD,
-  sdcmd_READ_OCR,
-  sdcmd_CRC_ON_OFF
-} sccmd;
+#define SD_CRC_GO_IDLE_STATE	0x95
 
-const uint8_t sdcmd_tab[23][4] PROGMEM = 
-{
-  {SDC_GO_IDLE_STATE,		0x95,	SD_R1,	SD_NO_DATA},
-  {SDC_SEND_OP_COND,		0xF9,	SD_R1,	SD_NO_DATA},
-  {SDC_SEND_CSD,		0xAF,	SD_R1,	SD_MORE_DATA},
-  {SDC_SEND_CID,		0x1B,	SD_R1,	SD_MORE_DATA},
-  {SDC_STOP_TRANSMISSION,	0xC3,	SD_R1,	SD_NO_DATA},
-  {SDC_SEND_STATUS,		0xAF,	SD_R2,	SD_NO_DATA},
-  {SDC_SET_BLOCKLEN,		0xFF,	SD_R1,	SD_NO_DATA},
-  {SDC_READ_SINGLE_BLOCK,	0xFF,	SD_R1,	SD_MORE_DATA},
-  {SDC_READ_MULTI_BLOCK,	0xFF,	SD_R1,	SD_MORE_DATA},
-  {SDC_WRITE_SINGLE_BLOCK,	0xFF,	SD_R1,	SD_MORE_DATA},
-  {SDC_WRITE_MULTI_BLOCK,	0xFF,	SD_R1,	SD_MORE_DATA},
-  {SDC_TAG_SECTOR_START,	0xFF,	SD_R1,	SD_NO_DATA},
-  {SDC_TAG_SECTOR_END,		0xFF,	SD_R1,	SD_NO_DATA},
-  {SDC_UNTAG_SECTOR,		0xFF,	SD_R1,	SD_NO_DATA},
-  {SDC_TAG_ERASE_GRP_START,	0xFF,	SD_R1,	SD_NO_DATA},
-  {SDC_TAG_ERASE_GRP_END,	0xFF,	SD_R1,	SD_NO_DATA},
-  {SDC_UNTAG_ERASE_GRP,		0xFF,	SD_R1,	SD_NO_DATA},
-  {SDC_ERASE,			0xDF,	SD_R1b,	SD_NO_DATA},
-  {SDC_LOCK_UNLOCK,		0x89,	SD_R1b,	SD_NO_DATA},
-  {SDC_APP_OP_COND,		0xE5,	SD_R1,	SD_NO_DATA},
-  {SDC_APP_CMD,			0x73,	SD_R1,	SD_NO_DATA},
-  {SDC_READ_OCR,		0x25,	SD_R3,	SD_NO_DATA},
-  {SDC_CRC_ON_OFF,		0x25,	SD_R1,	SD_NO_DATA}
-};
+// enum  sccmdno
+// {
+//   sdcmdno_GO_IDLE_STATE,
+//   sdcmdno_SEND_OP_COND,
+//   sdcmdno_SEND_CSD,
+//   sdcmdno_SEND_CID,
+//   sdcmdno_STOP_TRANSMISSION,
+//   sdcmdno_SEND_STATUS,
+//   sdcmdno_SET_BLOCKLEN,
+//   sdcmdno_READ_SNGLE_BLOCK,
+//   sdcmdno_READ_MULTI_BLOCK,
+//   sdcmdno_WRITE_SINGLE_BLOCK,
+//   sdcmdno_WRITE_MULTI_BLOCK,
+//   sdcmdno_TAG_SECTOR_START,
+//   sdcmdno_TAG_SECTOR_END,
+//   sdcmdno_UNTAG_SECTOR,
+//   sdcmdno_TAG_ERASE_GRP_START,
+//   sdcmdno_TAG_ERASE_GRP_END,
+//   sdcmdno_UNTAG_ERASE_GRP,
+//   sdcmdno_ERASE,
+//   sdcmdno_LOCK_UNLOCK,
+//   sdcmdno_APP_OP_COND,
+//   sdcmdno_APP_CMD,
+//   sdcmdno_READ_OCR,
+//   sdcmdno_CRC_ON_OFF
+// };
+
+// struct sdcmd_format
+// {
+//   uint8_t cmd;		// command code
+//   uint8_t crc;		// crc for command
+//   uint8_t resmd;	// response type and more data flag
+// };
+#define SD_NOCRC	0xff
+// const struct sdcmd_format sdcmd_tab[] PROGMEM = 
+// {
+//   {SDC_GO_IDLE_STATE,		0x95,		(SD_R1 | SD_NO_DATA)},
+//   {SDC_SEND_OP_COND,		0xF9,		(SD_R1 | SD_NO_DATA)},
+//   {SDC_SEND_CSD,		0xAF,		(SD_R1 | SD_MORE_DATA)},
+//   {SDC_SEND_CID,		0x1B,		(SD_R1 | SD_MORE_DATA)},
+//   {SDC_STOP_TRANSMISSION,	0xC3,		(SD_R1 | SD_NO_DATA)},
+//   {SDC_SEND_STATUS,		0xAF,		(SD_R2 | SD_NO_DATA)},
+//   {SDC_SET_BLOCKLEN,		SD_NOCRC,	(SD_R1 | SD_NO_DATA)},
+//   {SDC_READ_SINGLE_BLOCK,	SD_NOCRC,	(SD_R1 | SD_MORE_DATA)},
+//   {SDC_READ_MULTI_BLOCK,	SD_NOCRC,	(SD_R1 | SD_MORE_DATA)},
+//   {SDC_WRITE_SINGLE_BLOCK,	SD_NOCRC,	(SD_R1 | SD_MORE_DATA)},
+//   {SDC_WRITE_MULTI_BLOCK,	SD_NOCRC,	(SD_R1 | SD_MORE_DATA)},
+//   {SDC_TAG_SECTOR_START,	SD_NOCRC,	(SD_R1 | SD_NO_DATA)},
+//   {SDC_TAG_SECTOR_END,		SD_NOCRC,	(SD_R1 | SD_NO_DATA)},
+//   {SDC_UNTAG_SECTOR,		SD_NOCRC,	(SD_R1 | SD_NO_DATA)},
+//   {SDC_TAG_ERASE_GRP_START,	SD_NOCRC,	(SD_R1 | SD_NO_DATA)},
+//   {SDC_TAG_ERASE_GRP_END,	SD_NOCRC,	(SD_R1 | SD_NO_DATA)},
+//   {SDC_UNTAG_ERASE_GRP,		SD_NOCRC,	(SD_R1 | SD_NO_DATA)},
+//   {SDC_ERASE,			0xDF,		(SD_R1b| SD_NO_DATA)},
+//   {SDC_LOCK_UNLOCK,		0x89,		(SD_R1b| SD_NO_DATA)},
+//   {SDC_APP_OP_COND,		0xE5,		(SD_R1 | SD_NO_DATA)},
+//   {SDC_APP_CMD,			0x73,		(SD_R1 | SD_NO_DATA)},
+//   {SDC_READ_OCR,		0x25,		(SD_R3 | SD_NO_DATA)},
+//   {SDC_CRC_ON_OFF,		0x25,		(SD_R1 | SD_NO_DATA)}
+// };
+
+#define SDCMD_TAB_SIZE		sizeof(sdcmd_tab)/sizeof(struct sdcmd_format)
 
 struct sd_cid
 {
@@ -190,11 +236,13 @@ struct sd_cid
   uint8_t	PSN[4];		//Serial Number - 32 bits
   uint16_t	MDT;		//Manufacture Date Code - 12 bits
   uint8_t	CRC7;		//Checksum - 7 bits
+  uint16_t 	CRC;
 };
 
 struct sd_csd
 {
   uint8_t	field[16];
+  uint16_t 	CRC;
 };
 
 
@@ -203,8 +251,8 @@ static struct
   sd_callback 	callback;
   uint8_t 	status;
   
-  uint8_t 	R1;
-  uint8_t	R2;
+/*  uint8_t 	R1;
+  uint8_t	R2;*/
   uint8_t	OCR[4];
   
   struct sd_cid cid;
@@ -220,20 +268,32 @@ static struct
   uint16_t errno;
 } sd;
 
-static uint8_t sd_init_card(void);
-static void sd_enable(void);
-static void sd_disable(void);
-static void sd_delay(uint8_t n);
-static uint8_t sd_send_cmd(uint8_t cmd,uint32_t addr);
-static uint8_t sd_get_cmd(uint8_t sd_cmd);
-static uint8_t sd_get_crc(uint8_t sd_cmd);
-static uint8_t sd_get_resp(uint8_t sd_cmd);
-// static uint8_t sd_get_tdata(uint8_t sd_cmd);
+#define sd_block_addr(addr)		(addr & SD_BLOCK_MASK)
+#define sd_block_offset(addr)		(addr & ~SD_BLOCK_MASK)
+#define sd_valid_block()		(sd.block_state == SD_BLOCK_STATE_VALID)
+#define sd_valid_block_addr(addr)	(sd_block_addr((addr)) == sd.block_addr)
 
-static uint8_t	sd_read_reg(uint8_t cmd);
-#define sd_read_csd()	sd_read_reg(sdcmd_SEND_CSD)
-#define sd_read_cid()	sd_read_reg(sdcmd_SEND_CID)
+
+//static uint8_t sd_init_card(void);
+static void sd_delay(uint8_t n);
+
+uint8_t sd_send_cmd_r1_crc(uint8_t cmd,uint32_t arg,uint8_t crc);
+uint16_t sd_send_cmd_r2_crc(uint8_t cmd,uint32_t arg,uint8_t crc);
+#define sd_send_cmd_r1(cmd,arg)		sd_send_cmd_r1_crc(cmd,arg,SD_NOCRC)
+#define sd_send_cmd_r2(cmd,arg)		sd_send_cmd_r2_crc(cmd,arg,SD_NOCRC)
+static uint8_t _sd_read(uint8_t cmd,uint32_t arg,uint8_t * reg,uint16_t size);
 static uint8_t sd_read_block(uint32_t addr);
+#define sd_read_cid()	_sd_read(SDC_SEND_CID,0,(uint8_t*)&sd.cid,sizeof(sd.cid))
+#define sd_read_csd()	_sd_read(SDC_SEND_CSD,0,(uint8_t*)&sd.csd,sizeof(sd.csd))
+
+
+#define sd_select()		SD_CS_ACTIVE()
+#define sd_unselect()		SD_CS_INACTIVE()
+
+#define sd_card_removed()	(SD_DETECT_PIN & (1<<SD_DETECT))
+#define sd_card_inserted()	(!sd_card_removed())
+
+
 
 /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 static void print_csd(void);
@@ -243,6 +303,12 @@ static void print_cid(void);
 uint16_t sd_errno(void)
 {
     return sd.errno;
+}
+
+void sd_delay(uint8_t n)
+{
+    while(n--)
+      spi_write(0xff);
 }
 
 uint8_t sd_init(sd_callback callback)
@@ -263,310 +329,215 @@ uint8_t sd_init(sd_callback callback)
   SD_WP_DDR &= ~(1<<SD_WP);
   SD_WP_PORT |= (1<<SD_WP);
   
-
-  
   /* Clear sd struct */
   memset(&sd,0,sizeof(sd));
   
   /* Init sd struct */
   sd.callback = callback;
-  return 0;
-  
+  return 0;  
 }
 
-void sd_interrupt(void)
+uint8_t sd_send_cmd_r1_crc(uint8_t cmd,uint32_t arg,uint8_t crc)
 {
-  if(!sd.callback)
-    return;
-  sd.errno=0;
-  if(SD_DETECT_PIN & (1<<SD_DETECT))
+  uint8_t res;
+  int16_t i = SD_SEND_CMD_TIMEOUT;
+  /* wait 8 clock cycles */
+  sd_delay(1);
+  /* send command code */
+  spi_write(cmd);
+  /* send argument */
+  spi_write((arg>>24) & 0xff);
+  spi_write((arg>>16) & 0xff);
+  spi_write((arg>> 8) & 0xff);
+  spi_write((arg>> 0) & 0xff);
+  /* send crc */
+  spi_write(crc);
+  /* get response */
+  do
   {
-    sd.status = 0;
-    sd.callback(sd_event_removed);
-  }
-  else
-  {
-    sd.status |= (1<<SD_STATUS_INSERTED);
-    if(SD_WP_PIN & (1<<SD_WP))
-    {
-      sd.status |= (1<<SD_STATUS_WP);
-      sd.callback(sd_event_inserted_wp);
-    }
-    else
-    {
-      sd.callback(sd_event_inserted);
-    }
-    uint8_t ret = sd_init_card();
-      sd_send_cmd(sdcmd_SEND_STATUS,0x00);
-    if(ret)
-    {
-      sd.errno = ((uint16_t)ret<<8)|SD_ERR_INIT;
-      sd.callback(sd_event_error);
-    }
-    else
-    {
-      sd.callback(sd_event_initialized);
-      print_cid();
-      print_csd();
-    }
-  }
+      res = spi_read(0xff);
+  }while(res==0xff && --i>0);
+  return res;
+}
+
+uint16_t sd_send_cmd_r2_crc(uint8_t cmd,uint32_t arg,uint8_t crc)
+{
+  uint16_t res = sd_send_cmd_r1_crc(cmd,arg,crc);
+  res <<= 8;
+  res |= spi_read(0xff);
+  return res;
 }
 
 uint8_t sd_init_card(void)
 {
-  if((sd.status&(1<<SD_STATUS_INSERTED))==0)
+  int16_t i;
+  uint8_t ret=0;
+  sd_unselect();
+  if(!sd_card_inserted())
     return sderr_CardNotInserted;
-  memset(&sd.cid,0,sizeof(sd.cid));
-  memset(&sd.csd,0,sizeof(sd.csd));
-  uint32_t i;
-  uint8_t retval;
-  sd_enable();
-  _delay_ms(100);
-  sd_delay(10);
-  _delay_ms(10);
-  retval = sd_send_cmd(sdcmd_GO_IDLE_STATE,0x0);
-  if(retval != 0)
-    goto init_error;
-  if(sd.R1 != 0x01)
-  {
-    retval = sderr_CardInit_NotInIdleState;
-    goto init_error;
-  }
-  i = SD_IDLE_WAIT_MAX;
+  /* wait for the card being powered */
+  _delay_ms(SD_POWERON_DELAY);
+  /* set low freq of spi bus */
+  spi_low_frequency();
+  /* card needs at least 74 clock cycles for inititalization */
+  sd_delay(32);
+  /* select card */
+  sd_select();
+  /* reset card; (go to idle state)*/
+  i=SD_IDLE_WAIT_MAX;
   do
   {
-//     retval = sd_send_cmd(sdc,sdcmd_APP_CMD,0x00);
-    retval = sd_send_cmd(sdcmd_SEND_OP_COND,0x00);
-    i--;
-    if(retval)
-      i = 0;
-  }while((sd.R1 && 0x01) != 0 && i > 0);
-  if(i==0)
-  {
-    retval = sderr_CardInit_Timeout;
-    goto init_error;
-  }
-  i = SD_IDLE_WAIT_MAX;
+    /* 
+    * after power on card is in SDbus state so we have to send proper crc
+    */
+    ret = sd_send_cmd_r1_crc(SDC_GO_IDLE_STATE,0,SD_CRC_GO_IDLE_STATE);
+  /* wait until card is not in idle state */
+  }while(ret != (1<<SD_R1_IDLE_STATE) && --i>0);
+  if(i==0) goto out;
+  /* wait for card */
+  i=SD_WAIT_READY_TIMEOUT;
   do
   {
-    retval = sd_send_cmd(sdcmd_READ_OCR,0x0);
-    i--;
-    if(retval)
-      i=0;
-  }while(((sd.R1 && 0x01) != 0  && i > 0));
-  if(i==0)
-  {
-    retval = sderr_CardInit_Timeout;
-    goto init_error;
-  }
-  if(retval)
-    retval = sderr_CardInit_ReadOCR;
-  retval = sd_read_cid();
-  retval = sd_read_csd();
-  if(retval)
-    goto init_error;
-  sd.status |= (1<<SD_STATUS_INITIALIZED);
-init_error:
-  sd_disable();
+    ret = sd_send_cmd_r1(SDC_SEND_OP_COND,0);
+  /* wait until card is in idle state */
+  }while((ret & (1<<SD_R1_IDLE_STATE)) && --i>0);  
+  if(i==0) goto out;
+  /* set block size [SD_BLOCK_SIZE]*/
+  ret = sd_send_cmd_r1(SDC_SET_BLOCKLEN,SD_BLOCK_SIZE);
+    /*TODO: reading cid and csd here? if yes fix selecting/unselecting card*/
+  ret = sd_read_cid();
+  ret = sd_read_csd();
+  /* 
+   * read first block (of addr 0x0000) becouse it is the most probably
+   * that user will read this block at first (eg. MBR)
+   */
+  ret = sd_read_block(0);
+out:
+  sd_unselect();
   sd_delay(2);
-  return retval;
+  spi_high_frequency();
+  //print_cid();
+  //print_csd();
+  return ret;
 }
-uint8_t sd_get_cmd(uint8_t sd_cmd)
+static uint8_t sd_read_block(uint32_t addr)
 {
-    return pgm_read_byte(&sdcmd_tab[sd_cmd][0]);
-}
-uint8_t sd_get_crc(uint8_t sd_cmd)
-{
-    return pgm_read_byte(&sdcmd_tab[sd_cmd][1]);
-}
-uint8_t sd_get_resp(uint8_t sd_cmd)
-{
-    return pgm_read_byte(&sdcmd_tab[sd_cmd][2]);
-}
-// /*uint8_t sd_get_tdata(uint8_t sd_cmd)
-// {
-//     return pgm_read_byte(&sdcmd_tab[sd_cmd][3]);
-// }*/
-uint8_t sd_send_cmd(uint8_t cmd,uint32_t addr)
-{
-    uint8_t resp_type;
-    uint8_t resp;
-    uint32_t timeout;
-    resp_type = sd_get_resp(cmd);
-    SD_CS_ACTIVE();
-    spi_write(sd_get_cmd(cmd));
-    spi_write_block((uint8_t*)&addr,4);
-    spi_write(sd_get_crc(cmd));
-    timeout = SD_CMD_RTX;
-    do
-    {
-	resp = spi_read(0xff);
-	timeout--;
-    }while((resp&0x80)!=0 && timeout > 0);
-    if(timeout == 0)
-      return sderr_CardReadCmd_Timeout;
-    switch(resp_type)
-    {
-      case SD_R1:
-	sd.R1 = resp;
-	break;
-      case SD_R1b:
-	sd.R1 = resp;
-	break;
-      case SD_R2:
-	sd.R1 = resp;
-	sd.R2 = spi_read(0xff);
-	break;
-      case SD_R3:
-	sd.OCR[0] = resp;
-	spi_read_block(&sd.OCR[1],3,0xff);
-	sd.R1 = spi_read(0xff);
-	break;
-    }
-    sd_delay(2);
+  uint8_t ret;
+  addr &= SD_BLOCK_MASK;
+  if(sd.block_state == SD_BLOCK_STATE_VALID && 
+     sd.block_addr == addr)
     return 0;
-}
-
-uint8_t	sd_read_reg(uint8_t cmd)
-{
-    uint8_t retval;
-    uint32_t rtx;
-    uint8_t * ret;
-    rtx = SD_IDLE_WAIT_MAX;
-    do
-    {
-      retval = sd_send_cmd(cmd,0x00);
-      rtx--;
-    }while(sd.R1 != 0 && rtx > 0);
-    if(retval)
-      return sderr_ReadCSDCID;
-    rtx = SD_READ_CSDCID_RTX;
-    SD_CS_ACTIVE();
-    do
-    {
-      retval = spi_read(0xff);
-      rtx--;
-    }while(retval == SDC_FLOATING_BUS && rtx > 0);
-    if(rtx==0)
-      return sderr_ReadCSDCID_Timeout;
-    if(retval != 0xFE)
-      return sderr_ReadCSDCID_BadToken;
-    if(cmd == sdcmd_SEND_CID)
-      ret = (uint8_t*)&sd.cid;
-    else
-      ret = (uint8_t*)&sd.csd;
-    spi_read_block(ret,16,0xff);
-    sd_delay(2);
-    return 0;
-}
-uint8_t sd_read_block(uint32_t addr)
-{
-  uint8_t retval;
-  uint16_t i;	
-#if SD_CRC_SUPPORT    
-  uint16_t	crc;
-#endif
-  if((sd.status&(1<<SD_STATUS_INITIALIZED))==0)
+  ret = _sd_read(SDC_READ_SINGLE_BLOCK,addr,sd.block,sizeof(sd.block));
+  if(!ret)
   {
-    retval = sderr_Inactive;
-    goto sd_read_blk_err;
-  }
-  retval = sd_send_cmd(sdcmd_READ_SNGLE_BLOCK,addr);
-  if(retval)
-    goto sd_read_blk_err;
-  i = SD_READ_BLK_RTX;
-  SD_CS_ACTIVE();
-  do
-  {
-    retval = spi_read(0xff);
-    i--;
-  }while((retval != SDC_READ_TOKEN) && (i>0));
-  sd.R1 = retval;
-  if(i==0)
-  {
-    retval = sderr_ReadBlock_Timeout;
-    goto sd_read_blk_err;
-  }
-  spi_read_block(sd.block,SD_BLOCK_SIZE,0xff);
-#if SD_CRC_SUPPORT
-  crc = sd_spi_read();
-  crc = crc<<8;
-  crc = crc | sp_spi_read();
-  if(sd_check_crc(crc))
-  {
-    retval = sderr_ReadBlock_CRC;
-    g_sd_context.block_state = SD_BLOCK_STATE_INVALID;
+    sd.block_state = SD_BLOCK_STATE_VALID;
+    sd.block_addr=0;
   }
   else
+    sd.block_state = SD_BLOCK_STATE_EMPTY;
+  return ret;
+}
+static uint8_t	_sd_read(uint8_t cmd,uint32_t arg,uint8_t * reg,uint16_t size)
+{
+  uint8_t ret;
+  int16_t i;
+  if(!sd_card_inserted())
+    return sderr_CardNotInserted;
+  sd_select();
+  /* send cmd */
+  if((ret=sd_send_cmd_r1(cmd,arg))) goto out;
+  /* wait for data token */
+  i=SD_TIMEOUT_GENERIC;
+  do
   {
-    retval = 0;
-    g_sd_context.block_addr = addr;
-    g_sd_context.block_state = SD_BLOCK_STATE_VALID;
-  }
-#else
-  spi_read(0xff);
-  spi_read(0xff);
-  sd.block_addr = addr;
-  sd.block_state = SD_BLOCK_STATE_VALID;
-  retval = 0;
-#endif
-sd_read_blk_err:
+    ret = spi_read(0xff);
+  }while(ret != SD_READ_TOKEN && --i>0);
+  if(i==0) goto out;
+  spi_read_block(reg,size,0xff);
+  ret = 0;
+out:
+  sd_unselect();
   sd_delay(2);
-  DEBUG_PRINT_COLOR(B_IBLUE,"sd read block retval=%d\n",retval);
-  return retval;
+  return ret;
 }
 
 uint32_t sd_read(uint32_t addr,uint8_t * buff,uint32_t length)
 {
-    uint32_t block_addr;
-    uint16_t block_offset;
-    uint32_t temp_length;
-    uint32_t temp_addr = addr;
-    uint32_t retval = 0;
-    uint8_t ret;
-    while(retval < length)
+  uint32_t read_len=length;
+  uint32_t tmp;
+  uint32_t offset;
+  if(!sd_card_inserted()) 
+  {
+    sd.errno = sderr_CardNotInserted;
+    return 0;
+  }
+  while(read_len>0)
+  {
+    /* check if cached block is valid and one that we need */
+    if(!sd_valid_block() || !sd_valid_block_addr(addr))
     {
-	temp_length = length - retval;
-	block_addr = temp_addr & SD_BLOCK_MASK;
-	if(sd.block_state != SD_BLOCK_STATE_VALID || block_addr != sd.block_addr)
-	{
-	    if((ret=sd_read_block(block_addr)))
-	    {
-	      DEBUG_PRINT_COLOR(B_IRED,"error: sd_read_block %x\n",ret);
-	      return retval;
-	    }
-	}
-	block_offset = temp_addr & ~(SD_BLOCK_MASK);
-	if(block_offset + temp_length > SD_BLOCK_SIZE)
-	  temp_length = SD_BLOCK_SIZE - block_offset;
-	memcpy(&buff[retval],&sd.block[block_offset],temp_length);
-	retval += temp_length;
-	temp_addr += temp_length;
+      if(sd_read_block(addr))
+      {
+	sd.errno = sderr_ReadBlock;
+      /* return number of bytes already read */
+	return (length-read_len);
+      }
     }
-    return retval;
+    /* there we have wanted block cached */
+    /* get offset in cached block */
+    offset = sd_block_offset(addr);
+    tmp = read_len;
+    if(offset + tmp > SD_BLOCK_SIZE)
+      tmp = SD_BLOCK_SIZE - offset;
+    memcpy(buff,&sd.block[offset],tmp);
+    addr += tmp;
+    buff += tmp;
+    read_len -= tmp;
+  }
+  return length;
 }
 
-uint8_t sd_status(void)
-{
-  return sd.status;
-}
+// 
+// void sd_interrupt(void)
+// {
+//   if(!sd.callback)
+//     return;
+//   sd.errno=0;
+//   if(SD_DETECT_PIN & (1<<SD_DETECT))
+//   {
+//     sd.status = 0;
+//     sd.callback(sd_event_removed);
+//   }
+//   else
+//   {
+//     sd.status |= (1<<SD_STATUS_INSERTED);
+//     if(SD_WP_PIN & (1<<SD_WP))
+//     {
+//       sd.status |= (1<<SD_STATUS_WP);
+//       sd.callback(sd_event_inserted_wp);
+//     }
+//     else
+//     {
+//       sd.callback(sd_event_inserted);
+//     }
+//     uint8_t ret = sd_init_card();
+//       //sd_send_cmd(sdcmd_SEND_STATUS,0x00);
+//     if(ret)
+//     {
+//       sd.errno = ((uint16_t)ret<<8)|SD_ERR_INIT;
+//       sd.callback(sd_event_error);
+//     }
+//     else
+//     {
+//       sd.callback(sd_event_initialized);
+//       print_cid();
+//       print_csd();
+//     }
+//   }
+// }
+// 
 
-void sd_enable(void)
-{
-  SD_CS_ACTIVE();
-}
 
-void sd_disable(void)
-{
-  SD_CS_INACTIVE();
-}
-
-void sd_delay(uint8_t n)
-{
-    SD_CS_INACTIVE();
-    while(n--)
-      spi_write(0xff);
-}
 
 void print_cid(void)
 {
