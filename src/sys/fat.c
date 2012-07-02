@@ -24,6 +24,34 @@ uint8_t	fat_close(struct fat_fs * fs)
     fs->partition = 0;
     return 1;
 }
+void print_fat_boot_sector(struct fat_boot_sector * fbs)
+{
+  DEBUG_PRINT("JumpNOP: %x%x%x\n",fbs->JumpNOP[0],fbs->JumpNOP[1],fbs->JumpNOP[2]);
+  DEBUG_PRINT("OEM: %c%c%c%c%c%c%c%c\n",fbs->OEM[0],fbs->OEM[1],fbs->OEM[2],fbs->OEM[3],
+					fbs->OEM[4],fbs->OEM[5],fbs->OEM[6],fbs->OEM[7]);
+  DEBUG_PRINT("Sector size: %d\n",fbs->SectorSize);
+  DEBUG_PRINT("Cluster size: %d\n",fbs->ClusterSize);
+  DEBUG_PRINT("Reserved sec: %d\n",fbs->ResSectors);
+  DEBUG_PRINT("Fat copies: %d\n",fbs->NumFATCop);
+  DEBUG_PRINT("Max root dir entry: %d\n",fbs->MaxRootDirEntr);
+  DEBUG_PRINT("Num sec < 32MB: %d\n",fbs->NumSec32MB);
+  DEBUG_PRINT("Media desc: %d\n",fbs->MediaDesc);
+  DEBUG_PRINT("Sec per FAT: %d\n",fbs->SecPerFAT);
+  DEBUG_PRINT("Sec per track: %d\n",fbs->SecPerTrack);
+  DEBUG_PRINT("Num of heads: %d\n",fbs->NumHeads);
+  DEBUG_PRINT("Hidden sec: %d\n",fbs->NumHiddenSec);
+  DEBUG_PRINT("Sectors: %d\n",fbs->NumSec);
+  DEBUG_PRINT("Logic Drive num: %d\n",fbs->LogicDriveNum);
+  DEBUG_PRINT("Extended sig(0x29): %02x\n",fbs->extendedSig);
+  DEBUG_PRINT("SN: %x\n",fbs->SN);
+  DEBUG_PRINT("Vol name: %c%c%c%c%c%c%c%c%c%c%c\n",fbs->VolName[0],fbs->VolName[1],
+	      fbs->VolName[2],fbs->VolName[3],fbs->VolName[4],fbs->VolName[5],
+	      fbs->VolName[6],fbs->VolName[7],fbs->VolName[8],fbs->VolName[9],
+	      fbs->VolName[10]);
+  DEBUG_PRINT("Fat name: %c%c%c%c%c%c%c%c\n",fbs->FATName[0],fbs->FATName[1],
+	      fbs->FATName[2],fbs->FATName[3],fbs->FATName[4],fbs->FATName[5],
+	      fbs->FATName[6],fbs->FATName[7]);
+}
 
 uint8_t	fat_read_header(struct fat_fs * fs)
 {
@@ -38,6 +66,7 @@ uint8_t	fat_read_header(struct fat_fs * fs)
     fh = &fs->header;
     
     partition->device_read(partition_offset,(uint8_t*)&fatbs,sizeof(fatbs));
+    print_fat_boot_sector(&fatbs);
     uint32_t sector_count;
     if(fatbs.NumSec32MB == 0)
     {
