@@ -22,22 +22,46 @@
 
 #include "spi.h"
 
+void spi_low_frequency(void)
+{
+  SPCR = (0 << SPIE) | /* SPI interrupt enable */
+	 (1 << SPE)  | /* SPI enable */
+	 (0 << DORD) | /* Data order: 0 = MSB first, 1 = LSB first */
+	 (1 << MSTR) | /* Master mode */
+	 (0 << CPOL) | /* Clock polarity: 0 = SKC low when idle, 1 = SCK high when idle*/
+	 (0 << CPHA) | /* Clock phase: 0 = sample on rising edge, 1 = sample on falling edge*/
+	 (1 << SPR1) | /* Clock frequency: fosc/128*/
+	 (1 << SPR0);
+  SPSR &= ~(1<<SPI2X); /* No doubled speed*/
+}
+void spi_high_frequency(void)
+{
+  SPCR = (0 << SPIE) | /* SPI interrupt enable */
+	 (1 << SPE)  | /* SPI enable */
+	 (0 << DORD) | /* Data order: 0 = MSB first, 1 = LSB first */
+	 (1 << MSTR) | /* Master mode */
+	 (0 << CPOL) | /* Clock polarity: 0 = SKC low when idle, 1 = SCK high when idle*/
+	 (0 << CPHA) | /* Clock phase: 0 = sample on rising edge, 1 = sample on falling edge*/
+	 (0 << SPR1) | /* Clock frequency: fosc/4*/
+	 (0 << SPR0);
+  SPSR |= (1<<SPI2X); /* Doubled speed*/  
+}
+
 /**
 * Initializes SPI interface
 * \returns void
 */
 void spi_init(void)
 {
-    SPCR = (0<<SPIE)|(1<<SPE)|(0<<DORD)|(1<<MSTR)|(0<<CPOL)|(0<<CPHA)|(0<<SPR1)|(0<<SPR0);
-    SPSR = (1<<SPI2X);
-
-    /* CS, MOSI, SCK outputs */
-//     SPI_DDR |= (1<<SPI_MOSI)|(1<<SPI_SCK);
-    /* MISO input */
-//     SPI_DDR &= ~(1<<SPI_MISO);
-//     SPI_PORT |= (1<<SPI_MISO)|(1<<SPI_MOSI);
-    
-    SPI_ENABLE();	
+  /* Check if already initialized */
+//   if(SPCR & (1<<SPE))
+//     return;
+  /* Configure pins*/
+  SPI_DDR |= (1<<SPI_MOSI);
+  SPI_DDR |= (1<<SPI_SCK);
+  SPI_DDR &=~(1<<SPI_MISO);
+  /* Configure SPI*/
+  spi_high_frequency();
 }
 /**
 * Sends a byte over the SPI bus
