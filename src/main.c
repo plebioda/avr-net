@@ -51,7 +51,7 @@ void ds1338_print_time(struct date_time * dt);
 void tcallback(timer_t timer,void * arg)
 {
 	static struct date_time dt;
-	DBG_INFO("ds1338_time: ");
+	DBG_INFO("ds1338_time: \n");
 	ds1338_get_date_time(&dt);
 	ds1338_print_time(&dt);
 	timer_set(timer,30000);
@@ -60,10 +60,10 @@ void tcallback(timer_t timer,void * arg)
 void tpcallback(uint8_t status,uint32_t timeval)
 {
 	static struct date_time date_time;
-	DBG_INFO("tp status = %d",status);
+	DBG_INFO("tp status = %d\n",status);
 	if(status)
 		return;
-	DBG_INFO("tp time sync");
+	DBG_INFO("tp time sync\n");
 	rtc_convert_date_time(timeval,&date_time);
 	ds1338_set_date_time(&date_time);
 	ds1338_print_time(&date_time);
@@ -76,39 +76,39 @@ static char * days[7] = {"Mon","Tue","Wed","Thu","Fri","Sat","Sun"};
 
 void ds1338_print_time(struct date_time * dt)
 {
-	DBG_INFO("%02x:%02x:%02x",dt->hours,dt->minutes,dt->seconds);
-	DBG_INFO(" %s ",days[dt->day-1]);
-	DBG_INFO("%02x.%02x.%02x",dt->date,dt->month,dt->year);
-	DBG_INFO(" format = %02x",dt->format);
+	DBG_INFO("%02x:%02x:%02x\n",dt->hours,dt->minutes,dt->seconds);
+	DBG_INFO(" %s \n",days[dt->day-1]);
+	DBG_INFO("%02x.%02x.%02x\n",dt->date,dt->month,dt->year);
+	DBG_INFO(" format = %02x\n",dt->format);
 }
 
 void dhcpcallback(enum dhcp_event event)
 {
-	DBG_INFO("[dhcp]: ");
+	DBG_INFO("[dhcp]: \n");
 	switch(event)
 	{
 		case dhcp_event_lease_acquired:
-			DBG_INFO("lease acquired");
+			DBG_INFO("lease acquired\n");
 			break;
 		case dhcp_event_lease_denied:
-			DBG_INFO("lease denied");
+			DBG_INFO("lease denied\n");
 			break;
 		case dhcp_event_lease_expired:
-			DBG_ERROR("lease expired");
+			DBG_ERROR("lease expired\n");
 			break;
 		case dhcp_event_lease_expiring:
-			DBG_INFO("lease expiring");
+			DBG_INFO("lease expiring\n");
 			break;
 		case dhcp_event_error:
 		default:
-			DBG_ERROR("error");
+			DBG_ERROR("error\n");
 			break;
 	}
 }
 
 void echocallback(enum echo_event event)
 {
- DBG_INFO("Echo callback: event = %d",event); 
+ DBG_INFO("Echo callback: event = %d\n",event); 
 }
 
 
@@ -126,22 +126,22 @@ void echocallback(enum echo_event event)
 
 void print_partition(struct partition * p)
 {
-		DBG_INFO("Partition:");
-		DBG_INFO("State: %s",(p->state==0x80 ? "ACTIVE" : (p->state==0 ? "INACTIVE":"?")));
-		DBG_INFO("Type: %d",(p->type));
-		DBG_INFO("Offset: %d",(p->offset));
-		DBG_INFO("Length: %d",(p->length));
+		DBG_INFO("Partition:\n");
+		DBG_INFO("State: %s\n",(p->state==0x80 ? "ACTIVE" : (p->state==0 ? "INACTIVE":"?")));
+		DBG_INFO("Type: %d\n",(p->type));
+		DBG_INFO("Offset: %d\n",(p->offset));
+		DBG_INFO("Length: %d\n",(p->length));
 }
 void print_fat_header(struct fat_header * fh)
 {
-		DBG_INFO("Fat header: ");
-		DBG_INFO("Size: %lx",fh->size);
-		DBG_INFO("Fat offset: %lx",fh->fat_offset);
-		DBG_INFO("Fat size: %lx",fh->fat_size);
-		DBG_INFO("Sector size: %x",fh->sector_size);
-		DBG_INFO("Cluster size: %x",fh->cluster_size);
-		DBG_INFO("Root dir offset: %lx",fh->root_dir_offset);
-		DBG_INFO("Cluster 0 offset: %lx",fh->cluster_zero_offset);
+		DBG_INFO("Fat header: \n");
+		DBG_INFO("Size: %lx\n",fh->size);
+		DBG_INFO("Fat offset: %lx\n",fh->fat_offset);
+		DBG_INFO("Fat size: %lx\n",fh->fat_size);
+		DBG_INFO("Sector size: %x\n",fh->sector_size);
+		DBG_INFO("Cluster size: %x\n",fh->cluster_size);
+		DBG_INFO("Root dir offset: %lx\n",fh->root_dir_offset);
+		DBG_INFO("Cluster 0 offset: %lx\n",fh->cluster_zero_offset);
 }
 struct partition partition;
 struct fat_fs fatfs;
@@ -150,34 +150,34 @@ struct fat_dir_entry fat_dir_entry;
 
 void sdcallback(enum sd_event event)
 {
-	DBG_INFO("[sd]: ");
+	DBG_INFO("[sd]: \n");
 	switch(event)
 	{
 		case sd_event_inserted:
-			DBG_INFO("card inserted");
+			DBG_INFO("card inserted\n");
 			break;
 		case sd_event_inserted_wp:
-			DBG_INFO("card inserted");
+			DBG_INFO("card inserted\n");
 			DBG_INFO(" (Write Protection)");
 			break;
 		case sd_event_removed:
-			DBG_INFO("card removed");
+			DBG_INFO("card removed\n");
 			break;
 		case sd_event_initialized:
-			DBG_INFO("card initialized");
+			DBG_INFO("card initialized\n");
 			partition_open(&partition,sd_read,0,0);
 			print_partition(&partition);
 			fat_open(&fatfs,&partition);
 			print_fat_header(&fatfs.header);
 			break;
 		case sd_event_error:
-			DBG_ERROR("error %x",sd_errno());
+			DBG_ERROR("error %x\n",sd_errno());
 			break;
 		default:
-			DBG_ERROR("unknown event");
+			DBG_ERROR("unknown event\n");
 			break;
 	}
-	DBG_INFO("");
+	DBG_INFO("\n");
 }
 
 //uint8_t block[512];
@@ -242,12 +242,12 @@ int main(void)
 	
 	uint8_t ret = echod_start(echocallback);
 	
-	DBG_INFO("echo ret=%d",ret);
+	DBG_INFO("echo ret=%d\n",ret);
 	
 	stdout = DEBUG_FH;	
 		
 	sd_init(sdcallback);
-	DBG_INFO("Hello AVR!");
+	DBG_INFO("Hello AVR!\n");
 	sd_interrupt();
 	
 	//timer_t sdtimer = timer_alloc(sd_timer_callback);
@@ -263,15 +263,15 @@ int main(void)
 //	 timer_set(rtc_timer,1000);
 		 
 //	 uint8_t ret = dhcp_start(dhcpcallback);
-//	 DBG_INFO("dhcp start ret=	%d",ret);
+//	 DBG_INFO("dhcp start ret=	%d\n",ret);
 //	 tp_get_time(tpcallback);
 //	 udp_socket_t udps;
 //	 udps = udp_socket_alloc(12348,udp_callback);
 
 
 	
-//	 DBG_INFO("Hello ATMega128!");
-//	 DBG_INFO("ENC28J60 rev %d",enc28j60_get_revision());
+//	 DBG_INFO("Hello ATMega128!\n");
+//	 DBG_INFO("ENC28J60 rev %d\n",enc28j60_get_revision());
 
 	
 //	 memset(block,0,512);
@@ -306,6 +306,6 @@ ISR(INT7_vect)
 
 ISR(INT6_vect)
 {
-	DBG_ERROR("INT6_vect");
+	DBG_ERROR("INT6_vect\n");
 	sd_interrupt();
 }
