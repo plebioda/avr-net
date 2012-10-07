@@ -170,12 +170,12 @@ void tp_timer_callback(timer_t timer,void * arg)
 	switch(tpc.state)
 	{
 		case tp_state_idle:
-			DEBUG_PRINT_COLOR(B_IYELLOW,"tp state idle\n");
+			DBG_INFO("tp state idle\n");
 			break;
 #if TP_USE_TCP			
 		case tp_state_wait_for_conn:
 		{
-			DEBUG_PRINT_COLOR(B_IYELLOW,"tp state wait for conn\n");
+			DBG_INFO("tp state wait for conn\n");
 			tcp_close(tpc.socket);
 			tpc.callback(TP_ERR_TIMEOUT,0);
 			tp_reset();
@@ -183,7 +183,7 @@ void tp_timer_callback(timer_t timer,void * arg)
 		}
 		case tp_state_wait_for_data:
 		{
-			DEBUG_PRINT_COLOR(B_IYELLOW,"tp state wait for data\n");
+			DBG_INFO("tp state wait for data\n");
 			tcp_close(tpc.socket);
 			tpc.callback(TP_ERR_TIMEOUT,0);
 			tp_reset();
@@ -197,7 +197,7 @@ void tp_timer_callback(timer_t timer,void * arg)
 #else
 		case tp_state_wait_for_reply:
 		{
-		 DEBUG_PRINT_COLOR(B_IYELLOW,"tp state wait for reply\n");
+		 DBG_INFO("tp state wait for reply\n");
 		 if(tpc.rtx++ >= TP_RTX_MAX)
 		 {
 			 tpc.callback(TP_ERR_TIMEOUT,0);
@@ -226,11 +226,11 @@ static void tp_socket_callback(tcp_socket_t socket,enum tcp_event event)
 		tp_reset();
 		return;
 	}
-	DEBUG_PRINT_COLOR(B_IYELLOW,"tp event %d\n",event);
+	DBG_INFO("tp event %d\n",event);
 	switch(event)
 	{
 		case tcp_event_connection_established:
-			DEBUG_PRINT_COLOR(B_IYELLOW,"tp con established\n",event);
+			DBG_INFO("tp con established\n",event);
 			timer_set(tpc.timer,TP_RTX_TIMEOUT);
 			break;
 		case tcp_event_data_received:

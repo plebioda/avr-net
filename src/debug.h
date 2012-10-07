@@ -106,7 +106,7 @@ extern FILE * df;// = (FILE*)&fileRS;
 	#define DBG_MSG(ch,color,fmt,args...)		{						\
 							fprintf_P((DEBUG_FH),PSTR(color));		\
 							fprintf_P((DEBUG_FH),				\
-								PSTR("[%c|%-20S|%-20s]"),		\
+								PSTR("[%c|%-25S|%-25s]"),		\
 								(ch),					\
 								PSTR((__FILE__)),			\
 								((__func__)));				\

@@ -50,7 +50,7 @@ uint8_t echod_start(echo_callback callback)
 	if(socket < 0)
 		return ECHO_ERR_SOCKET;
 	echod.socket = socket;
-	DEBUG_PRINT_COLOR(B_IRED,"socketd %d socket %d\n",echod.socket,socket);
+	DBG_ERROR("socketd %d socket %d\n",echod.socket,socket);
 #if ECHO_USE_TCP
 	tcp_listen(socket,ECHO_LOCAL_PORT);
 #else
@@ -66,7 +66,7 @@ uint8_t echod_stop(void)
 
 void echo_incoming(tcp_socket_t socket,enum tcp_event event)
 {
-	DEBUG_PRINT_COLOR(B_IRED,"echo incoming event = %d\n",event);
+	DBG_ERROR("echo incoming event = %d\n",event);
 	switch(event)
 	{
 		case tcp_event_connection_incoming:

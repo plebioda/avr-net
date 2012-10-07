@@ -124,7 +124,6 @@ cluster_t fat_get_next_cluster(struct fat_fs * fs,cluster_t cluster)
 	if(!fs->partition->device_read(cluster_offset,(uint8_t*)&next_cluster,sizeof(next_cluster)))
 		return 1;
 	
-//	 DEBUG_PRINT_COLOR(BOLD_INTENSIVE_RED,"get next cluster, cluster size=	%x",fs->header.cluster_size);
 	
 	if(next_cluster == FAT16_CLUSTER_FREE ||
 		next_cluster == FAT16_CLUSTER_BAD || 
@@ -319,13 +318,13 @@ uint8_t fat_read_dir(struct fat_dir * fat_dir,struct fat_dir_entry * dir_entry)
 	// 	DBG_INFO("Cluster_size: %lx",cluster_size);
 		if(fat_dir->cluster_offset + data_length > cluster_size)
 		{
-			DEBUG_PRINT_COLOR(B_IRED,"cluster: %x",cluster_num);
+			DBG_ERROR("cluster: %x",cluster_num);
 			cluster_num = fat_get_next_cluster(fs,cluster_num);
-			DEBUG_PRINT_COLOR(B_IRED,"next cluster: %x",cluster_num);
+			DBG_ERROR("next cluster: %x",cluster_num);
 		}
 		if(cluster_num==1)
 		{
-			DEBUG_PRINT_COLOR(B_IRED,"!cluster_num: Return1");
+			DBG_ERROR("!cluster_num: Return1");
 			return 0;
 		}
 	

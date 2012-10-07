@@ -116,7 +116,7 @@ uint8_t ip_send_packet(const ip_address * ip_dst,uint8_t protocol,uint16_t lengt
 		else
 			/* otherwise request for gateway's	mac address */
 			arp_target=(const ip_address*)&ip_gateway;
-		DEBUG_PRINT("getting mac of	: %d.%d.%d.%d\n",(*arp_target)[0],(*arp_target)[1],(*arp_target)[2],(*arp_target)[3]);	
+		DGB_INFO("getting mac of	: %d.%d.%d.%d\n",(*arp_target)[0],(*arp_target)[1],(*arp_target)[2],(*arp_target)[3]);	
 		if(!arp_get_mac(arp_target,&mac))
 			/* if there is no mac in arp table
 			 the request for this mac is send
@@ -124,7 +124,7 @@ uint8_t ip_send_packet(const ip_address * ip_dst,uint8_t protocol,uint16_t lengt
 			 so we return 0 which means that packet was not send
 			*/
 		return 0;
-		DEBUG_PRINT_COLOR(B_IMAGENTA,"ip mac ok\n");
+		DBG_INFO("ip mac ok\n");
 	}
 	struct ip_header * ip = (struct ip_header*)ethernet_get_buffer();
 	
@@ -186,14 +186,14 @@ uint8_t ip_handle_packet(struct ip_header * header, uint16_t packet_len,const et
 	/* check destination ip address */
 	if(memcmp(&header->dst,ip_get_addr(),sizeof(ip_address)))
 	{
-		DEBUG_PRINT_COLOR(B_IMAGENTA,"ip handle: check broadcast\n");
+		DBG_INFO("ip handle: check broadcast\n");
 			/* check if this is broadcast packet */
 			if(	header->dst[0] != 0xff ||
 				header->dst[1] != 0xff ||
 				header->dst[2] != 0xff ||
 				header->dst[3] != 0xff)
 				return 0;
-			DEBUG_PRINT_COLOR(B_IMAGENTA,"ip handle: broadcast\n");
+			DBG_INFO("ip handle: broadcast\n");
 	}
 
 	/* check checksum */
@@ -213,12 +213,12 @@ uint8_t ip_handle_packet(struct ip_header * header, uint16_t packet_len,const et
 // #endif //NET_ICMP
 #if NET_UDP
 		case IP_PROTOCOL_UDP:
-			DEBUG_PRINT("ip handle UDP\n");
+			DGB_INFO("ip handle UDP\n");
 			udp_handle_packet((const ip_address*)&header->src,(const struct udp_header*)((const uint8_t*)header + header_length),packet_length-header_length);
 			break;
 #endif //NET_UDP			
 		case IP_PROTOCOL_TCP:
-			//DEBUG_PRINT("ip handle: TCP\n");
+			//DGB_INFO("ip handle: TCP\n");
 			tcp_handle_packet((const ip_address*)&header->src,(const struct tcp_header*)((const uint8_t*)header + header_length),packet_length-header_length);
 			break;
 		default:
@@ -234,11 +234,11 @@ uint8_t ip_in_subnet(const ip_address * ip_remote)
 	{
 		if((((uint8_t*)ip_remote)[i] & ((uint8_t*)ip_netmask)[i]) != (((uint8_t*)ip_addr)[i] & ((uint8_t*)ip_netmask)[i]))
 		{
-			DEBUG_PRINT("ip-not-in-subnet\n");
+			DGB_INFO("ip-not-in-subnet\n");
 			return 0;
 		}
 	}
-	DEBUG_PRINT("ip-in-subnet\n");
+	DGB_INFO("ip-in-subnet\n");
 	return 1;
 }
 

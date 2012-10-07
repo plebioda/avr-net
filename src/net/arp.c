@@ -81,12 +81,12 @@ void arp_print_stat(FILE * fh)
 void print_arp_table(void)
 {
 	struct arp_table_entry * entry;
-	DEBUG_PRINT_COLOR(B_IBLUE,"ARP table:\n");
+	DBG_INFO("ARP table:\n");
 	FOREACH_ARP_ENTRY(entry)
 	{
 		if(entry->status != ARP_TABLE_ENTRY_STATUS_EMPTY)
 		{
-			DEBUG_PRINT_COLOR(IBLUE,"%3d.%3d.%3d.%3d - %02x:%02x:%02x:%02x:%02x:%02x - status = %d, timeout = %d\n",
+			DBG_INFO("%3d.%3d.%3d.%3d - %02x:%02x:%02x:%02x:%02x:%02x - status = %d, timeout = %d\n",
 						entry->ip_addr[0],
 						entry->ip_addr[1],
 						entry->ip_addr[2],
@@ -214,7 +214,7 @@ void arp_table_insert(const ip_address * ip_addr,const ethernet_address * ethern
 	/* there must be some error (maybe arp timer does not work?) */
 	if(min_entry == 0)
 	{
-		DEBUG_PRINT_COLOR(B_IRED,"error: arp_table_insert: min_entry == 0\n");
+		DBG_INFO("error: arp_table_insert: min_entry == 0\n");
 		return;
 	}
 arp_table_insert_out:
@@ -242,15 +242,15 @@ void arp_timer_tick(timer_t timer,void * arg)
 					entry->timeout--;
 				else
 				{
-					DEBUG_PRINT_COLOR(B_IBLUE,"Removing from arp table: status: %x\n",entry->status);
-					DEBUG_PRINT_COLOR(B_IBLUE,"mac: %x:%x:%x:%x:%x:%x\n",
+					DBG_INFO("Removing from arp table: status: %x\n",entry->status);
+					DBG_INFO("mac: %x:%x:%x:%x:%x:%x\n",
 						entry->ethernet_addr[0],
 						entry->ethernet_addr[1],
 						entry->ethernet_addr[2],
 						entry->ethernet_addr[3],
 						entry->ethernet_addr[4],
 						entry->ethernet_addr[5]);
-					DEBUG_PRINT_COLOR(B_IBLUE,"ip: %d.%d.%d.%d\n",
+					DBG_INFO("ip: %d.%d.%d.%d\n",
 						entry->ip_addr[0],
 						entry->ip_addr[1],
 						entry->ip_addr[2],

@@ -100,7 +100,7 @@ uint8_t ethernet_handle_packet()
 
 uint8_t ethernet_send_packet(ethernet_address * dst,uint16_t type,uint16_t len)
 {
-	DEBUG_PRINT_COLOR(B_IRED,"eth sp len=%d\n",len);
+	DBG_INFO("eth sp len=%d\n",len);
 	if(len > ETHERNET_MAX_PACKET_SIZE -NET_HEADER_SIZE_ETHERNET)
 		return 0;
 	struct ethernet_header * header = (struct ethernet_header*)ethernet_tx_buffer;
