@@ -261,8 +261,8 @@ void enc28j60_reset(void)
 }
 void enc28j60_init(const uint8_t * macaddr)
 {		
-	DBG_INFO("enc28j60t init:");
-	DBG_INFO("%c:%c:%c:%c:%c:%c",(macaddr)[0],(macaddr)[1],(macaddr)[2],(macaddr)[3],(macaddr)[4],(macaddr)[5]);
+	DBG_INFO("enc28j60t init:\n");
+	DBG_INFO("%c:%c:%c:%c:%c:%c\n",(macaddr)[0],(macaddr)[1],(macaddr)[2],(macaddr)[3],(macaddr)[4],(macaddr)[5]);
 	DBG_INFO("\n");
 	enc28j60_io_init();
 	enc28j60_reset();

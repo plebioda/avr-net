@@ -26,29 +26,29 @@ uint8_t	fat_close(struct fat_fs * fs)
 }
 void print_fat_boot_sector(struct fat_boot_sector * fbs)
 {
-	DBG_INFO("JumpNOP: %x%x%x",fbs->JumpNOP[0],fbs->JumpNOP[1],fbs->JumpNOP[2]);
-	DBG_INFO("OEM: %c%c%c%c%c%c%c%c",fbs->OEM[0],fbs->OEM[1],fbs->OEM[2],fbs->OEM[3],
+	DBG_INFO("JumpNOP: %x%x%x\n",fbs->JumpNOP[0],fbs->JumpNOP[1],fbs->JumpNOP[2]);
+	DBG_INFO("OEM: %c%c%c%c%c%c%c%c\n",fbs->OEM[0],fbs->OEM[1],fbs->OEM[2],fbs->OEM[3],
 					fbs->OEM[4],fbs->OEM[5],fbs->OEM[6],fbs->OEM[7]);
-	DBG_INFO("Sector size: %d",fbs->SectorSize);
-	DBG_INFO("Cluster size: %d",fbs->ClusterSize);
-	DBG_INFO("Reserved sec: %d",fbs->ResSectors);
-	DBG_INFO("Fat copies: %d",fbs->NumFATCop);
-	DBG_INFO("Max root dir entry: %d",fbs->MaxRootDirEntr);
-	DBG_INFO("Num sec < 32MB: %d",fbs->NumSec32MB);
-	DBG_INFO("Media desc: %d",fbs->MediaDesc);
-	DBG_INFO("Sec per FAT: %d",fbs->SecPerFAT);
-	DBG_INFO("Sec per track: %d",fbs->SecPerTrack);
-	DBG_INFO("Num of heads: %d",fbs->NumHeads);
-	DBG_INFO("Hidden sec: %d",fbs->NumHiddenSec);
-	DBG_INFO("Sectors: %d",fbs->NumSec);
-	DBG_INFO("Logic Drive num: %d",fbs->LogicDriveNum);
-	DBG_INFO("Extended sig(0x29): %02x",fbs->extendedSig);
-	DBG_INFO("SN: %x",fbs->SN);
-	DBG_INFO("Vol name: %c%c%c%c%c%c%c%c%c%c%c",fbs->VolName[0],fbs->VolName[1],
+	DBG_INFO("Sector size: %d\n",fbs->SectorSize);
+	DBG_INFO("Cluster size: %d\n",fbs->ClusterSize);
+	DBG_INFO("Reserved sec: %d\n",fbs->ResSectors);
+	DBG_INFO("Fat copies: %d\n",fbs->NumFATCop);
+	DBG_INFO("Max root dir entry: %d\n",fbs->MaxRootDirEntr);
+	DBG_INFO("Num sec < 32MB: %d\n",fbs->NumSec32MB);
+	DBG_INFO("Media desc: %d\n",fbs->MediaDesc);
+	DBG_INFO("Sec per FAT: %d\n",fbs->SecPerFAT);
+	DBG_INFO("Sec per track: %d\n",fbs->SecPerTrack);
+	DBG_INFO("Num of heads: %d\n",fbs->NumHeads);
+	DBG_INFO("Hidden sec: %d\n",fbs->NumHiddenSec);
+	DBG_INFO("Sectors: %d\n",fbs->NumSec);
+	DBG_INFO("Logic Drive num: %d\n",fbs->LogicDriveNum);
+	DBG_INFO("Extended sig(0x29): %02x\n",fbs->extendedSig);
+	DBG_INFO("SN: %x\n",fbs->SN);
+	DBG_INFO("Vol name: %c%c%c%c%c%c%c%c%c%c%c\n",fbs->VolName[0],fbs->VolName[1],
 				fbs->VolName[2],fbs->VolName[3],fbs->VolName[4],fbs->VolName[5],
 				fbs->VolName[6],fbs->VolName[7],fbs->VolName[8],fbs->VolName[9],
 				fbs->VolName[10]);
-	DBG_INFO("Fat name: %c%c%c%c%c%c%c%c",fbs->FATName[0],fbs->FATName[1],
+	DBG_INFO("Fat name: %c%c%c%c%c%c%c%c\n",fbs->FATName[0],fbs->FATName[1],
 				fbs->FATName[2],fbs->FATName[3],fbs->FATName[4],fbs->FATName[5],
 				fbs->FATName[6],fbs->FATName[7]);
 }
@@ -152,7 +152,7 @@ uint8_t fat_get_dir_entry(struct fat_fs * fs,struct fat_dir_entry * dir_entry,co
 	uint8_t ret;
 	if(path[0] == '/')
 	{
-		DBG_INFO("begin with the root directory");
+		DBG_INFO("begin with the root directory\n");
 		/* begin with the root directory */
 		memset(dir_entry,0,sizeof(*dir_entry));
 		ret = fat_read_dir_entry_from_offset(fs,dir_entry,fs->header.root_dir_offset,sizeof(struct fat_root_dir),0);
@@ -164,55 +164,55 @@ uint8_t fat_get_dir_entry(struct fat_fs * fs,struct fat_dir_entry * dir_entry,co
 	
 	while(1)
 	{
-		DBG_INFO("Path = %s",path);
+		DBG_INFO("Path = %s\n",path);
 		if(path[0] == '\0')
 			return 1;
 		const char * sub_path = strchr(path,'/');
-		DBG_INFO("subPath = %s",sub_path);
+		DBG_INFO("subPath = %s\n",sub_path);
 		uint8_t length_to_sep;
 		if(sub_path)
 		{
-			DBG_INFO("Sub path != 0");
+			DBG_INFO("Sub path != 0\n");
 			length_to_sep = sub_path - path;
 			++sub_path;
 		}
 		else
 		{
-			DBG_INFO("Sub path == 0");
+			DBG_INFO("Sub path == 0\n");
 			length_to_sep = strlen(path);
 			sub_path = path + length_to_sep;
 		}
-		DBG_INFO("Opened dir %s",dir_entry->filename);
-		DBG_INFO("Dir entry first_cluster: %x",dir_entry->first_cluster);
-		DBG_INFO("Dir entry size: %x",dir_entry->file_size);
-		DBG_INFO("Dir entry offset: %lx",dir_entry->entry_offset);
-		DBG_INFO("Dir entry name: %s",dir_entry->filename);
-		DBG_INFO("Dire entry attr = %x",dir_entry->attributes);
+		DBG_INFO("Opened dir %s\n",dir_entry->filename);
+		DBG_INFO("Dir entry first_cluster: %x\n",dir_entry->first_cluster);
+		DBG_INFO("Dir entry size: %x\n",dir_entry->file_size);
+		DBG_INFO("Dir entry offset: %lx\n",dir_entry->entry_offset);
+		DBG_INFO("Dir entry name: %s\n",dir_entry->filename);
+		DBG_INFO("Dire entry attr = %x\n",dir_entry->attributes);
 		if(!fat_dir_open(&dir,dir_entry))
 			return 0;
 		while(fat_read_dir(&dir,dir_entry))
 		{
-			DBG_INFO("File name = %s, length = %d",dir_entry->filename,strlen(dir_entry->filename));
+			DBG_INFO("File name = %s, length = %d\n",dir_entry->filename,strlen(dir_entry->filename));
 			if(strlen(dir_entry->filename) != length_to_sep
 				|| strncmp(path,dir_entry->filename,length_to_sep))
 				continue;
-			DBG_INFO("File found");			
+			DBG_INFO("File found\n");			
 			fat_dir_close(&dir);
 			
 			if(path[length_to_sep] == '\0')
 			{
-				DBG_INFO("Found name = %s",dir_entry->filename);				
+				DBG_INFO("Found name = %s\n",dir_entry->filename);				
 				/* we parsed whole path and found the file */
 				return 1;
 			}
 			
 			if(dir_entry->attributes == FAT_ATTR_DIR)
 			{
-				DBG_INFO("we found parent dir");
+				DBG_INFO("we found parent dir\n");
 				path = sub_path;
 				break;
 			}
-			DBG_INFO("Return");
+			DBG_INFO("Return\n");
 			return 0;
 		}
 		fat_dir_close(&dir);
@@ -229,10 +229,10 @@ uint8_t fat_dir_close(struct fat_dir * fat_dir)
 
 uint8_t fat_dir_open(struct fat_dir * fat_dir,struct fat_dir_entry * dir_entry)
 {
-	DBG_INFO("fat_dir=%x dir_entry=%x,attr=%x",fat_dir,dir_entry,dir_entry->attributes);
+	DBG_INFO("fat_dir=%x dir_entry=%x,attr=%x\n",fat_dir,dir_entry,dir_entry->attributes);
 	if(!fat_dir || !dir_entry || !(dir_entry->attributes == FAT_ATTR_DIR || dir_entry->attributes == FAT_ATTR_VOLUME))
 		return 0;
-	DBG_INFO("here");
+	DBG_INFO("here\n");
 	fat_dir->fs = dir_entry->fs;
 	memcpy(&fat_dir->dir_entry,dir_entry,sizeof(*dir_entry));
 	fat_dir->current_cluster = dir_entry->first_cluster;
@@ -308,23 +308,23 @@ uint8_t fat_read_dir(struct fat_dir * fat_dir,struct fat_dir_entry * dir_entry)
 	uint8_t dir_entry_found = 0;
 	while(!dir_entry_found)
 	{
-	// 	DBG_INFO("Dir %s size: %d",fat_dir->dir_entry.filename,fat_dir->dir_entry.file_size);
+	// 	DBG_INFO("Dir %s size: %d\n",fat_dir->dir_entry.filename,fat_dir->dir_entry.file_size);
 	// 	if(fat_dir->file_offset + data_length > fat_dir->dir_entry.file_size)
 	// 	{
-	// 		DBG_INFO("Return0");
+	// 		DBG_INFO("Return0\n");
 	// 		return 0;
 	// 	}
-	// 	DBG_INFO("Cluster_offset: %lx",fat_dir->cluster_offset);
-	// 	DBG_INFO("Cluster_size: %lx",cluster_size);
+	// 	DBG_INFO("Cluster_offset: %lx\n",fat_dir->cluster_offset);
+	// 	DBG_INFO("Cluster_size: %lx\n",cluster_size);
 		if(fat_dir->cluster_offset + data_length > cluster_size)
 		{
-			DBG_ERROR("cluster: %x",cluster_num);
+			DBG_ERROR("cluster: %x\n",cluster_num);
 			cluster_num = fat_get_next_cluster(fs,cluster_num);
-			DBG_ERROR("next cluster: %x",cluster_num);
+			DBG_ERROR("next cluster: %x\n",cluster_num);
 		}
 		if(cluster_num==1)
 		{
-			DBG_ERROR("!cluster_num: Return1");
+			DBG_ERROR("!cluster_num: Return1\n");
 			return 0;
 		}
 	
@@ -339,12 +339,12 @@ uint8_t fat_read_dir(struct fat_dir * fat_dir,struct fat_dir_entry * dir_entry)
 		fat_dir->cluster_offset += data_length;
 		fat_dir->current_cluster = cluster_num;	
 	
-		DBG_INFO("Read offset %lx",read_offset);
+		DBG_INFO("Read offset %lx\n",read_offset);
 		if((ret=fat_read_dir_entry_from_offset(fs,dir_entry,read_offset,data_length,1)))
 			dir_entry_found = 1;
-	// 	DBG_INFO("fat_read_root_dir ret = %d",ret);
+	// 	DBG_INFO("fat_read_root_dir ret = %d\n",ret);
 	}
-	DBG_INFO("Return2");
+	DBG_INFO("Return2\n");
 	return 1;
 }
 

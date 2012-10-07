@@ -349,25 +349,25 @@ uint8_t dhcp_start(dhcp_callback callback)
 
 static void dhcp_udp_callback(udp_socket_t socket,uint8_t * data,uint16_t len)
 {
-	DBG_INFO("dhcp udp packet len = %d",len);
+	DBG_INFO("dhcp udp packet len = %d\n",len);
 	struct dhcp_header * dhcp_header = (struct dhcp_header*)data;
 	
 	/* accept only BOOTREPLY */
 	if(dhcp_header->op != DHCP_OP_BOOTREPLY)
 		return;
-	DBG_INFO("BOOTREPLY OK");
+	DBG_INFO("BOOTREPLY OK\n");
 	/* check our transaction id*/
 	if(dhcp_header->xid != HTON32(DHCP_XID))
 		return;
-	DBG_INFO("XID OK");
+	DBG_INFO("XID OK\n");
 	/* check our ethernet address */
 	if(memcmp(&dhcp_header->charrd,ethernet_get_mac(),sizeof(ethernet_address)))
 		return;
-	DBG_INFO("ETH ADDR OK");
+	DBG_INFO("ETH ADDR OK\n");
 	/* check COOKIE*/
 	if(dhcp_header->cookie != HTON32(DHCP_COOKIE))
 		return;
-	DBG_INFO("COOKIE OK");
+	DBG_INFO("COOKIE OK\n");
 	/* parse options */
 	uint8_t msgtype = dhcp_parse_options((const struct dhcp_header *)dhcp_header);
 	
@@ -413,7 +413,7 @@ static void dhcp_udp_callback(udp_socket_t socket,uint8_t * data,uint16_t len)
 			dhcp_client.callback(dhcp_event_lease_acquired);
 			break;
 		default:
-			DBG_INFO("WRONG STATE!!!!");
+			DBG_INFO("WRONG STATE!!!!\n");
 			break;
 	}
 	
@@ -427,7 +427,7 @@ static void dhcp_timer_callback(timer_t timer,void * arg)
 		dhcp_client.callback(dhcp_event_error);
 		dhcp_free();
 	}
-	DBG_INFO("dhcp_timer_callback state %d",dhcp_client.state);
+	DBG_INFO("dhcp_timer_callback state %d\n",dhcp_client.state);
 	switch(dhcp_client.state)
 	{
 		case dhcp_state_init:
@@ -472,7 +472,7 @@ static void dhcp_timer_callback(timer_t timer,void * arg)
 			break;
 		}
 		default:
-			DBG_ERROR("dhcp time: not handled state %x",dhcp_client.state);
+			DBG_ERROR("dhcp time: not handled state %x\n",dhcp_client.state);
 			break;
 	}
 }
@@ -486,7 +486,7 @@ uint8_t dhcp_parse_options(const struct dhcp_header * dhcp_header)
 	
 	uint8_t msgtype=0;
 	uint8_t * options = (uint8_t*)(dhcp_header+1);
-	DBG_INFO("dhcp parsing options:");
+	DBG_INFO("dhcp parsing options:\n");
 	while(1)
 	{
 		uint8_t optype = *options;
@@ -494,39 +494,39 @@ uint8_t dhcp_parse_options(const struct dhcp_header * dhcp_header)
 		const uint8_t * optdata = (options+2);
 		if(optype == DHCP_OPTION_PAD)
 		{
-			DBG_INFO("PAD ");
+			DBG_INFO("PAD \n");
 			options++;
 			continue;
 		}
 		else if(optype == DHCP_OPTION_END)
 		{
-			DBG_INFO("END ");
+			DBG_INFO("END \n");
 			break;
 		}
 		else if(optype == DHCP_OPTION_MESSAGE_TYPE && optlen == DHCP_OPTION_LEN_MESSAGE_TYPE)
 		{
 			msgtype = *optdata;
-			DBG_INFO("MSGTYPE[%d] ",msgtype);
+			DBG_INFO("MSGTYPE[%d] \n",msgtype);
 		}
 		else if(optype == DHCP_OPTION_ROUTER && optlen/4 > 0)
 		{
 			memcpy(&dhcp_client.gateway,optdata,sizeof(ip_address));
-			DBG_INFO("ROUTER ",msgtype);
+			DBG_INFO("ROUTER \n",msgtype);
 		}
 		else if(optype == DHCP_OPTION_SUBNET_MASK && optlen == DHCP_OPTION_LEN_SUBNET_MASK)
 		{
 			memcpy(&dhcp_client.netmask,optdata,sizeof(ip_address));
-			DBG_INFO("NETMASK ",msgtype);
+			DBG_INFO("NETMASK \n",msgtype);
 		}
 		else if(optype == DHCP_OPTION_SERVER_ID && optlen == DHCP_OPTION_LEN_SERVER_ID)
 		{
 			memcpy(&dhcp_client.server,optdata,sizeof(ip_address));
-			DBG_INFO("SERVER_ID ",msgtype);
+			DBG_INFO("SERVER_ID \n",msgtype);
 		}
 		else if(optype == DHCP_OPTION_IP_ADDRESS_LEASE_TIME && optlen == DHCP_OPTION_LEN_IP_ADDRESS_LEASE_TIME)
 		{
 			dhcp_client.time_rebind = ntoh32(*((uint32_t*)optdata));
-			DBG_INFO("TIME[%lx] ",dhcp_client.time_rebind);
+			DBG_INFO("TIME[%lx] \n",dhcp_client.time_rebind);
 		}
 		options += optlen +2;
 	}
@@ -592,7 +592,7 @@ uint8_t dhcp_send(void)
 	/* bind local to bootpc*/
 	if(!udp_bind_local(dhcp_client.socket,UDP_PORT_BOOTPC))
 	{
-		DBG_ERROR("dhcp send: can't bind local");
+		DBG_ERROR("dhcp send: can't bind local\n");
 		return 1;
 	}
 	/* bind remote to bootps */
@@ -601,7 +601,7 @@ uint8_t dhcp_send(void)
 		ip_remote = (const ip_address *)&dhcp_client.server;
 	if(!udp_bind_remote(dhcp_client.socket,UDP_PORT_BOOTPS,ip_remote))
 	{
-		DBG_ERROR("dhcp send: can't bind remote");
+		DBG_ERROR("dhcp send: can't bind remote\n");
 		return 1;
 	}
 	/* send udp packet */

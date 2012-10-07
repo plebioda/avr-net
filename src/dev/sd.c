@@ -468,44 +468,44 @@ void sd_interrupt(void)
 
 void print_cid(void)
 {
-	DBG_INFO("MID = %02x",sd.cid.MID);
-	DBG_INFO("OID = %c%c",sd.cid.OID[0],sd.cid.OID[1]);
-	DBG_INFO("Product Revision = %02x",sd.cid.MID);
-	DBG_INFO("PSN = %02x%02x%02x%02x",sd.cid.PSN[0],sd.cid.PSN[1],sd.cid.PSN[2],sd.cid.PSN[3]);
-	DBG_INFO("PNM = %c%c%c%c%c",sd.cid.PNM[0],sd.cid.PNM[1],sd.cid.PNM[2],sd.cid.PNM[3],sd.cid.PNM[4]);
-	DBG_INFO("MDT = %d.20%d%d",(sd.cid.MDT>>8)&0xf,(sd.cid.MDT)&0xf,(sd.cid.MDT>>4)&0xf);
+	DBG_INFO("MID = %02x\n",sd.cid.MID);
+	DBG_INFO("OID = %c%c\n",sd.cid.OID[0],sd.cid.OID[1]);
+	DBG_INFO("Product Revision = %02x\n",sd.cid.MID);
+	DBG_INFO("PSN = %02x%02x%02x%02x\n",sd.cid.PSN[0],sd.cid.PSN[1],sd.cid.PSN[2],sd.cid.PSN[3]);
+	DBG_INFO("PNM = %c%c%c%c%c\n",sd.cid.PNM[0],sd.cid.PNM[1],sd.cid.PNM[2],sd.cid.PNM[3],sd.cid.PNM[4]);
+	DBG_INFO("MDT = %d.20%d%d\n",(sd.cid.MDT>>8)&0xf,(sd.cid.MDT)&0xf,(sd.cid.MDT>>4)&0xf);
 }
 
 void print_csd(void)
 {
-	DBG_INFO("CSD:");
-	DBG_INFO("CSD structure: %x",SD_GET_CSD_STRUCTURE(sd.csd));
-	DBG_INFO("TAAC: %x",SD_GET_CSD_TAAC(sd.csd));
-	DBG_INFO("NSAC: %x",SD_GET_CSD_NSAC(sd.csd));
-	DBG_INFO("TRANS_SPEED: %x",SD_GET_CSD_TRANS_SPEED(sd.csd));
-	DBG_INFO("CCC: %x",SD_GET_CSD_CCC(sd.csd));
-	DBG_INFO("READ_BL_LEN: %x",SD_GET_CSD_READ_BL_LEN(sd.csd));
-	DBG_INFO("READ_BL_PARTIAL: %x",SD_GET_CSD_READ_BL_PARTIAL(sd.csd));
-	DBG_INFO("WRITE_BLK_MISSALIGN: %x",SD_GET_CSD_WRITE_BLK_MISSALIGN(sd.csd));
-	DBG_INFO("READ_BLK_MISSALIGN: %x",SD_GET_CSD_READ_BLK_MISSALIGN(sd.csd));
-	DBG_INFO("DSR_IMP: %x",SD_GET_CSD_DSR_IMP(sd.csd));
-	DBG_INFO("C_SIZE: %x",SD_GET_CSD_C_SIZE(sd.csd));
-	DBG_INFO("VDD_R_CURR_MIN: %x",SD_GET_CSD_VDD_R_CURR_MIN(sd.csd));
-	DBG_INFO("VDD_R_CURR_MAX: %x",SD_GET_CSD_VDD_R_CURR_MAX(sd.csd));
-	DBG_INFO("VDD_W_CURR_MIN: %x",SD_GET_CSD_VDD_W_CURR_MIN(sd.csd));
-	DBG_INFO("VDD_W_CURR_MAX: %x",SD_GET_CSD_VDD_W_CURR_MAX(sd.csd));
-	DBG_INFO("C_SIZE_MULT: %x",SD_GET_CSD_C_SIZE_MULT(sd.csd));
-	DBG_INFO("ERASE_BLK_EN: %x",SD_GET_CSD_ERASE_BLK_EN(sd.csd));
-	DBG_INFO("SECTOR_SIZE: %x",SD_GET_CSD_SECTOR_SIZE(sd.csd));
-	DBG_INFO("WP_GRP_SIZE: %x",SD_GET_CSD_WP_GRP_SIZE(sd.csd));
-	DBG_INFO("WP_GRP_ENABLE: %x",SD_GET_CSD_WP_GRP_ENABLE(sd.csd));
-	DBG_INFO("R2W_FACTOR: %x",SD_GET_CSD_R2W_FACTOR(sd.csd));
-	DBG_INFO("WRITE_BL_LEN: %x",SD_GET_CSD_WRITE_BL_LEN(sd.csd));
-	DBG_INFO("WRITE_BL_PARTIAL: %x",SD_GET_CSD_WRITE_BL_PARTIAL(sd.csd));
-	DBG_INFO("FILE_FORMAT_GRP: %x",SD_GET_CSD_FILE_FORMAT_GRP(sd.csd));
-	DBG_INFO("COPY: %x",SD_GET_CSD_COPY(sd.csd));
-	DBG_INFO("PERM_WRITE_PROTECT: %x",SD_GET_CSD_PERM_WRITE_PROTECT(sd.csd));
-	DBG_INFO("TMP_WRITE_PROTECT: %x",SD_GET_CSD_TMP_WRITE_PROTECT(sd.csd));
-	DBG_INFO("FILE_FORMAT: %x",SD_GET_CSD_FILE_FORMAT(sd.csd));
-	DBG_INFO("CRC: %x",SD_GET_CSD_CRC(sd.csd));	 
+	DBG_INFO("CSD:\n");
+	DBG_INFO("CSD structure: %x\n",SD_GET_CSD_STRUCTURE(sd.csd));
+	DBG_INFO("TAAC: %x\n",SD_GET_CSD_TAAC(sd.csd));
+	DBG_INFO("NSAC: %x\n",SD_GET_CSD_NSAC(sd.csd));
+	DBG_INFO("TRANS_SPEED: %x\n",SD_GET_CSD_TRANS_SPEED(sd.csd));
+	DBG_INFO("CCC: %x\n",SD_GET_CSD_CCC(sd.csd));
+	DBG_INFO("READ_BL_LEN: %x\n",SD_GET_CSD_READ_BL_LEN(sd.csd));
+	DBG_INFO("READ_BL_PARTIAL: %x\n",SD_GET_CSD_READ_BL_PARTIAL(sd.csd));
+	DBG_INFO("WRITE_BLK_MISSALIGN: %x\n",SD_GET_CSD_WRITE_BLK_MISSALIGN(sd.csd));
+	DBG_INFO("READ_BLK_MISSALIGN: %x\n",SD_GET_CSD_READ_BLK_MISSALIGN(sd.csd));
+	DBG_INFO("DSR_IMP: %x\n",SD_GET_CSD_DSR_IMP(sd.csd));
+	DBG_INFO("C_SIZE: %x\n",SD_GET_CSD_C_SIZE(sd.csd));
+	DBG_INFO("VDD_R_CURR_MIN: %x\n",SD_GET_CSD_VDD_R_CURR_MIN(sd.csd));
+	DBG_INFO("VDD_R_CURR_MAX: %x\n",SD_GET_CSD_VDD_R_CURR_MAX(sd.csd));
+	DBG_INFO("VDD_W_CURR_MIN: %x\n",SD_GET_CSD_VDD_W_CURR_MIN(sd.csd));
+	DBG_INFO("VDD_W_CURR_MAX: %x\n",SD_GET_CSD_VDD_W_CURR_MAX(sd.csd));
+	DBG_INFO("C_SIZE_MULT: %x\n",SD_GET_CSD_C_SIZE_MULT(sd.csd));
+	DBG_INFO("ERASE_BLK_EN: %x\n",SD_GET_CSD_ERASE_BLK_EN(sd.csd));
+	DBG_INFO("SECTOR_SIZE: %x\n",SD_GET_CSD_SECTOR_SIZE(sd.csd));
+	DBG_INFO("WP_GRP_SIZE: %x\n",SD_GET_CSD_WP_GRP_SIZE(sd.csd));
+	DBG_INFO("WP_GRP_ENABLE: %x\n",SD_GET_CSD_WP_GRP_ENABLE(sd.csd));
+	DBG_INFO("R2W_FACTOR: %x\n",SD_GET_CSD_R2W_FACTOR(sd.csd));
+	DBG_INFO("WRITE_BL_LEN: %x\n",SD_GET_CSD_WRITE_BL_LEN(sd.csd));
+	DBG_INFO("WRITE_BL_PARTIAL: %x\n",SD_GET_CSD_WRITE_BL_PARTIAL(sd.csd));
+	DBG_INFO("FILE_FORMAT_GRP: %x\n",SD_GET_CSD_FILE_FORMAT_GRP(sd.csd));
+	DBG_INFO("COPY: %x\n",SD_GET_CSD_COPY(sd.csd));
+	DBG_INFO("PERM_WRITE_PROTECT: %x\n",SD_GET_CSD_PERM_WRITE_PROTECT(sd.csd));
+	DBG_INFO("TMP_WRITE_PROTECT: %x\n",SD_GET_CSD_TMP_WRITE_PROTECT(sd.csd));
+	DBG_INFO("FILE_FORMAT: %x\n",SD_GET_CSD_FILE_FORMAT(sd.csd));
+	DBG_INFO("CRC: %x\n",SD_GET_CSD_CRC(sd.csd));	 
 }

@@ -232,13 +232,13 @@ void fifo_print(struct fifo * fifo)
 {
 	uint8_t * data = fifo->buffer;
 	uint16_t i;
-	DBG_INFO("FIFO length: %d",fifo_length(fifo));
-	DBG_INFO("FIFO space: %d",fifo_space(fifo));
-	DBG_INFO("FIFO content:");
-	DBG_INFO(" i	hex dec char");
+	DBG_INFO("FIFO length: %d\n",fifo_length(fifo));
+	DBG_INFO("FIFO space: %d\n",fifo_space(fifo));
+	DBG_INFO("FIFO content:\n");
+	DBG_INFO(" i	hex dec char\n");
 	for(i=0;i<FIFO_SIZE;i++)
 	{
-		DEBUG_PRINT("%3d: %02x %3d",i,*(data),*(data));
+		DBG_INFO("%3d: %02x %3d",i,*(data),*(data));
 		if(data == fifo->first)
 		{
 			DEBUG_PRINT(" <- first");

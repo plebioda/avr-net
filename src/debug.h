@@ -75,8 +75,6 @@ extern FILE * df;// = (FILE*)&fileRS;
 
 #define ENDCOLOR 	"\033[0m"
 
-#define NEWLINE		"\n"
-
 #define DEBUG_FH		df
 
 
@@ -111,7 +109,7 @@ extern FILE * df;// = (FILE*)&fileRS;
 								PSTR((__FILE__)),			\
 								((__func__)));				\
 							fprintf_P((DEBUG_FH),				\
-								PSTR(fmt NEWLINE ENDCOLOR),## args);	\
+								PSTR(fmt ENDCOLOR),## args);	\
 							}						
 	
 	#define DBG_INFO(fmt,args...)	DBG_MSG(DBG_CH_INFO,DBG_CLR_INFO,fmt,## args)	
