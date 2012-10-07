@@ -399,13 +399,13 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
 	/* we accept only packets which starts 
 	at the beggining of the fifo_rx last pointer, it means that 
 	we do not support packets that arrive out of order */
-	DBG_ERROR("tcp->seq=%lx,tcp->ack=%lu,tcb->ack=%lx,tcb->seq=%lu\n",ntoh32(tcp->seq),ntoh32(tcp->ack),tcb->ack,tcb->seq);
-	DBG_ERROR("tcp->state=%d\n",tcb->state);
+	DBG_INFO("tcp->seq=%lx,tcp->ack=%lu,tcb->ack=%lx,tcb->seq=%lu\n",ntoh32(tcp->seq),ntoh32(tcp->ack),tcb->ack,tcb->seq);
+	DBG_INFO("tcp->state=%d\n",tcb->state);
 	if(ntoh32(tcp->seq) != tcb->ack)
 	{
 			/* if we received packet out of order send packet to tell 
 			the remote host about our position*/
-			DBG_ERROR("ACKED HERE\n");
+			DBG_INFO("ACKED HERE\n");
 			return tcp_send_packet(tcb,TCP_FLAG_ACK,0);
 	}
 	/* check RST and SYN bits */
@@ -458,7 +458,7 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
 			/* nothing acked */
 			if(rcv_ack == tcb->seq)
 			{
-				DBG_ERROR("nothing acked\n");
+				DBG_INFO("nothing acked\n");
 				break;
 			}
 			uint32_t seq_next = tcb->seq + (uint32_t)tcb->seq_next;
@@ -466,7 +466,7 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
 			DBG_INFO("rcv_ack %lu, tcb->seq %lu seq_next %lu\n",rcv_ack,tcb->seq,seq_next);
 			if((rcv_ack > tcb->seq) && (rcv_ack <= seq_next))
 			{
-				DBG_ERROR("ack in window\n");
+				DBG_INFO("ack in window\n");
 				/* get number of acked bytes */
 				uint16_t acked_bytes = (uint16_t)(rcv_ack - tcb->seq);
 				/* remove acked bytes form tx fifo */
@@ -515,12 +515,12 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
 			/* if the ack is duplicate. it can be ignored */
 			else if(rcv_ack < tcb->seq)
 			{
-			// 	DBG_ERROR("ack duplicated\n");
+			// 	DBG_INFO("ack duplicated\n");
 				 return 0;
 			}
 			else if(rcv_ack == tcb->seq+1)
 			{
-				DBG_ERROR("fin acked\n");
+				DBG_INFO("fin acked\n");
 				if(tcb->state == tcp_state_fin_wait_1)
 				{
 					/* our FIN has been acked */
@@ -549,7 +549,7 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
 			{
 				tcp_tcb_close(tcb,socket,tcp_event_error);
 			}
-			DBG_ERROR("acked smt not yet sent\n");
+			DBG_INFO("acked smt not yet sent\n");
 			return 0;
 		}
 		case tcp_state_last_ack:
@@ -875,7 +875,7 @@ uint8_t tcp_send_packet(struct tcp_tcb * tcb,uint8_t flags,uint8_t send_data)
 		when this data will be acked we will update information about window size */
 		tx_data_size = tcb->mss;
 	} 
-//	 DBG_ERROR("seq_next=%d\n",tcb->seq_next);
+//	 DBG_INFO("seq_next=%d\n",tcb->seq_next);
 	uint16_t tx_data_offset = tcb->seq_next;
 	tx_data_size -= tx_data_offset;
 	uint32_t packet_seq = tcb->seq + (uint32_t)tx_data_offset;
@@ -888,7 +888,7 @@ uint8_t tcp_send_packet(struct tcp_tcb * tcb,uint8_t flags,uint8_t send_data)
 		if(send_data)
 		{
 			 data_length = fifo_peek(tcb->fifo_tx,data_ptr,max_packet_size,tx_data_offset);
-			 //				DBG_ERROR("data length = %d\n",data_length);
+			 //				DBG_INFO("data length = %d\n",data_length);
 		}
 		packet_total_len = data_length + packet_header_len;
 		/*make sure that FIN is sent only with last data packet */

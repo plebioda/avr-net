@@ -100,11 +100,11 @@ extern FILE * df;// = (FILE*)&fileRS;
 	#define DBG_CH_ERROR	'E'	
 	#define DBG_CLR_INFO	""
 	#define DBG_CLR_WARN	B_IYELLOW
-	#define DBG_CLR_ERROR	""
+	#define DBG_CLR_ERROR	B_IRED
 	#define DBG_MSG(ch,color,fmt,args...)		{						\
 							fprintf_P((DEBUG_FH),PSTR(color));		\
 							fprintf_P((DEBUG_FH),				\
-								PSTR("[%c|%-25S|%-25s]"),		\
+								PSTR("[%c|%-20S|%-20s]"),		\
 								(ch),					\
 								PSTR((__FILE__)),			\
 								((__func__)));				\

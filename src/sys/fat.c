@@ -318,13 +318,13 @@ uint8_t fat_read_dir(struct fat_dir * fat_dir,struct fat_dir_entry * dir_entry)
 	// 	DBG_INFO("Cluster_size: %lx\n",cluster_size);
 		if(fat_dir->cluster_offset + data_length > cluster_size)
 		{
-			DBG_ERROR("cluster: %x\n",cluster_num);
+			DBG_INFO("cluster: %x\n",cluster_num);
 			cluster_num = fat_get_next_cluster(fs,cluster_num);
-			DBG_ERROR("next cluster: %x\n",cluster_num);
+			DBG_INFO("next cluster: %x\n",cluster_num);
 		}
 		if(cluster_num==1)
 		{
-			DBG_ERROR("!cluster_num: Return1\n");
+			DBG_INFO("!cluster_num: Return1\n");
 			return 0;
 		}
 	

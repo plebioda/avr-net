@@ -126,23 +126,24 @@ void echocallback(enum echo_event event)
 
 void print_partition(struct partition * p)
 {
-		DBG_INFO("Partition:\n");
-		DBG_INFO("State: %s\n",(p->state==0x80 ? "ACTIVE" : (p->state==0 ? "INACTIVE":"?")));
-		DBG_INFO("Type: %d\n",(p->type));
-		DBG_INFO("Offset: %d\n",(p->offset));
-		DBG_INFO("Length: %d\n",(p->length));
+	DBG_INFO("Partition:\n");
+	DBG_INFO("State: %s\n",(p->state==0x80 ? "ACTIVE" : (p->state==0 ? "INACTIVE":"?")));
+	DBG_INFO("Type: %d\n",(p->type));
+	DBG_INFO("Offset: %d\n",(p->offset));
+	DBG_INFO("Length: %d\n",(p->length));
 }
 void print_fat_header(struct fat_header * fh)
 {
-		DBG_INFO("Fat header: \n");
-		DBG_INFO("Size: %lx\n",fh->size);
-		DBG_INFO("Fat offset: %lx\n",fh->fat_offset);
-		DBG_INFO("Fat size: %lx\n",fh->fat_size);
-		DBG_INFO("Sector size: %x\n",fh->sector_size);
-		DBG_INFO("Cluster size: %x\n",fh->cluster_size);
-		DBG_INFO("Root dir offset: %lx\n",fh->root_dir_offset);
-		DBG_INFO("Cluster 0 offset: %lx\n",fh->cluster_zero_offset);
+	DBG_INFO("Fat header: \n");
+	DBG_INFO("Size: %lx\n",fh->size);
+	DBG_INFO("Fat offset: %lx\n",fh->fat_offset);
+	DBG_INFO("Fat size: %lx\n",fh->fat_size);
+	DBG_INFO("Sector size: %x\n",fh->sector_size);
+	DBG_INFO("Cluster size: %x\n",fh->cluster_size);
+	DBG_INFO("Root dir offset: %lx\n",fh->root_dir_offset);
+	DBG_INFO("Cluster 0 offset: %lx\n",fh->cluster_zero_offset);
 }
+
 struct partition partition;
 struct fat_fs fatfs;
 struct fat_dir_entry fat_dir_entry;
@@ -205,7 +206,6 @@ int main(void)
 {
 	/* constants */
 	const ethernet_address my_mac = {'<','P','A','K','O','>'};
-//	 const ip_address my_ip = {192,168,1,200};
 	
 	/* init io */
 	DDRB = 0xff;
@@ -214,8 +214,8 @@ int main(void)
 	PORTE |= (1<<7);
 	
 	/* init interrupts */
-	 interrupt_timer0_init();
-	 interrupt_exint_init();
+	interrupt_timer0_init();
+	interrupt_exint_init();
 	
 	/* init arch */
 	uart_init();
@@ -234,15 +234,14 @@ int main(void)
 //	 rtc_init((0<<RTC_FORMAT_12_24)|(0<<RTC_FORMAT_AM_PM));
 	
 	/* init net */
-	 ethernet_init(&my_mac);
-	 ip_init(0,0,0);
-	 arp_init();
-	 udp_init();
-	 tcp_init();
+	ethernet_init(&my_mac);
+	ip_init(0,0,0);
+	arp_init();
+	udp_init();
+	tcp_init();
 	
 	uint8_t ret = echod_start(echocallback);
-	
-	DBG_INFO("echo ret=%d\n",ret);
+	DBG_INFO("Echo server ret=%d\n",ret);
 	
 	stdout = DEBUG_FH;	
 		
@@ -252,13 +251,6 @@ int main(void)
 	
 	//timer_t sdtimer = timer_alloc(sd_timer_callback);
 	//timer_set(sdtimer,3000);
-//	 memset(block,0,512);
-//	 int i;
-//	 for(i=0;i<17;i++) 
-//	 {
-//		 sd_read(i<<9,block,512);
-//		 print_block(block,512);
-//	 }
 //	 timer_t rtc_timer = timer_alloc(tcallback);
 //	 timer_set(rtc_timer,1000);
 		 
@@ -267,23 +259,9 @@ int main(void)
 //	 tp_get_time(tpcallback);
 //	 udp_socket_t udps;
 //	 udps = udp_socket_alloc(12348,udp_callback);
-
-
-	
-//	 DBG_INFO("Hello ATMega128!\n");
-//	 DBG_INFO("ENC28J60 rev %d\n",enc28j60_get_revision());
-
-	
-//	 memset(block,0,512);
-//	 int i;
-//	 for(i=0;i<17;i++) 
-//	 {
-//		 sd_read(i<<9,block,512);
-//		 print_block(block,512);
-//	 }
-
 	
 	//fat_get_dir_entry(&fatfs,&fat_dir_entry,"/ROOT/FOO/..");		
+	
 	/* global interrupt enable */
 	sei();
 	for(;;)
