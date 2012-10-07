@@ -15,12 +15,12 @@
 
 enum dhcp_event
 {
-  dhcp_event_error=0,
-  dhcp_event_timeout,
-  dhcp_event_lease_acquired,
-  dhcp_event_lease_expiring,
-  dhcp_event_lease_expired,
-  dhcp_event_lease_denied
+	dhcp_event_error=0,
+	dhcp_event_timeout,
+	dhcp_event_lease_acquired,
+	dhcp_event_lease_expiring,
+	dhcp_event_lease_expired,
+	dhcp_event_lease_denied
 };
 
 typedef void (*dhcp_callback)(enum dhcp_event event);

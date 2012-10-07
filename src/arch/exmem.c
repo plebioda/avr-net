@@ -16,11 +16,11 @@
 
 void before_main(void)
 {
-    MCUCR = 1<<SRE;
-    SFIOR = 1<<XMBK | 1<<XMM0;
-    DDRC = 0x80;
-    PORTC &= ~(1<<7);
-    SP = 0xffff;
+	MCUCR = 1<<SRE;
+	SFIOR = 1<<XMBK | 1<<XMM0;
+	DDRC = 0x80;
+	PORTC &= ~(1<<7);
+	SP = 0xffff;
 }
 /**
 * @}

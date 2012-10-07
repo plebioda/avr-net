@@ -14,11 +14,11 @@
 
 enum echo_event
 {
-  echo_event_error,
-  echo_event_established,
-  echo_event_data_rcv,
-  echo_event_buffer,
-  echo_event_closed
+	echo_event_error,
+	echo_event_established,
+	echo_event_data_rcv,
+	echo_event_buffer,
+	echo_event_closed
 };
 
 typedef void (*echo_callback)(enum echo_event event);

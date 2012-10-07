@@ -24,27 +24,27 @@
 
 void spi_low_frequency(void)
 {
-  SPCR = (0 << SPIE) | /* SPI interrupt enable */
-	 (1 << SPE)  | /* SPI enable */
-	 (0 << DORD) | /* Data order: 0 = MSB first, 1 = LSB first */
-	 (1 << MSTR) | /* Master mode */
-	 (0 << CPOL) | /* Clock polarity: 0 = SKC low when idle, 1 = SCK high when idle*/
-	 (0 << CPHA) | /* Clock phase: 0 = sample on rising edge, 1 = sample on falling edge*/
-	 (1 << SPR1) | /* Clock frequency: fosc/128*/
-	 (1 << SPR0);
-  SPSR &= ~(1<<SPI2X); /* No doubled speed*/
+	SPCR = 	(0 << SPIE) | /* SPI interrupt enable */
+	 	(1 << SPE)	| /* SPI enable */
+		(0 << DORD) | /* Data order: 0 = MSB first, 1 = LSB first */
+		(1 << MSTR) | /* Master mode */
+		(0 << CPOL) | /* Clock polarity: 0 = SKC low when idle, 1 = SCK high when idle*/
+		(0 << CPHA) | /* Clock phase: 0 = sample on rising edge, 1 = sample on falling edge*/
+		(1 << SPR1) | /* Clock frequency: fosc/128*/
+		(1 << SPR0);
+	SPSR &= ~(1<<SPI2X); /* No doubled speed*/
 }
 void spi_high_frequency(void)
 {
-  SPCR = (0 << SPIE) | /* SPI interrupt enable */
-	 (1 << SPE)  | /* SPI enable */
-	 (0 << DORD) | /* Data order: 0 = MSB first, 1 = LSB first */
-	 (1 << MSTR) | /* Master mode */
-	 (0 << CPOL) | /* Clock polarity: 0 = SKC low when idle, 1 = SCK high when idle*/
-	 (0 << CPHA) | /* Clock phase: 0 = sample on rising edge, 1 = sample on falling edge*/
-	 (0 << SPR1) | /* Clock frequency: fosc/4*/
-	 (0 << SPR0);
-  SPSR |= (1<<SPI2X); /* Doubled speed*/  
+	SPCR = 	(0 << SPIE) | /* SPI interrupt enable */
+		(1 << SPE)	| /* SPI enable */
+		(0 << DORD) | /* Data order: 0 = MSB first, 1 = LSB first */
+		(1 << MSTR) | /* Master mode */
+		(0 << CPOL) | /* Clock polarity: 0 = SKC low when idle, 1 = SCK high when idle*/
+		(0 << CPHA) | /* Clock phase: 0 = sample on rising edge, 1 = sample on falling edge*/
+		(0 << SPR1) | /* Clock frequency: fosc/4*/
+		(0 << SPR0);
+	SPSR |= (1<<SPI2X); /* Doubled speed*/	
 }
 
 /**
@@ -53,15 +53,15 @@ void spi_high_frequency(void)
 */
 void spi_init(void)
 {
-  /* Check if already initialized */
-//   if(SPCR & (1<<SPE))
-//     return;
-  /* Configure pins*/
-  SPI_DDR |= (1<<SPI_MOSI);
-  SPI_DDR |= (1<<SPI_SCK);
-  SPI_DDR &=~(1<<SPI_MISO);
-  /* Configure SPI*/
-  spi_high_frequency();
+	/* Check if already initialized */
+//	 if(SPCR & (1<<SPE))
+//		 return;
+	/* Configure pins*/
+	SPI_DDR |= (1<<SPI_MOSI);
+	SPI_DDR |= (1<<SPI_SCK);
+	SPI_DDR &=~(1<<SPI_MISO);
+	/* Configure SPI*/
+	spi_high_frequency();
 }
 /**
 * Sends a byte over the SPI bus
@@ -69,8 +69,8 @@ void spi_init(void)
 */
 void spi_write(uint8_t data)
 {
-  SPI_DATA = data;
-  SPI_WAIT();
+	SPI_DATA = data;
+	SPI_WAIT();
 }
 /**
 * Reads a byte from the SPI bus
@@ -79,9 +79,9 @@ void spi_write(uint8_t data)
 */
 uint8_t spi_read(uint8_t data)
 {
-  SPI_DATA = data;
-  SPI_WAIT();
-  return (uint8_t)SPI_DATA;
+	SPI_DATA = data;
+	SPI_WAIT();
+	return (uint8_t)SPI_DATA;
 }
 /**
 * Writess a block of bytes to the SPI bus
@@ -91,12 +91,12 @@ uint8_t spi_read(uint8_t data)
 */
 uint8_t spi_write_block(uint8_t * data,uint16_t len)
 {
-  while(len--)
-  {
-    SPI_DATA = *(data++);
-    SPI_WAIT();
-  }
-  return 0;
+	while(len--)
+	{
+		SPI_DATA = *(data++);
+		SPI_WAIT();
+	}
+	return 0;
 }
 /**
 * Reads a block of bytes from the SPI bus
@@ -107,13 +107,13 @@ uint8_t spi_write_block(uint8_t * data,uint16_t len)
 */
 uint8_t spi_read_block(uint8_t * data,uint16_t len,uint8_t bus)
 {
-  while(len--)
-  {
-    SPI_DATA = bus;
-    SPI_WAIT();
-    *(data++) = (uint8_t)SPI_DATA;
-  }
-  return 0;
+	while(len--)
+	{
+		SPI_DATA = bus;
+		SPI_WAIT();
+		*(data++) = (uint8_t)SPI_DATA;
+	}
+	return 0;
 }
 /**
 * @}

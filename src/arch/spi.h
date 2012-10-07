@@ -30,19 +30,19 @@
 /**
 * Waits for sending or receiving data byte
 */
-#define SPI_WAIT()              while(!(SPSR & (1<<SPIF)))
+#define SPI_WAIT()	while(!(SPSR & (1<<SPIF)))
 /**
 * SPI data byte register
 */
-#define SPI_DATA                SPDR
+#define SPI_DATA	SPDR
 /**
 * Enables SPI interface
 */
-#define SPI_ENABLE()            SPCR |= (1<<SPE)
+#define SPI_ENABLE()	SPCR |= (1<<SPE)
 /**
 * Disables SPI interface
 */
-#define SPI_DISABLE()           SPCR &= ~(1<<SPE)
+#define SPI_DISABLE()	SPCR &= ~(1<<SPE)
 
 void spi_init(void);
 void spi_low_frequency(void);

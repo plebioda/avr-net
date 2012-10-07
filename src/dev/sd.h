@@ -15,11 +15,11 @@
 
 enum sd_event
 {
-  sd_event_inserted,
-  sd_event_inserted_wp,
-  sd_event_removed,
-  sd_event_initialized,
-  sd_event_error
+	sd_event_inserted,
+	sd_event_inserted_wp,
+	sd_event_removed,
+	sd_event_initialized,
+	sd_event_error
 };
 
 typedef void (*sd_callback)(enum sd_event event);
@@ -37,6 +37,6 @@ uint32_t sd_read(uint32_t addr,uint8_t * buff,uint32_t length);
 
 #define SD_ERR_CALLBACK		(1<<0)
 #define SD_ERR_INIT		(1<<1)
-  
+	
 
 #endif //_SD_H

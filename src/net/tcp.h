@@ -19,17 +19,17 @@
 
 enum tcp_event
 {
-    tcp_event_nop =0,
-    tcp_event_connection_incoming,
-    tcp_event_error,
-    tcp_event_timeout,
-    tcp_event_connection_established,
-    tcp_event_reset,
-    tcp_event_data_received,
-    tcp_event_data_acked,
-    tcp_event_connection_closing,
-    tcp_event_connection_closed,
-    tcp_event_connection_idle
+	tcp_event_nop =0,
+	tcp_event_connection_incoming,
+	tcp_event_error,
+	tcp_event_timeout,
+	tcp_event_connection_established,
+	tcp_event_reset,
+	tcp_event_data_received,
+	tcp_event_data_acked,
+	tcp_event_connection_closing,
+	tcp_event_connection_closed,
+	tcp_event_connection_idle
 };
 
 

@@ -30,21 +30,21 @@
 
 typedef struct _UART_BAUD_DATA
 {
-  uint16_t baud;        
-  uint16_t ubrr;
+	uint16_t baud;				
+	uint16_t ubrr;
 } UART_BAUD_DATA;
 
 typedef struct fcheat_file
 {
-  char *buf;
-  unsigned char unget;
-  uint8_t flags;
+	char *buf;
+	unsigned char unget;
+	uint8_t flags;
 #define FCHEAT_SRD 0x0001
 #define FCHEAT_SWR 0x0002
-  int size;
-  int len;
-  int (*put)(char,FILE*);
-  int (*get)(FILE*);
+	int size;
+	int len;
+	int (*put)(char,FILE*);
+	int (*get)(FILE*);
 } fcheat_file;
 
 #define FCHEAT_STATIC_FDEVOPENR(get) \
@@ -56,9 +56,9 @@ typedef struct fcheat_file
 #define FCHEAT_STATIC_FDEVOPENWR(put,get) \
 {0,0,FCHEAT_SWR|FCHEAT_SRD,0,0,put,get}
 
-void            uart_init(void);
-int             uart_putc         (char data,FILE*);
-int             uart_getc         (FILE*);
+void uart_init(void);
+int uart_putc(char data,FILE*);
+int uart_getc(FILE*);
 
 /**
 * @}

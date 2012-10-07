@@ -11,11 +11,11 @@
 
 #include "../dev/ds1338.h"
 
-#define GMT			2
-#define GMT_SECS_OFFSET		(GMT * 3600L)
+#define GMT				2
+#define GMT_SECS_OFFSET			(GMT * 3600L)
 
-#define rtc_hal_get_date_time(x)  	ds1338_get_date_time((x))	
-#define rtc_hal_set_date_time(x)  	ds1338_set_date_time((x))
+#define rtc_hal_get_date_time(x)	ds1338_get_date_time((x))	
+#define rtc_hal_set_date_time(x)	ds1338_set_date_time((x))
 #define rtc_hal_stop()			ds1338_stop();
 #define rtc_hal_start()			ds1338_start();
 #define rtc_hal_set_format(format)	ds1338_set_format((format));

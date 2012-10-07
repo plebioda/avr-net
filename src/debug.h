@@ -21,7 +21,7 @@ extern FILE * df;// = (FILE*)&fileRS;
 #define BLUE 		"\033[0;34m"
 #define MAGENTA		"\033[0;35m"
 #define CYAN 		"\033[0;36m"
-#define WHITE  		"\033[0;37m"
+#define WHITE			"\033[0;37m"
 
 /* Bold */
 #define B_BLACK 	"\033[1;30m"
@@ -31,7 +31,7 @@ extern FILE * df;// = (FILE*)&fileRS;
 #define B_MAGENTA	"\033[1;35m"
 #define B_CYAN 		"\033[1;36m"
 #define B_BLUE 		"\033[1;34m"
-#define B_WHITE  	"\033[1;37m"
+#define B_WHITE		"\033[1;37m"
 
 /* Underline */
 #define U_BLACK 	"\033[4;30m"
@@ -41,7 +41,7 @@ extern FILE * df;// = (FILE*)&fileRS;
 #define U_MAGENTA	"\033[4;35m"
 #define U_CYAN 		"\033[4;36m"
 #define U_BLUE 		"\033[4;34m"
-#define U_WHITE  	"\033[4;37m"
+#define U_WHITE		"\033[4;37m"
 
 /* Intensive colors*/
 #define IBLACK 		"\033[0;90m"
@@ -51,7 +51,7 @@ extern FILE * df;// = (FILE*)&fileRS;
 #define IMAGENTA	"\033[0;95m"
 #define ICYAN 		"\033[0;96m"
 #define IBLUE 		"\033[0;94m"
-#define IWHITE  	"\033[0;97m"
+#define IWHITE		"\033[0;97m"
 
 /* Bold and intensive colors */
 #define B_IBLACK 	"\033[1;90m"
@@ -61,7 +61,7 @@ extern FILE * df;// = (FILE*)&fileRS;
 #define B_IBLUE 	"\033[1;94m"
 #define B_IMAGENTA	"\033[1;95m"
 #define B_ICYAN 	"\033[1;96m"
-#define B_IWHITE  	"\033[1;97m"
+#define B_IWHITE		"\033[1;97m"
 
 /* Background colors */
 #define BCKGND_BLACK 	"\033[40m"
@@ -71,27 +71,56 @@ extern FILE * df;// = (FILE*)&fileRS;
 #define BCKGND_BLUE 	"\033[44m"
 #define BCKGND_MAGENTA	"\033[45m"
 #define BCKGND_CYAN 	"\033[46m"
-#define BCKGND_WHITE  	"\033[47m"
+#define BCKGND_WHITE		"\033[47m"
 
 #define ENDCOLOR 	"\033[0m"
 
-#define DEBUG_FH  	df
+#define NEWLINE		"\n"
+
+#define DEBUG_FH		df
 
 
 #define DEBUG_INIT() uart_init()
 
 #ifdef DEBUG_MODE
-  #define DEBUG(x)		(x)
-  #define DEBUG_PRINT(fmt,args...)	fprintf_P((DEBUG_FH),PSTR(fmt),## args)
-  #define DEBUG_PRINT_COLOR(c,fmt,args...)  fprintf_P((DEBUG_FH),PSTR(c fmt ENDCOLOR),## args)
-  #define DEBUG_SET_COLOR(c)	{fprintf_P((DEBUG_FH),PSTR((c)));}
-  #define DEBUG_CLR_COLOR()	{fprintf_P((DEBUG_FH),PSTR((ENDCOLOR)));} 
+	#define DEBUG(x)		(x)
+	#define DEBUG_PRINT(fmt,args...)	fprintf_P((DEBUG_FH),PSTR(fmt),## args)
+	#define DEBUG_PRINT_COLOR(c,fmt,args...)	fprintf_P((DEBUG_FH),PSTR(c fmt ENDCOLOR),## args)
+	#define DEBUG_SET_COLOR(c)	{fprintf_P((DEBUG_FH),PSTR((c)));}
+	#define DEBUG_CLR_COLOR()	{fprintf_P((DEBUG_FH),PSTR((ENDCOLOR)));} 
 #else
-  #define DEBUG(x)
-  #define DEBUG_PRINT(fmt,args...) 
-  #define DEBUG_PRINT_COLOR(c,fmt,args...)
-  #define DEBUG_SET_COLOR(c) 
-  #define DEBUG_CLR_COLOR() 
+	#define DEBUG(x)
+	#define DEBUG_PRINT(fmt,args...) 
+	#define DEBUG_PRINT_COLOR(c,fmt,args...)
+	#define DEBUG_SET_COLOR(c) 
+	#define DEBUG_CLR_COLOR() 
 #endif
+
+#ifdef DEBUG_MODE	
+	#define DBG_CH_INFO	'I'
+	#define DBG_CH_WARN	'W'
+	#define DBG_CH_ERROR	'E'	
+	#define DBG_CLR_INFO	""
+	#define DBG_CLR_WARN	B_IYELLOW
+	#define DBG_CLR_ERROR	""
+	#define DBG_MSG(ch,color,fmt,args...)		{						\
+							fprintf_P((DEBUG_FH),PSTR(color));		\
+							fprintf_P((DEBUG_FH),				\
+								PSTR("[%c|%-20S|%-20s]"),		\
+								(ch),					\
+								PSTR((__FILE__)),			\
+								((__func__)));				\
+							fprintf_P((DEBUG_FH),				\
+								PSTR(fmt NEWLINE ENDCOLOR),## args);	\
+							}						
+	
+	#define DBG_INFO(fmt,args...)	DBG_MSG(DBG_CH_INFO,DBG_CLR_INFO,fmt,## args)	
+	#define DBG_WARN(fmt,args...)	DBG_MSG(DBG_CH_WARN,DBG_CLR_WARN,fmt,## args)
+	#define DBG_ERROR(fmt,args...)	DBG_MSG(DBG_CH_ERROR,DBG_CLR_ERROR,fmt,## args)
+#else
+	#define DBG_INFO(fmt,args...)	
+	#define DBG_WARN(fmt,args...)	
+	#define DBG_ERROR(fmt,args...)	
+#endif 
 
 #endif //_DEBUG_H_INCLUDED

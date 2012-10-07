@@ -13,7 +13,7 @@
 #define NET_UDP		1
 #define NET_TCP		1
 
-#define NET_IP_ADDRESS	{192,168,1,200}
+#define NET_IP_ADDRESS	{192,168,1,7}
 #define NET_IP_NETMASK	{255,255,255,0}
 #define NET_IP_GATEWAY	{192,168,1,1}
 

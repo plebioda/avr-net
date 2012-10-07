@@ -13,27 +13,27 @@
 
 uint8_t	partition_open(struct partition * partition,device_read_t device_read,device_write_t device_write,uint8_t index)
 {
-    /* 16 bytes fo partition table entry*/
-    uint8_t buff[0x10];		
-    /* device_read function must be defined, number of partition entries == 4*/
-    if(!partition || device_read == 0 || index>=4)
-      return 1;
-    partition->device_read = device_read;
-    partition->device_write = device_write;
-    partition->device_read(PT_OFFSET + (index<<4),buff,sizeof(buff));
-    partition->state = buff[PTE_STATE];
-    if(partition->state == INACTIVE_PARTITION)
-      return 1;
-    partition->type = buff[PTE_TYPE];
-    partition->offset = read32(&buff[PTE_OFFSET]);
-    partition->length = read32(&buff[PTE_LENGTH]);
-    return 0;
+	/* 16 bytes fo partition table entry*/
+	uint8_t buff[0x10];		
+	/* device_read function must be defined, number of partition entries == 4*/
+	if(!partition || device_read == 0 || index>=4)
+		return 1;
+	partition->device_read = device_read;
+	partition->device_write = device_write;
+	partition->device_read(PT_OFFSET + (index<<4),buff,sizeof(buff));
+	partition->state = buff[PTE_STATE];
+	if(partition->state == INACTIVE_PARTITION)
+		return 1;
+	partition->type = buff[PTE_TYPE];
+	partition->offset = read32(&buff[PTE_OFFSET]);
+	partition->length = read32(&buff[PTE_LENGTH]);
+	return 0;
 }
 
 uint8_t partition_close(struct partition * partition)
 {
-    if(!partition)
-      return 1;
-    partition->state = INACTIVE_PARTITION;
-    return 0;
+	if(!partition)
+		return 1;
+	partition->state = INACTIVE_PARTITION;
+	return 0;
 }

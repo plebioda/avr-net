@@ -23,8 +23,8 @@ extern uint8_t ethernet_tx_buffer[];
 
 struct ethernet_stats
 {
-  uint32_t rx_packets;
-  uint32_t tx_packets;
+	uint32_t rx_packets;
+	uint32_t tx_packets;
 };
 
 typedef uint8_t ethernet_address[6];

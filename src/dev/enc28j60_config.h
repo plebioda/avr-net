@@ -6,9 +6,9 @@
  * published by the Free Software Foundation.
  */
 
-#define ENC28J60_CS_PORT        PORTB
-#define ENC28J60_CS_DDR         DDRB
-#define ENC28J60_CS             0
+#define ENC28J60_CS_PORT				PORTB
+#define ENC28J60_CS_DDR				 DDRB
+#define ENC28J60_CS						 0
 #define ENC28J60_RST_PORT	PORTE
 #define ENC28J60_RST_DDR	DDRE
 #define ENC28J60_RST		3

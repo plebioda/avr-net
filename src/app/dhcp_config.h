@@ -14,7 +14,7 @@
 #define DHCP_RTX		4
 #define DHCP_USE_HOST_NAME	1
 #if DHCP_USE_HOST_NAME
-  #define DHCP_HOST_NAME	"AVR-NET"
+	#define DHCP_HOST_NAME	"AVR-NET"
 #endif
 
 #endif //_DHCP_CONFIG_H
