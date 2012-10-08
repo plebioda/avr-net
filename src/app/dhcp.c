@@ -14,7 +14,7 @@
 
 #include <string.h>
 
-#define DEBUG_MODE
+//
 #include "../debug.h"
 
 /*

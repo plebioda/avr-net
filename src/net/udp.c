@@ -10,7 +10,7 @@
 
 #if NET_UDP
 
-#define DEBUG_MODE
+//
 #include "../debug.h"
 
 //#include "../arch/exmem.h"

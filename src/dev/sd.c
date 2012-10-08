@@ -9,7 +9,7 @@
 #include "sd.h"
 #include "../arch/spi.h"
 
-#define DEBUG_MODE
+//
 #include "../debug.h"
 
 #include <string.h>

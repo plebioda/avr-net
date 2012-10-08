@@ -104,9 +104,10 @@ EXTRAINCDIRS = include
 #     gnu99 = c99 plus GCC extensions
 CSTANDARD = -std=gnu99
 
+CDEFS_DBG = 
 
 # Place -D or -U options here
-CDEFS = -DF_CPU=$(F_CPU)UL
+CDEFS = -DF_CPU=$(F_CPU)UL $(CDEFS_DBG)
 
 
 # Place -I options here

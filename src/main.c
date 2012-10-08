@@ -12,7 +12,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#define DEBUG_MODE
+//
 #include "debug.h"
 
 #include "arch/interrupts.h"
@@ -45,6 +45,11 @@
 #include "app/dhcp.h"
 #include "app/echod.h"
 #include "app/netstat.h"
+
+
+struct partition partition;
+struct fat_fs fatfs;
+struct fat_dir_entry fat_dir_entry;
 
 void ds1338_print_time(struct date_time * dt);
 
@@ -144,9 +149,6 @@ void print_fat_header(struct fat_header * fh)
 	DBG_INFO("Cluster 0 offset: %lx\n",fh->cluster_zero_offset);
 }
 
-struct partition partition;
-struct fat_fs fatfs;
-struct fat_dir_entry fat_dir_entry;
 
 
 void sdcallback(enum sd_event event)
@@ -201,6 +203,7 @@ void print_block(uint8_t * block,uint16_t len)
 	} 
 		 
 }
+
 
 int main(void)
 {
@@ -284,6 +287,5 @@ ISR(INT7_vect)
 
 ISR(INT6_vect)
 {
-	DBG_ERROR("INT6_vect\n");
 	sd_interrupt();
 }

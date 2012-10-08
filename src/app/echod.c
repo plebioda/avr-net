@@ -17,7 +17,7 @@
 
 #include "../sys/timer.h"
 
-#define DEBUG_MODE
+//
 #include "../debug.h"
 
 struct 

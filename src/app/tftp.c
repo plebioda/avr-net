@@ -15,7 +15,7 @@
 
 #include "../arch/exmem.h"
 
-#define DEBUG_MODE
+//
 #include "../debug.h"
 
 

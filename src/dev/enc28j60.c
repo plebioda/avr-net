@@ -8,7 +8,7 @@
 
 #include "enc28j60.h"
 
-#define DEBUG_MODE
+//
 #include "../debug.h"
 #include <avr/io.h>
 #include <avr/interrupt.h>

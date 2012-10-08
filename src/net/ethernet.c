@@ -11,7 +11,7 @@
 #include "../arch/exmem.h"
 #include "ip.h"
 #include "arp.h"
-// #define DEBUG_MODE
+// 
 #include "../debug.h"
 
 #include <string.h>

@@ -9,7 +9,7 @@
 #include "ds1338.h"
 #include "../arch/i2c.h"
 
-#define DEBUG_MODE
+//
 #include "../debug.h"
 
 uint8_t ds1338_init(void)

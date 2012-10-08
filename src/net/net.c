@@ -8,7 +8,7 @@
 
 #include "net.h"
 
-#define DEBUG_MODE
+//
 #include "../debug.h"
 
 uint16_t hton16(uint16_t h)

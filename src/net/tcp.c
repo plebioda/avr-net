@@ -13,7 +13,7 @@
 #include "../sys/timer.h"
 #include "../util/fifo.h"
 
-#define DEBUG_MODE
+//
 #include "../debug.h"
 
 #include <string.h>

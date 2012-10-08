@@ -12,7 +12,7 @@
 
 #include "../arch/exmem.h"
 
-#define DEBUG_MODE
+//
 #include "../debug.h"
 
 #define TIMER_STATE_UNUSED 	0

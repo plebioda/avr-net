@@ -27,7 +27,7 @@
 /**
 * Baud rate
 */
-#define UART_BAUD_RATE 9600UL
+#define UART_BAUD_RATE 115200UL
 /**
 * @}
 */
