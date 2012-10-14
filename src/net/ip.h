@@ -21,20 +21,68 @@
 
 typedef uint8_t ip_address[4];
 
+
+/**
+ *
+ */
 struct ip_header;
 
+/**
+ * Inits IP module
+ * @param [in] addr IP Address
+ * @param [in] netmask Netmask
+ * @param [in] gateway Gateway
+ */
 void ip_init(const ip_address * addr,const ip_address * netmask,const ip_address * gateway);
+
+/**
+ */
 const ip_address * ip_get_addr(void);
+
+/**
+ *
+ */
 const ip_address * ip_get_netmask(void);
+
+/**
+ *
+ */
 const ip_address * ip_get_broadcast(void); 
+
+/**
+ *
+ */
 const ip_address * ip_get_gateway(void);
+
+/**
+ *
+ */
 const char * ip_addr_str(const ip_address * addr);
+
+/**
+ *
+ */
 const char * ip_addr_port_str(const ip_address * addr,uint16_t portno);
+
+/**
+ *
+ */
 uint8_t ip_send_packet(const ip_address * ip_dst,uint8_t protocol,uint16_t length);
+
+/**
+ *
+ */
 uint8_t ip_handle_packet(struct ip_header * header, uint16_t packet_len,const ethernet_address * mac );
 
 
+/**
+ *
+ */
 #define ip_get_buffer() (ethernet_get_buffer() + NET_HEADER_SIZE_IP)
+
+/**
+ *
+ */
 #define ip_get_buffer_size() (ethernet_get_buffer_size() - NET_HEADER_SIZE_IP)
 
 #endif //_IP_H

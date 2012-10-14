@@ -9,7 +9,7 @@
 #ifndef _EXMEM_H
 #define _EXMEM_H
 /**
-* \addtogroup arch
+* @addtogroup arch
 * @{
 */
 #include "exmem_config.h"

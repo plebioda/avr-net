@@ -7,17 +7,17 @@
  */
 
 /**
-* \addtogroup arch
+* @addtogroup arch
 * @{
 */
 /**
-* \addtogroup spi
+* @addtogroup spi
 * @{
 */
 /**
-* \file
+* @file
 * SPI implementation
-* \author Paweł Lebioda <pawel.lebioda89@gmail.com>
+* @author Paweł Lebioda <pawel.lebioda89@gmail.com>
 */
 
 #include "spi.h"
@@ -49,7 +49,7 @@ void spi_high_frequency(void)
 
 /**
 * Initializes SPI interface
-* \returns void
+* @returns void
 */
 void spi_init(void)
 {
@@ -65,7 +65,7 @@ void spi_init(void)
 }
 /**
 * Sends a byte over the SPI bus
-* \param[in] data Byte to send
+* @param[in] data Byte to send
 */
 void spi_write(uint8_t data)
 {
@@ -74,8 +74,8 @@ void spi_write(uint8_t data)
 }
 /**
 * Reads a byte from the SPI bus
-* \param[in] data Value which will be on the MOSI bus while reading
-* \returns The received byte
+* @param[in] data Value which will be on the MOSI bus while reading
+* @returns The received byte
 */
 uint8_t spi_read(uint8_t data)
 {
@@ -85,9 +85,9 @@ uint8_t spi_read(uint8_t data)
 }
 /**
 * Writess a block of bytes to the SPI bus
-* \param[in] data Pointer to data to write
-* \param[in] len Length of data
-* \returns 0 on success
+* @param[in] data Pointer to data to write
+* @param[in] len Length of data
+* @returns 0 on success
 */
 uint8_t spi_write_block(uint8_t * data,uint16_t len)
 {
@@ -100,10 +100,10 @@ uint8_t spi_write_block(uint8_t * data,uint16_t len)
 }
 /**
 * Reads a block of bytes from the SPI bus
-* \param[in] data Pointer to data to write
-* \param[in] len Length of data
-* \param[in] bus Value which will be on the MOSI bus while reading
-* \returns 0 on success
+* @param[in] data Pointer to data to write
+* @param[in] len Length of data
+* @param[in] bus Value which will be on the MOSI bus while reading
+* @returns 0 on success
 */
 uint8_t spi_read_block(uint8_t * data,uint16_t len,uint8_t bus)
 {

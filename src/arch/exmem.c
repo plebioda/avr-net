@@ -7,7 +7,7 @@
  */
 
 /**
-* \addtogroup arch
+* @addtogroup arch
 * @{
 */
 #include "exmem.h"

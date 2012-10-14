@@ -9,7 +9,7 @@
 #ifndef _EXMEM_CONFIG_H
 #define _EXMEM_CONFIG_H
 /**
-* \addtogroup arch
+* @addtogroup arch
 * @{
 */
 #define EXMEM_USE_ATTR	1

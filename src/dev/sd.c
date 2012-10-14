@@ -205,7 +205,6 @@ static struct
 #define sd_valid_block()		(sd.block_state == SD_BLOCK_STATE_VALID)
 #define sd_valid_block_addr(addr)	(sd_block_addr((addr)) == sd.block_addr)
 
-
 static uint8_t sd_init_card(void);
 static void sd_delay(uint8_t n);
 
@@ -303,6 +302,7 @@ uint16_t sd_send_cmd_r2_crc(uint8_t cmd,uint32_t arg,uint8_t crc)
 
 uint8_t sd_init_card(void)
 {
+	DBG_INFO("init\n");
 	int16_t i;
 	uint8_t ret=0;
 	sd_unselect();
@@ -316,6 +316,7 @@ uint8_t sd_init_card(void)
 	sd_delay(32);
 	/* select card */
 	sd_select();
+	DBG_INFO("before go to idle state\n");
 	/* reset card; (go to idle state)*/
 	i=SD_IDLE_WAIT_MAX;
 	do
@@ -326,6 +327,7 @@ uint8_t sd_init_card(void)
 		ret = sd_send_cmd_r1_crc(SDC_GO_IDLE_STATE,0,SD_CRC_GO_IDLE_STATE);
 	/* wait until card is not in idle state */
 	}while(ret != (1<<SD_R1_IDLE_STATE) && --i>0);
+	DBG_INFO("after go to idle state: i= %d\n",i);
 	if(i==0) goto out;
 	/* wait for card */
 	i=SD_WAIT_READY_TIMEOUT;
@@ -334,14 +336,17 @@ uint8_t sd_init_card(void)
 		ret = sd_send_cmd_r1(SDC_SEND_OP_COND,0);
 	/* wait until card is in idle state */
 	}while((ret & (1<<SD_R1_IDLE_STATE)) && --i>0);	
+	DBG_INFO("after SDC_SEND_OP_COND\n");
 	if(i==0) goto out;
 	/* set block size [SD_BLOCK_SIZE]*/
 	ret = sd_send_cmd_r1(SDC_SET_BLOCKLEN,SD_BLOCK_SIZE);
 	/*TODO: reading cid and csd here? if yes fix selecting/unselecting card*/
 	ret = sd_read_cid();
+	DBG_INFO("sd_read_cid = 0x%x\n",ret);
 	ret = sd_read_csd();
+	DBG_INFO("sd_read_cid = 0x%x\n",ret);
 	/* 
-	 * read first block (of addr 0x0000) becouse it is the most probably
+	 * read first block (of addr 0x0000) because it is the most probably
 	 * that user will read this block at first (eg. MBR)
 	 */
 	ret = sd_read_block(0);
@@ -355,6 +360,7 @@ out:
 }
 static uint8_t sd_read_block(uint32_t addr)
 {
+	DBG_INFO("addr=0x%lx\n",addr)
 	uint8_t ret;
 	addr &= SD_BLOCK_MASK;
 	if(sd_valid_block() && sd_valid_block_addr(addr))
@@ -367,6 +373,10 @@ static uint8_t sd_read_block(uint32_t addr)
 	}
 	else
 		sd.block_state = SD_BLOCK_STATE_INVALID;
+#ifdef DEBUG_MODE
+	//print_block(sd.block,sizeof(sd.block));
+#endif
+	DBG_INFO("ret=0x%x\n",ret);
 	return ret;
 }
 static uint8_t	_sd_read(uint8_t cmd,uint32_t arg,uint8_t * reg,uint16_t size)
@@ -395,12 +405,14 @@ out:
 
 uint32_t sd_read(uint32_t addr,uint8_t * buff,uint32_t length)
 {
+	DBG_INFO("addr=0x%08x(%d) len=0x%08x(%d)\n",addr,addr,length,length);
 	uint32_t read_len=length;
 	uint32_t tmp;
 	uint32_t offset;
 	if(!sd_card_inserted()) 
 	{
 		sd.errno = sderr_CardNotInserted;
+		DBG_ERROR("card not inserted\n");
 		return 0;
 	}
 	while(read_len>0)
@@ -410,6 +422,7 @@ uint32_t sd_read(uint32_t addr,uint8_t * buff,uint32_t length)
 		{
 			if(sd_read_block(addr))
 			{
+				DBG_ERROR("sd_read_block\n")
 				sd.errno = sderr_ReadBlock;
 				/* return number of bytes already read */
 				return (length-read_len);
@@ -426,6 +439,7 @@ uint32_t sd_read(uint32_t addr,uint8_t * buff,uint32_t length)
 		buff += tmp;
 		read_len -= tmp;
 	}
+	DBG_INFO("length: %d\n",length);
 	return length;
 }
 
@@ -452,6 +466,7 @@ void sd_interrupt(void)
 			sd.callback(sd_event_inserted);
 		}
 		uint8_t ret = sd_init_card();
+		DBG_INFO("sd_init_card = 0x%x\n",ret);
 		if(ret)
 		{
 			sd.errno = ((uint16_t)ret<<8)|SD_ERR_INIT;
@@ -459,12 +474,47 @@ void sd_interrupt(void)
 		}
 		else
 		{
-			sd.callback(sd_event_initialized);
+#ifdef DEBUG_MODE
 			print_cid();
 			print_csd();
+#endif
+			sd.callback(sd_event_initialized);
 		}
 	}
 }
+
+#if DEBUG_MODE
+
+char get_char(uint8_t byte)
+{
+	char c = (char)byte;
+	if(c >= ' ' && c <= '~') {
+		return c;
+	} else { 
+		return '.';
+	}
+}
+
+void print_block(uint8_t * data, uint16_t len)
+{
+	uint16_t i=0,j;
+	for(i=0;i<len;i+=16)
+	{
+		DBG_INFO("0x%04x: ",i);
+		for(j=0;j<16;j++)
+		{
+			DEBUG_PRINT("%02x%s",data[i+j],(j==7)?"  ":" ");
+		}
+		DEBUG_PRINT(" |");
+		for(j=0;j<16;j++)
+		{
+			DEBUG_PRINT("%c",get_char(data[i+j]));
+		}
+		DEBUG_PRINT("|\n");
+	}
+}
+
+#endif 
 
 void print_cid(void)
 {

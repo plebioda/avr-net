@@ -59,12 +59,13 @@ FORMAT = ihex
 TARGET = main
 
 # List C source files here. (C dependencies are automatically generated.)
-SRC = $(wildcard src/*.c) $(wildcard src/*/*.c)
-# SRC = src/main.c
-# SRC += src/debug.c
-# SRC += src/arch/uart.c
-# SRC += src/arch/spi.c
-# SRC += src/dev/enc28j60.c
+SRC =  $(wildcard src/*.c) 
+SRC += $(wildcard src/dev/*.c) 
+SRC += $(wildcard src/arch/*.c) 
+SRC += $(wildcard src/sys/*.c) 
+SRC += $(wildcard src/util/*.c) 
+#SRC += $(wildcard src/net/*.c) 
+#SRC += $(wildcard src/app/*.c) 
 
 
 # List Assembler source files here.
@@ -104,7 +105,7 @@ EXTRAINCDIRS = include
 #     gnu99 = c99 plus GCC extensions
 CSTANDARD = -std=gnu99
 
-CDEFS_DBG = 
+CDEFS_DBG = -DDEBUG_MODE
 
 # Place -D or -U options here
 CDEFS = -DF_CPU=$(F_CPU)UL $(CDEFS_DBG)
@@ -337,6 +338,9 @@ ALL_ASFLAGS = -mmcu=$(MCU) -I. -x assembler-with-cpp $(ASFLAGS)
 
 
 
+
+dbg: 
+	make CDEFS_DBG=-DDEBUG_MODE build
 
 # Default target.
 all: begin gccversion sizebefore build sizeafter end

@@ -8,6 +8,21 @@
 
 #include "partition.h"
 
+#include "../debug.h"
+
+#ifdef DEBUG_MODE
+
+void print_partition(struct partition * p)
+{
+	DBG_INFO("Partition:\n");
+	DBG_INFO("State: %s\n",(p->state==0x80 ? "ACTIVE" : (p->state==0 ? "INACTIVE":"?")));
+	DBG_INFO("Type: %d\n",(p->type));
+	DBG_INFO("Offset: %d\n",(p->offset));
+	DBG_INFO("Length: %d\n",(p->length));
+}
+
+#endif
+
 #define read32(ptr)	(uint32_t)(*((uint32_t*)ptr))
 #define read16(ptr)	(uint16_t)(*((uint16_t*)buff))
 
@@ -27,6 +42,9 @@ uint8_t	partition_open(struct partition * partition,device_read_t device_read,de
 	partition->type = buff[PTE_TYPE];
 	partition->offset = read32(&buff[PTE_OFFSET]);
 	partition->length = read32(&buff[PTE_LENGTH]);
+#ifdef DEBUG_MODE
+	print_partition(partition);
+#endif
 	return 0;
 }
 

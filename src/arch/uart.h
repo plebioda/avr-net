@@ -9,16 +9,16 @@
 #ifndef _UART_H
 #define _UART_H
 /**
-* \addtogroup arch
+* @addtogroup arch
 * @{
 */
 /**
-* \addtogroup uart
+* @addtogroup uart
 * @{
 */
 /**
-* \file UART Header
-* \author Paweł Lebioda <pawel.lebioda89@gmail.com>
+* @file UART Header
+* @author Paweł Lebioda <pawel.lebioda89@gmail.com>
 */
 #include <avr/io.h>
 #include <avr/pgmspace.h>

@@ -8,7 +8,7 @@
 #ifndef _INTERRUPTS_H
 #define _INTERRUPTS_H
 /**
-* \addtogroup arch
+* @addtogroup arch
 * @{
 */
 #define interrupt_timer0_init() \

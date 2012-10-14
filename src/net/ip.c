@@ -5,7 +5,15 @@
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
-
+/**
+ * @addtogroup net
+ * @{
+ * @addtogroup ip
+ * @{
+ * @file ip.c
+ * @author Pawel Lebioda <pawel.lebioda89@gmail.com>
+ * @brief This file contains definition of Internet Protocol layer functions
+ */
 #include <string.h>
 #include <stdio.h>
 
@@ -17,73 +25,190 @@
 #include "udp.h"
 #include "tcp.h"
 
-//
 #include "../debug.h"
 
+/**
+ * Internet Protocol version 4
+ */
 #define IP_V4		0x4
 
 #define IP_VIHL_HL_MASK	0xf
-#define IP_FLAGS_MORE_FRAGMENTS 0x01
-#define IP_FLAGS_DO_NOT_FRAGMENT 0x02
+/**
+ * Internet Protocol Header
+ */
 struct ip_header
 {
+	/**
+ 	 * Version and header length
+	 */
 	union
 	{
-		uint8_t version;
+		/**
+		 * Version - 4 bits
+		 */
+		uint8_t version; 
+
+		/**
+ 		 * Header length in 4 bytes words - 4 bits
+		 */
 		uint8_t header_length;
 	} vihl;
+
+	/**
+	 * Type of service
+	 */
 	uint8_t 	type_of_service;
+	
+	/**
+	 * Data length
+	 */
 	uint16_t 	length;
+
+	/**
+	 * Packet ID
+	 */
 	uint16_t 	id;
+	
+	/**
+	 * Flags and fragment offset
+	 */
 	union
 	{
+		/**
+		 * Flags
+		 */
 		uint16_t flags;
+		
+		/**
+		 * Fragment offset
+ 		 */
 		uint16_t fragment_offset;
 	} ffo;
+	
+	/**
+	 * More fragments
+	 */
+	#define IP_FLAGS_MORE_FRAGMENTS 0x01
+
+	/**
+	 * Do not fragment
+	 */
+	#define IP_FLAGS_DO_NOT_FRAGMENT 0x02
+
+	/**
+	 * Time to live
+	 */
 	uint8_t 	ttl;
+	
+	/**
+	 * Protocol
+	 */
 	uint8_t 	protocol;
+	
+	/**
+	 * Checksum
+	 */
 	uint16_t 	checksum;
+
+	/**
+	 * Source IP Address
+	 */
 	ip_address	src;
+
+	/**
+	 * Destination IP Address
+	 */
 	ip_address 	dst;
 };
 
+/**
+ * IP Address
+ */
 static ip_address ip_addr = NET_IP_ADDRESS;
+
+/**
+ * Netmask
+ */
 static ip_address ip_netmask = NET_IP_NETMASK;
+
+/**
+ * Gateway address
+ */
 static ip_address ip_gateway = NET_IP_GATEWAY;
+
+/**
+ * Broadcast address
+ */
 static ip_address ip_broadcast;
 
 /*		A.B.C.D = 3*4 + 3 dots +	: + port number + NULL*/
 static char ip_addr_char[3*sizeof(ip_address) + 3 + 1 + 5 + 1];
 
+
+/**
+ * Checks if specified ip address is the broadcast address
+ * @param [in] ip IP Address
+ * @return 1 if specified address is broadcast, otherwise 0
+ */
 uint8_t ip_is_broadcast(const ip_address * ip);
+
+/**
+ * Checks if specified ip address belongs to the same subnet
+ * @param [in] ip_remote IP Address
+ * @return 1 if specified address belongs to the same subnet, otherwise 0
+ */
 uint8_t ip_in_subnet(const ip_address * ip_remote);
+
 
 const ip_address * ip_get_addr(void)		{return (const ip_address*)&ip_addr;} 
 const ip_address * ip_get_netmask(void) 	{return (const ip_address*)&ip_netmask;} 
 const ip_address * ip_get_broadcast(void)	{return (const ip_address*)&ip_broadcast;} 
 const ip_address * ip_get_gateway(void)		{return (const ip_address*)&ip_gateway;} 
 
-
-
+/**
+ *
+ */
 static void ip_set_broadcast(void);
 
+
+/**
+ *
+ */
 const char * ip_addr_str(const ip_address * addr)
 {
 	sprintf(ip_addr_char,"%d.%d.%d.%d",*((uint8_t*)addr+0),*((uint8_t*)addr+1),*((uint8_t*)addr+2),*((uint8_t*)addr+3));
 	return (const char*)ip_addr_char;
 }
 
+
+/**
+ *
+ */
 const char * ip_addr_port_str(const ip_address * addr,uint16_t portno)
 {
-	sprintf(ip_addr_char,"%d.%d.%d.%d:%u",*((uint8_t*)addr+0),*((uint8_t*)addr+1),*((uint8_t*)addr+2),*((uint8_t*)addr+3),portno);
+	sprintf(ip_addr_char,
+		"%d.%d.%d.%d:%u",
+		*((uint8_t*)addr+0),
+		*((uint8_t*)addr+1),
+		*((uint8_t*)addr+2),
+		*((uint8_t*)addr+3),
+		portno);
 	return (const char*)ip_addr_char;
 }
 
+
+/**
+ *
+ */
 uint8_t ip_is_broadcast(const ip_address * ip)
 {
 	return (*((uint32_t*)ip) == 0xffffffff || memcmp(ip,ip_broadcast,4) == 0);
 }
 
+
+/**
+ *
+ */
 void ip_init(const ip_address * addr,const ip_address * netmask,const ip_address * gateway)
 {
 	if(addr)
@@ -93,8 +218,18 @@ void ip_init(const ip_address * addr,const ip_address * netmask,const ip_address
 	if(gateway)
 		memcpy(&ip_gateway,gateway,sizeof(ip_address));
 	ip_set_broadcast();
+#ifdef DEBUG_MODE
+	DBG_INFO("ip addr  : %s\n",ip_addr_str(addr));	
+	DBG_INFO("netmask  : %s\n",ip_addr_str(netmask));	
+	DBG_INFO("gateway  : %s\n",ip_addr_str(gateway));	
+	DBG_INFO("broadcast: %s\n",ip_addr_str(ip_get_broadcast()));	
+#endif //DEBUG_MODE
 }
 
+
+/**
+ *
+ */
 uint8_t ip_send_packet(const ip_address * ip_dst,uint8_t protocol,uint16_t length)
 {
 	ethernet_address mac;
@@ -160,6 +295,10 @@ uint8_t ip_send_packet(const ip_address * ip_dst,uint8_t protocol,uint16_t lengt
 	return ethernet_send_packet(&mac,ETHERNET_TYPE_IP,total_len);
 }
 
+
+/**
+ *
+ */
 uint8_t ip_handle_packet(struct ip_header * header, uint16_t packet_len,const ethernet_address * mac )
 {	
 	if(packet_len < sizeof(struct ip_header))
@@ -208,18 +347,27 @@ uint8_t ip_handle_packet(struct ip_header * header, uint16_t packet_len,const et
 	{
 // #if NET_ICMP		
 		case IP_PROTOCOL_ICMP:
-			icmp_handle_packet((const ip_address*)&header->src,(const struct icmp_header*)((const uint8_t*)header + header_length),packet_length-header_length);
+			icmp_handle_packet(
+				(const ip_address*)&header->src,
+				(const struct icmp_header*)((const uint8_t*)header + header_length),
+				packet_length-header_length);
 			break;
 // #endif //NET_ICMP
 #if NET_UDP
 		case IP_PROTOCOL_UDP:
 			DBG_INFO("ip handle UDP\n");
-			udp_handle_packet((const ip_address*)&header->src,(const struct udp_header*)((const uint8_t*)header + header_length),packet_length-header_length);
+			udp_handle_packet(
+				(const ip_address*)&header->src,
+				(const struct udp_header*)((const uint8_t*)header + header_length),
+				packet_length-header_length);
 			break;
 #endif //NET_UDP			
 		case IP_PROTOCOL_TCP:
 			//DBG_INFO("ip handle: TCP\n");
-			tcp_handle_packet((const ip_address*)&header->src,(const struct tcp_header*)((const uint8_t*)header + header_length),packet_length-header_length);
+			tcp_handle_packet(
+				(const ip_address*)&header->src,
+				(const struct tcp_header*)((const uint8_t*)header + header_length),
+				packet_length-header_length);
 			break;
 		default:
 			break;
@@ -227,6 +375,10 @@ uint8_t ip_handle_packet(struct ip_header * header, uint16_t packet_len,const et
 	return 0;
 }
 
+
+/**
+ *
+ */
 uint8_t ip_in_subnet(const ip_address * ip_remote)
 {
 	uint8_t i;
@@ -242,6 +394,9 @@ uint8_t ip_in_subnet(const ip_address * ip_remote)
 	return 1;
 }
 
+/**
+ *
+ */
 void ip_set_broadcast(void)
 {
 	uint8_t i;
@@ -253,3 +408,9 @@ void ip_set_broadcast(void)
 			ip_broadcast[i] = (ip_addr[i] | ~ip_netmask[i]);
 	}
 }
+
+/**
+ * @}
+ * @}
+ */
+

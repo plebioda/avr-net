@@ -9,23 +9,19 @@
 #ifndef _I2C_H
 #define _I2C_H
 /**
-* \addtogroup arch
+* @addtogroup arch
 * @{
-*/
-/**
-* \addtogroup i2c
+* @addtogroup i2c
 * @{
-*/
-/**
-* \file i2c header
-* \author Paweł Lebioda <pawel.lebioda89@gmail.com>
+* @file i2c header
+* @author Pawel Lebioda <pawel.lebioda89@gmail.com>
 */
 
 #include "i2c_config.h"
 #include <stdint.h>
 
 /**
-* \name Error numbers
+* @name Error numbers
 * @{
 */
 /**

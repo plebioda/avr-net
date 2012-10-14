@@ -9,7 +9,14 @@
 #ifndef _DEBUG_H_INCLUDED
 #define _DEBUG_H_INCLUDED
 
+#include "debug_conf.h"
 #include "arch/uart.h"
+
+#include <string.h>
+
+
+
+#define __file__	PSTR(__FILE__)
 
 extern fcheat_file debug_file_fcheat;// = FCHEAT_STATIC_FDEVOPENWR(rs_putc,rs_getc);
 extern FILE * df;// = (FILE*)&fileRS;
@@ -21,7 +28,7 @@ extern FILE * df;// = (FILE*)&fileRS;
 #define BLUE 		"\033[0;34m"
 #define MAGENTA		"\033[0;35m"
 #define CYAN 		"\033[0;36m"
-#define WHITE			"\033[0;37m"
+#define WHITE		"\033[0;37m"
 
 /* Bold */
 #define B_BLACK 	"\033[1;30m"
@@ -61,7 +68,7 @@ extern FILE * df;// = (FILE*)&fileRS;
 #define B_IBLUE 	"\033[1;94m"
 #define B_IMAGENTA	"\033[1;95m"
 #define B_ICYAN 	"\033[1;96m"
-#define B_IWHITE		"\033[1;97m"
+#define B_IWHITE	"\033[1;97m"
 
 /* Background colors */
 #define BCKGND_BLACK 	"\033[40m"
@@ -71,7 +78,7 @@ extern FILE * df;// = (FILE*)&fileRS;
 #define BCKGND_BLUE 	"\033[44m"
 #define BCKGND_MAGENTA	"\033[45m"
 #define BCKGND_CYAN 	"\033[46m"
-#define BCKGND_WHITE		"\033[47m"
+#define BCKGND_WHITE	"\033[47m"
 
 #define ENDCOLOR 	"\033[0m"
 
@@ -106,8 +113,8 @@ extern FILE * df;// = (FILE*)&fileRS;
 							fprintf_P((DEBUG_FH),				\
 								PSTR("[%c|%-20S|%-20s]"),		\
 								(ch),					\
-								PSTR((__FILE__)),			\
-								((__func__)));				\
+								(__file__),			\
+								(__func__));				\
 							fprintf_P((DEBUG_FH),				\
 								PSTR(fmt ENDCOLOR),## args);	\
 							}						

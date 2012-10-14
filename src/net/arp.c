@@ -77,6 +77,7 @@ void arp_print_stat(FILE * fh)
 		}
 	}
 }
+
 #ifdef DEBUG_MODE
 void print_arp_table(void)
 {
@@ -190,7 +191,7 @@ void arp_table_insert(const ip_address * ip_addr,const ethernet_address * ethern
 				case ARP_TABLE_ENTRY_STATUS_REQUEST:
 					min_entry = entry;
 					/* insert to arp table with status TIMEOUT*/
-					DEBUG_PRINT("insert to table\n");
+					DBG_INFO("insert to table\n");
 					goto arp_table_insert_out;
 				case ARP_TABLE_ENTRY_STATUS_TIMEOUT:
 					/* update timeout only */
@@ -299,10 +300,10 @@ uint8_t arp_get_mac(const ip_address * ip_addr,ethernet_address * ethernet_addr)
 		memcpy(&empty->ip_addr,ip_addr,sizeof(ip_address));
 		empty->status = ARP_TABLE_ENTRY_STATUS_REQUEST;
 		empty->timeout = ARP_TABLE_ENTRY_REQ_TIME;
-		DEBUG_PRINT("arp_get_mac: print_arp_table:\n");
+		DBG_INFO("arp_get_mac: print_arp_table:\n");
 		DEBUG(print_arp_table());
 	}
-	DEBUG_PRINT("arp_get_mac: sending request\n");
+	DBG_INFO("arp_get_mac: sending request\n");
 	arp_send_request(ip_addr);
 	return 0;
 }
@@ -310,7 +311,7 @@ uint8_t arp_get_mac(const ip_address * ip_addr,ethernet_address * ethernet_addr)
 uint8_t arp_send_request(const ip_address * ip_addr)
 {
 	struct arp_header * arp_request = (struct arp_header*)ethernet_get_buffer();
-	DEBUG_PRINT("sending arp request\n");
+	DBG_INFO("sending arp request\n");
 	/* Set protocol and hardware addresses type and length */
 	arp_request->hardware_addr_len = ARP_HW_ADDR_SIZE_ETHERNET;
 	arp_request->protocol_addr_len = ARP_PROTO_ADDR_SIZE_IP;

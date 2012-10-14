@@ -9,17 +9,17 @@
 #ifndef _SPI_H
 #define _SPI_H
 /**
-* \addtogroup arch
+* @addtogroup arch
 * @{
 */
 /**
-* \addtogroup spi
+* @addtogroup spi
 * @{
 */
 /**
-* \file
+* @file
 * SPI header
-* \author Paweł Lebioda <pawel.lebioda89@gmail.com>
+* @author Paweł Lebioda <pawel.lebioda89@gmail.com>
 */
 
 #include <stdint.h>

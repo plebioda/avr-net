@@ -8,179 +8,136 @@
 
 #ifndef _FAT_H
 #define _FAT_H
-
+/**
+ * @addtogroup sys
+ * @{
+ * @addtogroup fat
+ * @{
+ * @file fat.h
+ * @author Pawel Lebidoa <pawel.lebioda89@gmail.com>
+ * @brief This header file contains declarations of public methods for fat
+ * file system module
+ */ 
 #include "fat_config.h"
 
 #include <stdint.h>
 
-//
 #include "../debug.h"
 
 #include "partition.h"
 #include <string.h>
 
-/* Cluster entries meanings in FAT table */
-#define FAT16_CLUSTER_FREE		0x0000
-#define FAT16_CLUSTER_BAD		0xfff7
-#define FAT16_CLUSTER_RESERVED_MIN	0xfff0
-#define FAT16_CLUSTER_RESERVED_MAX	0xfff6
-#define FAT16_CLUSTER_LAST_MIN		0xfff8
-#define FAT16_CLUSTER_LAST_MAX		0xfff8
+/**
+ * FAT file system handle struct
+ */ 
+struct fat_fs;
 
-/* File attributes masks */
-#define FAT_ATTR_READONLY		(1 << 0)
-#define FAT_ATTR_HIDDEN			(1 << 1)
-#define FAT_ATTR_SYSTEM			(1 << 2)
-#define FAT_ATTR_VOLUME			(1 << 3)
-#define FAT_ATTR_DIR			(1 << 4)
-#define FAT_ATTR_ARCHIVE		(1 << 5)
-#define FAT_ATTR_LFN			0xf
+/**
+ * FAT file handle struct
+ */ 
+struct fat_file;
 
-#define FAT_DIRENTRY_DELETED		0xe5
+/**
+ * FAT directory handle struct
+ */ 
+struct fat_dir;
 
-typedef uint16_t cluster_t;
-typedef uint32_t offset_t;
-// typedef uint32_t size_t;
+/**
+ * FAT directory entry struct
+ */ 
+struct fat_dir_entry;
 
-struct fat_boot_sector
-{
-	uint8_t		JumpNOP[3];		//Jump Code + NOP
-	uint8_t 	OEM[8];			//OEM Name
-	uint16_t	SectorSize;		//Bytes per sector
-	uint8_t 	ClusterSize;		//Sectors per cluster
-	uint16_t	ResSectors;		//Reserved sectors
-	uint8_t 	NumFATCop;		//Number of copies of fat
-	uint16_t	MaxRootDirEntr;		//Maximum Root Directory Entries
-	uint16_t	NumSec32MB;		//Number of Sectors in Partition Smaller than 32MB
-	uint8_t		MediaDesc;		//Media descriptor
-	uint16_t	SecPerFAT;		//Sectors per fat
-	uint16_t	SecPerTrack;		//Sectors per track
-	uint16_t	NumHeads;		//Number of heads
-	uint32_t	NumHiddenSec;		//Number of Hidden Sectors in Partition
-	uint32_t	NumSec;			//Number of sectors in partition
-	uint16_t	LogicDriveNum;		//Logical drive number of partition
-	uint8_t		extendedSig;		//Extended signature - 29h
-	uint32_t 	SN;			//Serial number of partition
-	uint8_t		VolName[11];		//Volume name of partition
-	uint8_t		FATName[8];		//Fat name - e.x. FAT16
-};
+/**
+ * Inits FAT module
+ * @return One if succesfully initialized, otherwise 0
+ */ 
+uint8_t fat_init(void);
 
+/**
+ * Opens FAT file system from specified partition
+ * @param [in] partition Partition from which file system should be opened
+ * @return FAT fs handle or NULL if any error occured
+ */ 
+struct fat_fs * fat_open(struct partition * partition);
 
-struct fat_root_dir
-{
-	char 		filename[8];
-	char		extension[3];
-	uint8_t		attributes;
-	uint8_t		reserved0;
-	uint8_t		creation_time_ms;
-	uint16_t	creation_time;
-	uint16_t 	creation_date;
-	uint16_t	last_access_date;
-	uint16_t	reserved1;
-	uint16_t	modification_time;
-	uint16_t	modification_date;
-	cluster_t	first_cluster;
-	uint32_t	file_size;
-};
-
-#if FAT_LFN_SUPPORT
-struct fat_lfn
-{
-	
-};
-#endif
-
-struct fat_header
-{
-	uint32_t 	size;
-	
-	offset_t 	fat_offset;
-	uint32_t 	fat_size;
-	
-	uint16_t	sector_size;
-	uint16_t 	cluster_size;
-		
-	offset_t	cluster_zero_offset;
-	offset_t	root_dir_offset;
-};
-
-struct fat_fs
-{
-	struct partition * partition;
-	struct fat_header header;
-};
-
-uint8_t	fat_open(struct fat_fs * fs,struct partition * partition);
+/**
+ * Closes FAT file system
+ * @param [in] fs FAT file system struct
+ */ 
 uint8_t	fat_close(struct fat_fs * fs);
-uint8_t	fat_read_header(struct fat_fs * fs);
-cluster_t fat_get_next_cluster(struct fat_fs * fs,cluster_t cluster);
-offset_t fat_cluster_offset(struct fat_fs * fs,cluster_t cluster);
 
-#if FAT_LFN_SUPPORT
-	#define FAT_NAME_LEN	32
- #else
-	#define FAT_NAME_LEN	8
- #endif
+/**
+ * Returns directory entry from specified file system and specified path.
+ * This struct defines location in file system. It is used with other functions
+ * which take file path as an argument. Using this struct we can pass relative
+ * file path to those functions.
+ * @param [in] fs FAT file system struct
+ * @param [in] path Absolute path to directory entry
+ * @return Directory entry struct pointer which defines location in file
+ * system
+ */  
+struct fat_dir_entry * fat_get_dir_entry(struct fat_fs * fs, const char * path);
 
-struct fat_dir_entry
-{
-	struct fat_fs * fs;
-	
-	/* File name */
-	char filename[FAT_NAME_LEN];
-	
-	/* File's attributes */
-	uint8_t attributes;
-	
-	/* First cluster of file */
-	cluster_t first_cluster;
-	
-	/* Total size of file in bytes*/
-	uint32_t file_size;
-	
-	/* Total disk offset in bytes of this entry*/
-	offset_t entry_offset;
-	
-	/* Date and time of file's creation */
-#if FAT_DATE_TIME_SUPPORT && FAT_DATE_TIME_SUPPORT_CREATION
-	uint16_t creation_time;
-	uint16_t creation_date;
-#endif
+/**
+ * Changes directory of directory entry struct.
+ * @param [in] dir_entry Directory entry struct
+ * @param [in] path Relative or absolute path of new directory
+ * @return One if directory has been succesfully changed, otherwise 0
+ */ 
+uint8_t fat_cd(struct fat_dir_entry * dir_entry,const char * path);
 
-	/* Date and time of last file's modification */
-#if FAT_DATE_TIME_SUPPORT && FAT_DATE_TIME_SUPPORT_MODIFICATION
-	uint16_t modification_time;
-	uint16_t modification_date;
-#endif
+/**
+ * Releases file system's location struct
+ * @param [in] dir_entry Directory entry
+ */ 
+void fat_release_dir_entry(struct fat_dir_entry * dir_entry);
 
-	/* Date of last access to the file */
-#if FAT_DATE_TIME_SUPPORT && FAT_DATE_TIME_SUPPORT_LAST_ACCESS
-	uint16_t last_access_date;
-#endif
-};
-uint8_t	fat_read_dir_entry_from_offset(struct fat_fs * fs,struct fat_dir_entry * dir_entry,offset_t offset,uint32_t length,uint8_t skip_volume);
-uint8_t fat_get_dir_entry(struct fat_fs * fs,struct fat_dir_entry * dir,const char * path);
+/**
+ * Opens dir of specified path from specified location
+ * @param [in] wd Working directory struct
+ * @param [in] path Absolute or relative path to wd
+ * @return Directory handle or NULL if any error occured
+ */  
+struct fat_dir * fat_dir_open(const struct fat_dir_entry * wd,const char * path);
 
-struct fat_dir
-{
-	struct fat_fs * fs;
-	struct fat_dir_entry dir_entry;
-	
-	cluster_t current_cluster;
-	offset_t file_offset;	
-	offset_t cluster_offset;
-};
-
-uint8_t fat_dir_open(struct fat_dir * fat_dir,struct fat_dir_entry * dir_entry);
+/**
+ * Closes directory
+ * @param [in] fat_dir Directory handle
+ * @return One if directory has been closed succesfully, otherwise zero
+ */ 
 uint8_t fat_dir_close(struct fat_dir * fat_dir);
 
+/**
+ * Reads directory entry struct from specivied directory
+ * @param [in] fat_dir Directory handle
+ * @param [out] dir_entry Directory entry struct
+ * @return One if directory entry has been read succesfully, otherwise zero
+ */ 
 uint8_t fat_read_dir(struct fat_dir * fat_dir,struct fat_dir_entry * dir_entry);
 
-struct fat_file
-{
-	
-};
+/**
+ * Open file of specified name from specified location
+ * @param [in] wd Working directory location
+ * @param [in] path Absolute or relative path to file
+ * @return File handle, or NULL if any error occured.
+ */ 
+struct fat_file * fat_fopen(const struct fat_dir_entry * wd, const char * path);
 
+/**
+ * Closes file
+ * @param [in] file File handle
+ * @return One if file has been closed succesfully, otherwise zero
+ */ 
+uint8_t fat_fclose(struct fat_file * file);
+
+/**
+ * Reads specified amount of bytes from file to specified buffer
+ * @param [in] file File handle
+ * @param [out] ptr Pointer to buffer
+ * @param [in] Maximum number of bytes which can be placed in buffer
+ * @return Number of bytes read
+ */ 
+size_t fat_fread(struct fat_file * file, void * ptr, size_t size);
 
 #if FAT_DATE_TIME_SUPPORT
 uint16_t fat_get_year(uint16_t fat_date);
@@ -190,5 +147,8 @@ uint8_t fat_get_hours(uint16_t fat_time);
 uint8_t	fat_get_minutes(uint16_t fat_time);
 uint8_t fat_get_seconds(uint16_t fat_time);
 #endif
-
+/**
+ * @}
+ * @}
+ */ 
 #endif //_FAT_H

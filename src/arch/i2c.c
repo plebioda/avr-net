@@ -6,16 +6,16 @@
  * published by the Free Software Foundation.
  */
 /**
-* \addtogroup arch
+* @addtogroup arch
 * @{
 */
 /**
-* \addtogroup i2c
+* @addtogroup i2c
 * @{
 */
 /**
-* \file i2c implementation
-* \author Paweł Lebioda <pawel.lebioda89@gmail.com>
+* @file i2c implementation
+* @author Paweł Lebioda <pawel.lebioda89@gmail.com>
 */
 #include "i2c.h"
 #include <avr/io.h>
@@ -35,7 +35,7 @@
 #define I2C_SR_SLAR_ARB_LOST	0x38
 
 /**
-* \name Basic functions
+* @name Basic functions
 * @{
 */
 /**
@@ -78,7 +78,7 @@
 
 /**
 * Initializes i2c interface
-* \returns void
+* @returns void
 */
 void i2c_init(void)
 {
@@ -89,13 +89,13 @@ void i2c_init(void)
 }
 /**
 * Reads number of bytes from i2c device's memory
-*\param[in] dev_addr Address of i2c device 
-*\param[in] mem_addr Address of first byte to read from memory
-*\param[out] ptr Pointer to data block
-*\param[in] len Length of data block
-*\returns 0 for success or error number 
-*\see Error numbers
-* \note dev_addr is always write address of i2c device
+* @param[in] dev_addr Address of i2c device 
+* @param[in] mem_addr Address of first byte to read from memory
+* @param[out] ptr Pointer to data block
+* @param[in] len Length of data block
+* @returns 0 for success or error number 
+* @see Error numbers
+* @note dev_addr is always write address of i2c device
 */
 uint8_t i2c_read_mem(uint8_t dev_addr,uint8_t mem_addr,uint8_t * ptr,uint16_t len)
 {
@@ -138,11 +138,11 @@ uint8_t i2c_read_mem(uint8_t dev_addr,uint8_t mem_addr,uint8_t * ptr,uint16_t le
 }
 /**
 * Writes number of bytes to i2c device's memory
-*\param[in] dev_addr Address of i2c device 
-*\param[in] mem_addr Address of first byte to read from memory
-*\param[in] ptr Pointer to data block
-*\param[in] len Length of data block
-* \note dev_addr is always write address of i2c device
+* @param[in] dev_addr Address of i2c device 
+* @param[in] mem_addr Address of first byte to read from memory
+* @param[in] ptr Pointer to data block
+* @param[in] len Length of data block
+* @note dev_addr is always write address of i2c device
 */
 uint8_t i2c_write_mem(uint8_t dev_addr,uint8_t mem_addr,uint8_t * ptr,uint16_t len)
 {

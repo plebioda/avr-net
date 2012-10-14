@@ -9,6 +9,11 @@
 #ifndef _FAT_CONFIG_H
 #define _FAT_CONFIG_H
 
+#define FAT_MAX_FS		1
+#define FAT_MAX_DIR		3
+#define FAT_MAX_FILE		3
+#define FAT_MAX_DIRENT		3
+
 /* Date and time support */
 #define FAT_DATE_TIME_SUPPORT	1
 

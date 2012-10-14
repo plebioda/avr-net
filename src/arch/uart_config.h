@@ -9,19 +9,19 @@
 #ifndef _UART_CONFIG_H
 #define _UART_CONFIG_H
 /**
-* \addtogroup arch
+* @addtogroup arch
 * @{
 */
 /**
-* \addtogroup uart
+* @addtogroup uart
 * @{
 */
 /**
-* \file UART Configuration
-* \author Paweł Lebioda <pawel.lebioda89@gmail.com>
+* @file UART Configuration
+* @author Paweł Lebioda <pawel.lebioda89@gmail.com>
 */
 /**
-* \name Configuration
+* @name Configuration
 * @{
 */
 /**

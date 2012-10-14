@@ -7,16 +7,16 @@
  */
 
 /**
-* \addtogroup arch
+* @addtogroup arch
 * @{
 */
 /**
-* \addtogroup uart
+* @addtogroup uart
 * @{
 */
 /**
-* \file UART implementation
-* \author Paweł Lebioda <pawel.lebioda89@gmail.com>
+* @file UART implementation
+* @author Paweł Lebioda <pawel.lebioda89@gmail.com>
 */
 #include "uart.h"
 
@@ -35,9 +35,9 @@ void uart_init(void)
 }
 /**
 * Sends a byte over UART bus
-* \param[in] data The byte to send
-* \param[in] fh File handler to which to write data (unused)
-* \returns 0
+* @param[in] data The byte to send
+* @param[in] fh File handler to which to write data (unused)
+* @returns 0
 */
 int uart_putc(char data,FILE* fh)
 {
@@ -49,8 +49,8 @@ int uart_putc(char data,FILE* fh)
 }
 /**
 * Receives a byte from UART
-*\param[in] fh File handler from which to read (unused)
-*\returns Received byte
+* @param[in] fh File handler from which to read (unused)
+* @returns Received byte
 */
 int uart_getc(FILE* fh)
 {

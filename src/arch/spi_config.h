@@ -9,20 +9,20 @@
 #ifndef _SPI_CONFIG_H
 #define _SPI_CONFIG_H
 /**
-* \addtogroup arch
+* @addtogroup arch
 * @{
 */
 /**
-* \addtogroup spi
+* @addtogroup spi
 * @{
 */
 /**
-* \file
+* @file
 * SPI configuration
-* \author Paweł Lebioda <pawel.lebioda89@gmail.com>
+* @author Paweł Lebioda <pawel.lebioda89@gmail.com>
 */
 /**
-* \name Configuration
+* @name Configuration
 * @{
 */
 /**

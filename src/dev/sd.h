@@ -31,6 +31,10 @@ uint16_t sd_errno(void);
 uint32_t sd_read(uint32_t addr,uint8_t * buff,uint32_t length);
 
 
+#ifdef DEBUG_MODE
+void print_block(uint8_t * data, uint16_t len);	
+#endif
+
 #define SD_STATUS_INSERTED	0
 #define SD_STATUS_WP		1
 #define SD_STATUS_INITIALIZED	2
