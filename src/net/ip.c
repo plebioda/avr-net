@@ -219,9 +219,9 @@ void ip_init(const ip_address * addr,const ip_address * netmask,const ip_address
 		memcpy(&ip_gateway,gateway,sizeof(ip_address));
 	ip_set_broadcast();
 #ifdef DEBUG_MODE
-	DBG_INFO("ip addr  : %s\n",ip_addr_str(addr));	
-	DBG_INFO("netmask  : %s\n",ip_addr_str(netmask));	
-	DBG_INFO("gateway  : %s\n",ip_addr_str(gateway));	
+	DBG_INFO("ip addr  : %s\n",ip_addr_str((const ip_address*)&ip_addr));	
+	DBG_INFO("netmask  : %s\n",ip_addr_str((const ip_address*)&ip_netmask));	
+	DBG_INFO("gateway  : %s\n",ip_addr_str((const ip_address*)&ip_gateway));	
 	DBG_INFO("broadcast: %s\n",ip_addr_str(ip_get_broadcast()));	
 #endif //DEBUG_MODE
 }

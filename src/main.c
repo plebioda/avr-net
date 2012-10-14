@@ -31,25 +31,24 @@
 #include "sys/partition.h"
 #include "sys/fat.h"
 
-/*
+
 #include "net/hal.h"
 #include "net/ethernet.h"
 #include "net/ip.h"
 #include "net/arp.h"
 #include "net/udp.h"
 #include "net/tcp.h"
-*/
-/*
+
 #include "app/app_config.h"
 #include "app/tftp.h"
 #include "app/tp.h"
 #include "app/dhcp.h"
 #include "app/echod.h"
 #include "app/netstat.h"
-*/
 
 struct partition partition;
 struct fat_fs * fatfs;
+struct fat_dir_entry * fat_root;
 void ds1338_print_time(struct date_time * dt);
 
 void tcallback(timer_t timer,void * arg)
@@ -145,7 +144,10 @@ void sdcallback(enum sd_event event)
 			DBG_INFO("card initialized\n");
 			ret = partition_open(&partition,sd_read,0,0);
 			DBG_INFO("partition_open = 0x%x\n",ret);
+			fat_close(fatfs);
 			fatfs = fat_open(&partition);
+			fat_root = fat_get_dir_entry(fatfs, "/");
+			tftpd_init(fat_root);
 			break;
 		case sd_event_error:
 			DBG_ERROR("error %x\n",sd_errno());
@@ -162,7 +164,7 @@ char buffer[512];
 int main(void)
 {
 	/* constants */
-	//const ethernet_address my_mac = {'<','P','A','K','O','>'};
+	const ethernet_address my_mac = {'<','P','A','K','O','>'};
 	
 	/* init io */
 	DDRB = 0xff;
@@ -179,31 +181,32 @@ int main(void)
 	spi_init();
 	i2c_init();
 	
+	DBG_INFO(B_IBLUE "avr-net ver %s build time: %s %s\n","1.0",__DATE__,__TIME__);
+	
 	/* init utils */
 	fifo_init();
 	
 	/* init dev */
 //	 ds1338_init();
-	//enc28j60_init((uint8_t*)&my_mac); 
+	enc28j60_init((uint8_t*)&my_mac); 
 	
 	/* init sys */
 	timer_init();
 	fat_init();
 //	 rtc_init((0<<RTC_FORMAT_12_24)|(0<<RTC_FORMAT_AM_PM));
 	
-	/*ethernet_init(&my_mac);
+	ethernet_init(&my_mac);
 	ip_init(0,0,0);
 	arp_init();
 	udp_init();
 	tcp_init();
 	
-	uint8_t ret = echod_start(echocallback);
-	DBG_INFO("Echo server ret=%d\n",ret);
-	*/
+	//uint8_t ret = echod_start(echocallback);
+	//DBG_INFO("Echo server ret=%d\n",ret);
+	
 	stdout = DEBUG_FH;	
 		
 	sd_init(sdcallback);
-	DBG_INFO(B_IBLUE "avr-net ver %s build time: %s %s\n","1.0",__DATE__,__TIME__);
 	sd_interrupt();
 	
 	//timer_t sdtimer = timer_alloc(sd_timer_callback);
@@ -216,21 +219,35 @@ int main(void)
 //	 tp_get_time(tpcallback);
 //	 udp_socket_t udps;
 //	 udps = udp_socket_alloc(12348,udp_callback);
-	struct fat_dir_entry * wd = fat_get_dir_entry(fatfs,"/");
+	/*struct fat_dir_entry * wd = fat_get_dir_entry(fatfs,"/");
 	if(NULL != wd )
 	{	
 		DBG_INFO(B_IYELLOW "NULL != dirent\n");
 	}
 	struct fat_file * file = fat_fopen(wd, "GPLV2");
 	size_t read;
+	uint8_t i = 0;
 	if(NULL != file)
 	{
 		DBG_INFO(B_IYELLOW "File struct not NULL\n");
-		while((read = fat_fread(file, buffer, 512)) > 0)
+		for(i=0;i<7;i++)
+		{
+			if((read = fat_fread(file, buffer, 512)) > 0)
+			{
+				//print_block((uint8_t*)buffer, read);	
+			}
+		}
+		if((read = fat_fread(file, buffer, 256)) > 0)
+		{
+			//print_block((uint8_t*)buffer, read);	
+		}
+		
+		if((read = fat_fread(file, buffer, 512)) > 0)
 		{
 			print_block((uint8_t*)buffer, read);	
 		}
-	}
+		
+	}*/
 	DBG_INFO(B_IYELLOW "End\n");
 	/* global interrupt enable */
 	sei();
@@ -249,7 +266,7 @@ ISR(TIMER0_COMP_vect)
 
 ISR(INT7_vect)
 {
-	//while(ethernet_handle_packet());
+	while(ethernet_handle_packet());
 }
 
 ISR(INT6_vect)

@@ -64,8 +64,8 @@ SRC += $(wildcard src/dev/*.c)
 SRC += $(wildcard src/arch/*.c) 
 SRC += $(wildcard src/sys/*.c) 
 SRC += $(wildcard src/util/*.c) 
-#SRC += $(wildcard src/net/*.c) 
-#SRC += $(wildcard src/app/*.c) 
+SRC += $(wildcard src/net/*.c) 
+SRC += $(wildcard src/app/*.c) 
 
 
 # List Assembler source files here.

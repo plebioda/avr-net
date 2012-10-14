@@ -330,6 +330,7 @@ struct fat_file * fat_fopen(const struct fat_dir_entry * wd, const char * path)
 {
 	if(!wd || !wd->fs || !path || 0 == strlen(path))
 		return NULL;
+	DBG_INFO("path=%s\n",path);
 	struct fat_dir_entry dirent;
 	memcpy(&dirent, wd, sizeof(*wd));
 	if(!_fat_get_dir_entry(dirent.fs, &dirent, path))
