@@ -160,7 +160,7 @@ struct fat_dir_entry
 #endif
 };
 
-struct fat_node
+struct fat_file
 {
 	struct fat_fs * fs;
 	struct fat_dir_entry dir_entry;
@@ -168,16 +168,17 @@ struct fat_node
 	cluster_t current_cluster;
 	offset_t file_offset;	
 	offset_t cluster_offset;
-};
-
-struct fat_file
-{
-	struct fat_node node;
+	cluster_t file_cluster;
 };
 
 struct fat_dir
 {
-	struct fat_node node;
+	struct fat_fs * fs;
+	struct fat_dir_entry dir_entry;
+	
+	cluster_t current_cluster;
+	offset_t file_offset;	
+	offset_t cluster_offset;
 };
 
 static struct fat_fs fat_fss[FAT_MAX_FS];
@@ -311,7 +312,7 @@ struct fat_dir * fat_dir_open(const struct fat_dir_entry * wd, const char * path
 	uint8_t i;
 	for(i=0;i<FAT_MAX_DIR;i++)
 	{	
-		if(NULL == fat_dirs[i].node.fs)
+		if(NULL == fat_dirs[i].fs)
 			break;
 	}
 	if(i < 0 || i >= FAT_MAX_DIR)
@@ -338,7 +339,7 @@ struct fat_file * fat_fopen(const struct fat_dir_entry * wd, const char * path)
 	uint8_t i;
 	for(i=0;i<FAT_MAX_FILE;i++)
 	{
-		if(NULL == fat_files[i].node.fs)
+		if(NULL == fat_files[i].fs)
 			break;
 	}	
 	if(i < 0 || i >= FAT_MAX_FILE)
@@ -355,6 +356,8 @@ struct fat_file * fat_fopen(const struct fat_dir_entry * wd, const char * path)
 
 uint8_t fat_fclose(struct fat_file * file)
 {
+	if(!file)
+		return 0;
 	memset(file, 0, sizeof(*file));
 	return 1;
 }
@@ -363,25 +366,24 @@ size_t fat_fread(struct fat_file * file, void * ptr, size_t size)
 {
 	if(!file || !ptr)
 		return size;
-	struct fat_node * node = &file->node;
-	struct fat_fs * fs = node->fs;
+	struct fat_fs * fs = file->fs;
 	struct fat_header * header = &fs->header;
-	uint32_t file_size = node->dir_entry.file_size;
-	DBG_INFO("current_cluster=%d\n",node->current_cluster);
-	DBG_INFO("file_offset=%d\n",node->file_offset);
-	DBG_INFO("cluster_offset=%d\n",node->cluster_offset);
+	uint32_t file_size = file->dir_entry.file_size;
+	DBG_INFO("current_cluster=%d\n",file->current_cluster);
+	DBG_INFO("file_offset=%d\n",file->file_offset);
+	DBG_INFO("cluster_offset=%d\n",file->cluster_offset);
 	DBG_INFO("size=%d\n",size);
 	DBG_INFO("cluster_size=%d\n",header->cluster_size);
 	DBG_INFO("file_size=%d\n",file_size);
-	if(node->file_offset >= file_size)
+	if(file->file_offset >= file_size)
 	{
 		DBG_INFO("EOF\n");
-		node->file_offset = file_size;
+		file->file_offset = file_size;
 		return 0;
 	}
-	if(node->file_offset + size > node->dir_entry.file_size)
+	if(file->file_offset + size > file->dir_entry.file_size)
 	{
-		size = node->dir_entry.file_size - node->file_offset;
+		size = file->dir_entry.file_size - file->file_offset;
 		DBG_INFO("new size=%d\n",size);
 	}
 	
@@ -390,47 +392,110 @@ size_t fat_fread(struct fat_file * file, void * ptr, size_t size)
 	DBG_INFO("while{\n");
 	while(read < size)
 	{
-		DBG_INFO("\tcurrent_cluster=%d\n",node->current_cluster);
-		DBG_INFO("\tfile_offset=%d\n",node->file_offset);
-		DBG_INFO("\tcluster_offset=%d\n",node->cluster_offset);
+		DBG_INFO("\tcurrent_cluster=%d\n",file->current_cluster);
+		DBG_INFO("\tfile_offset=%d\n",file->file_offset);
+		DBG_INFO("\tcluster_offset=%d\n",file->cluster_offset);
 		DBG_INFO("\tsize=%d\n",size);
 		DBG_INFO("\tread=%d\n",read);
 		read_size = size-read;
 		DBG_INFO("\tread_size=%d\n",read_size);
-		if(node->cluster_offset >= header->cluster_size)
+		if(file->cluster_offset >= header->cluster_size)
 		{
-			node->cluster_offset = 0;
-			node->current_cluster = fat_get_next_cluster(fs, node->current_cluster);
-			DBG_INFO("\tnext cluster=%d\n",node->current_cluster);
-			if(node->current_cluster < 2)
+			file->cluster_offset = 0;
+			file->current_cluster = fat_get_next_cluster(fs, file->current_cluster);
+			file->file_cluster++;
+			DBG_INFO("\tnext cluster=%d\n",file->current_cluster);
+			if(file->current_cluster < 2)
 			{
-				DBG_ERROR("\tnode->current_cluster < 2\n");
+				DBG_ERROR("\tfile->current_cluster < 2\n");
 				return 0;
 			}
 		}
-		if(node->cluster_offset + read_size > header->cluster_size)
+		if(file->cluster_offset + read_size > header->cluster_size)
 		{	
-			read_size = header->cluster_size - node->cluster_offset;
+			read_size = header->cluster_size - file->cluster_offset;
 			DBG_INFO("\tnew read_size=%d\n",read_size);
 		}
 		read_size = fs->partition->device_read(
-			fat_cluster_offset(fs, node->current_cluster) + node->cluster_offset,
+			fat_cluster_offset(fs, file->current_cluster) + file->cluster_offset,
 			ptr,
 			read_size);
 		DBG_INFO("device_read=%d\n",read_size);
-		node->cluster_offset += read_size;
-		node->file_offset += read_size;
+		file->cluster_offset += read_size;
+		file->file_offset += read_size;
 		read += read_size;
 		ptr += read_size;
 	}
 	DBG_INFO("} while\n");
-	DBG_INFO("current_cluster=%d\n",node->current_cluster);
-	DBG_INFO("file_offset=%d\n",node->file_offset);
-	DBG_INFO("cluster_offset=%d\n",node->cluster_offset);
+	DBG_INFO("current_cluster=%d\n",file->current_cluster);
+	DBG_INFO("file_offset=%d\n",file->file_offset);
+	DBG_INFO("cluster_offset=%d\n",file->cluster_offset);
 	DBG_INFO("size=%d\n",size);
 	DBG_INFO("read=%d\n",read);
 
 	return size;
+}
+
+uint8_t fat_fseek(struct fat_file * file,int32_t offset, uint8_t whence)
+{
+	if(!file)
+		return 0;
+	DBG_INFO("current_cluster=%d\n",file->current_cluster);
+	DBG_INFO("file_offset=%d\n",file->file_offset);
+	DBG_INFO("cluster_offset=%d\n",file->cluster_offset);
+	DBG_INFO("offset=%d\n");
+	uint32_t file_offset = file->file_offset;
+	uint32_t file_size = file->dir_entry.file_size;
+	switch(whence)
+	{
+	case SEEK_SET:
+		DBG_INFO("SEEK_SET\n");
+		file_offset = offset;
+	break;
+	case SEEK_CUR:
+		DBG_INFO("SEEK_CUR\n");
+		file_offset += offset;
+	break;
+	case SEEK_END:
+		DBG_INFO("SEEK_END\n");
+		if(offset < 0)
+			return 0;
+		file_offset = file_size-offset;
+	break;
+	default:
+		return 0;
+	}
+	uint16_t cluster_num = file_offset / file->fs->header.cluster_size;
+	offset_t cluster_offset = file_offset % file->fs->header.cluster_size;
+	cluster_t cluster = file->dir_entry.first_cluster;
+	if(cluster_num >= file->file_cluster)
+	{
+		cluster = file->current_cluster;
+		cluster_num -= file->file_cluster;
+	}
+	DBG_INFO("first_cluster=%d\n",cluster);
+	DBG_INFO("num_clusters=%d\n",cluster_num);
+	DBG_INFO("cluster_offset=%d\n",cluster_offset);
+	while(cluster_num--)
+	{
+		cluster = fat_get_next_cluster(file->fs, cluster);
+		file->file_cluster++;
+	}
+	if(cluster < 2)
+	{
+		return 0;
+	}
+	file->current_cluster = cluster;
+	file->cluster_offset = cluster_offset;
+	file->file_offset = file_offset;
+	return 1;
+}
+
+size_t fat_fsize(struct fat_file * file)
+{
+	if(!file)
+		return -1;
+	return file->dir_entry.file_size;
 }
 
 uint8_t fat_read_dir(struct fat_dir * fat_dir,struct fat_dir_entry * dir_entry)
@@ -438,9 +503,9 @@ uint8_t fat_read_dir(struct fat_dir * fat_dir,struct fat_dir_entry * dir_entry)
 	if(!fat_dir || !dir_entry)
 		return 0;
 	uint8_t ret;
-	struct fat_fs * fs = fat_dir->node.fs;
+	struct fat_fs * fs = fat_dir->fs;
 	struct fat_header * header = &fs->header;
-	cluster_t cluster_num = fat_dir->node.current_cluster;
+	cluster_t cluster_num = fat_dir->current_cluster;
 	uint32_t cluster_size;
 	/* Root directory */
 	if(cluster_num == 0)
@@ -451,7 +516,7 @@ uint8_t fat_read_dir(struct fat_dir * fat_dir,struct fat_dir_entry * dir_entry)
 	uint8_t dir_entry_found = 0;
 	while(!dir_entry_found)
 	{
-		if(fat_dir->node.cluster_offset + data_length > cluster_size)
+		if(fat_dir->cluster_offset + data_length > cluster_size)
 		{
 			DBG_INFO("cluster: %x\n",cluster_num);
 			cluster_num = fat_get_next_cluster(fs,cluster_num);
@@ -463,16 +528,16 @@ uint8_t fat_read_dir(struct fat_dir * fat_dir,struct fat_dir_entry * dir_entry)
 			return 0;
 		}
 	
-		offset_t read_offset = fat_dir->node.cluster_offset;
+		offset_t read_offset = fat_dir->cluster_offset;
 		if(cluster_num == 0)
 			read_offset += fs->header.root_dir_offset; 
 		else
 			read_offset += fat_cluster_offset(fs,cluster_num);
 
 	
-		fat_dir->node.file_offset += data_length;
-		fat_dir->node.cluster_offset += data_length;
-		fat_dir->node.current_cluster = cluster_num;	
+		fat_dir->file_offset += data_length;
+		fat_dir->cluster_offset += data_length;
+		fat_dir->current_cluster = cluster_num;	
 	
 		DBG_INFO("Read offset %lx\n",read_offset);
 		if((ret=fat_read_dir_entry_from_offset(fs,dir_entry,read_offset,data_length,1)))
@@ -488,11 +553,12 @@ uint8_t _fat_file_open(struct fat_file * file, struct fat_dir_entry * dir_entry)
 	DBG_INFO("fat_file=%x dir_entry=%x,attr=%x\n",file,dir_entry,dir_entry->attributes);
 	if(!file || !dir_entry || dir_entry->attributes == FAT_ATTR_LFN )
 		return 0;
-	file->node.fs = dir_entry->fs;
-	memcpy(&file->node.dir_entry, dir_entry, sizeof(*dir_entry));
-	file->node.current_cluster = dir_entry->first_cluster;	
-	file->node.file_offset = 0;	
-	file->node.cluster_offset = 0;
+	file->fs = dir_entry->fs;
+	memcpy(&file->dir_entry, dir_entry, sizeof(*dir_entry));
+	file->current_cluster = dir_entry->first_cluster;	
+	file->file_offset = 0;	
+	file->cluster_offset = 0;
+	file->file_cluster = 0;
 	return 1;	
 }
 
@@ -501,11 +567,11 @@ uint8_t _fat_dir_open(struct fat_dir * fat_dir,struct fat_dir_entry * dir_entry)
 	DBG_INFO("fat_dir=%x dir_entry=%x,attr=%x\n",fat_dir,dir_entry,dir_entry->attributes);
 	if(!fat_dir || !dir_entry || !(dir_entry->attributes == FAT_ATTR_DIR || dir_entry->attributes == FAT_ATTR_VOLUME))
 		return 0;
-	fat_dir->node.fs = dir_entry->fs;
-	memcpy(&fat_dir->node.dir_entry,dir_entry,sizeof(*dir_entry));
-	fat_dir->node.current_cluster = dir_entry->first_cluster;
-	fat_dir->node.file_offset = 0;	 
-	fat_dir->node.cluster_offset = 0;
+	fat_dir->fs = dir_entry->fs;
+	memcpy(&fat_dir->dir_entry,dir_entry,sizeof(*dir_entry));
+	fat_dir->current_cluster = dir_entry->first_cluster;
+	fat_dir->file_offset = 0;	 
+	fat_dir->cluster_offset = 0;
 	return 1;
 }
 

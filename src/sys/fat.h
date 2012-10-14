@@ -21,6 +21,7 @@
 #include "fat_config.h"
 
 #include <stdint.h>
+#include <stdio.h>
 
 #include "../debug.h"
 
@@ -138,6 +139,24 @@ uint8_t fat_fclose(struct fat_file * file);
  * @return Number of bytes read
  */ 
 size_t fat_fread(struct fat_file * file, void * ptr, size_t size);
+
+/**
+ * Sets the file position. The new position measeured in bytes is  
+ * obtained by adding offset bytes to the position specified by whence.
+ * @param [in] file File handle
+ * @param [in] offset Offset in bytes
+ * @param [in] whence File relative position
+ * @return One if file position succesfully changed otherwise zero
+ */ 
+uint8_t fat_fseek(struct fat_file * file, int32_t offset, uint8_t whence);
+
+/**
+ * Gets size of file measured in bytes
+ * @param [in] file File handle
+ * @return File size in bytes
+ */ 
+size_t fat_fsize(struct fat_file * file);
+
 
 #if FAT_DATE_TIME_SUPPORT
 uint16_t fat_get_year(uint16_t fat_date);

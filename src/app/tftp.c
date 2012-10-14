@@ -114,6 +114,7 @@ void tftpd_reset(void)
 	tftpd.state = tftpd_state_listen;
 	tftpd.mode = tftp_mode_none;
 	tftpd.last_block = 0;
+	fat_fclose(tftpd.file);
 	udp_unbind_remote(tftpd.socket);
 }
 
@@ -155,14 +156,15 @@ uint8_t tftpd_handle_ack(uint8_t * data,uint16_t length)
 	if(tftpd.state != tftpd_state_sending)
 		return 0;
 	uint16_t acked_block = ntoh16(*((uint16_t*)data));
-	if(acked_block != tftpd.last_block)
+	uint32_t file_offset = acked_block*TFTP_BLOCK_SIZE;
+	fat_fseek(tftpd.file, file_offset, SEEK_SET);
+	tftpd.last_block = acked_block+1;
+	if(!tftpd_send_block())
 	{
-		DBG_ERROR("acked_block != tftpd.last_block\n");
-		return 0;
+		DBG_INFO("last block acked\n");
+		tftpd_reset();
 	}
-	tftpd.last_block++;
-	tftpd_send_block();
-	return 0;
+	return 1;
 }
 
 uint8_t tftpd_handle_rrq(uint8_t * data,uint16_t length)
@@ -241,6 +243,12 @@ uint8_t tftpd_send_block(void)
 	{
 		udp_send(tftpd.socket, 4 + read);		
 	}
+	if(0 == read)
+	{
+		return 0;
+	}
+	
+	return 1;
 }
 
 enum tftp_mode tftpd_get_mode(const char * mode)
