@@ -16,9 +16,7 @@
 
 #include <string.h>
 
-//
 #include "../debug.h"
-
 
 /* 
 RFC 868: Time Protocol
