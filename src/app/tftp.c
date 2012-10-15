@@ -300,7 +300,6 @@ uint8_t tftpd_handle_rrq(uint8_t * data,uint16_t length)
 	return 1;
 }
 
-
 /**
  * Handles Write ReQuest message from client
  * @param [in] data Pointer to data buffer (should point to file name)

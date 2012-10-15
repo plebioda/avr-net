@@ -191,12 +191,10 @@ void arp_table_insert(const ip_address * ip_addr,const ethernet_address * ethern
 				case ARP_TABLE_ENTRY_STATUS_REQUEST:
 					min_entry = entry;
 					/* insert to arp table with status TIMEOUT*/
-					DBG_INFO("insert to table\n");
 					goto arp_table_insert_out;
 				case ARP_TABLE_ENTRY_STATUS_TIMEOUT:
 					/* update timeout only */
 					entry->timeout = ARP_TABLE_ENTRY_TIMEOUT;
-					DEBUG(print_arp_table());				
 					return;
 				default:
 					break;
@@ -215,7 +213,6 @@ void arp_table_insert(const ip_address * ip_addr,const ethernet_address * ethern
 	/* there must be some error (maybe arp timer does not work?) */
 	if(min_entry == 0)
 	{
-		DBG_INFO("error: arp_table_insert: min_entry == 0\n");
 		return;
 	}
 arp_table_insert_out:
@@ -227,7 +224,6 @@ arp_table_insert_out:
 	memcpy(&min_entry->ip_addr,ip_addr,sizeof(ip_address));
 	/* copy mac address */
 	memcpy(&min_entry->ethernet_addr,ethernet_addr,sizeof(ethernet_address));
-	DEBUG(print_arp_table());
 }
 
 void arp_timer_tick(timer_t timer,void * arg)
@@ -240,22 +236,11 @@ void arp_timer_tick(timer_t timer,void * arg)
 			if(entry->status != ARP_TABLE_ENTRY_STATUS_EMPTY)
 			{
 				if(entry->timeout > 0)
+				{
 					entry->timeout--;
+				}
 				else
 				{
-					DBG_INFO("Removing from arp table: status: %x\n",entry->status);
-					DBG_INFO("mac: %x:%x:%x:%x:%x:%x\n",
-						entry->ethernet_addr[0],
-						entry->ethernet_addr[1],
-						entry->ethernet_addr[2],
-						entry->ethernet_addr[3],
-						entry->ethernet_addr[4],
-						entry->ethernet_addr[5]);
-					DBG_INFO("ip: %d.%d.%d.%d\n",
-						entry->ip_addr[0],
-						entry->ip_addr[1],
-						entry->ip_addr[2],
-						entry->ip_addr[3]);
 					entry->status = ARP_TABLE_ENTRY_STATUS_EMPTY;
 				}
 			}
@@ -279,20 +264,20 @@ uint8_t arp_get_mac(const ip_address * ip_addr,ethernet_address * ethernet_addr)
 		}
 		if(!memcmp(&entry->ip_addr,ip_addr,sizeof(ip_address)))
 		{
-				switch(entry->status)
-				{
-					/* There is ethernet address in arp table */
-					case ARP_TABLE_ENTRY_STATUS_TIMEOUT:
-						entry->timeout = ARP_TABLE_ENTRY_TIMEOUT;
-						if(ethernet_addr)
-							memcpy(ethernet_addr,&entry->ethernet_addr,sizeof(ethernet_address));
-						return 1;
-					/* There is ip address but waiting for reply*/
-					case ARP_TABLE_ENTRY_STATUS_REQUEST:
-						return 0;
-					default:
-						continue;
-				}
+			switch(entry->status)
+			{
+				/* There is ethernet address in arp table */
+				case ARP_TABLE_ENTRY_STATUS_TIMEOUT:
+					entry->timeout = ARP_TABLE_ENTRY_TIMEOUT;
+					if(ethernet_addr)
+						memcpy(ethernet_addr,&entry->ethernet_addr,sizeof(ethernet_address));
+					return 1;
+				/* There is ip address but waiting for reply*/
+				case ARP_TABLE_ENTRY_STATUS_REQUEST:
+					return 0;
+				default:
+					continue;
+			}
 		}
 	}
 	if(empty != 0)
@@ -300,10 +285,7 @@ uint8_t arp_get_mac(const ip_address * ip_addr,ethernet_address * ethernet_addr)
 		memcpy(&empty->ip_addr,ip_addr,sizeof(ip_address));
 		empty->status = ARP_TABLE_ENTRY_STATUS_REQUEST;
 		empty->timeout = ARP_TABLE_ENTRY_REQ_TIME;
-		DBG_INFO("arp_get_mac: print_arp_table:\n");
-		DEBUG(print_arp_table());
 	}
-	DBG_INFO("arp_get_mac: sending request\n");
 	arp_send_request(ip_addr);
 	return 0;
 }
@@ -311,7 +293,6 @@ uint8_t arp_get_mac(const ip_address * ip_addr,ethernet_address * ethernet_addr)
 uint8_t arp_send_request(const ip_address * ip_addr)
 {
 	struct arp_header * arp_request = (struct arp_header*)ethernet_get_buffer();
-	DBG_INFO("sending arp request\n");
 	/* Set protocol and hardware addresses type and length */
 	arp_request->hardware_addr_len = ARP_HW_ADDR_SIZE_ETHERNET;
 	arp_request->protocol_addr_len = ARP_PROTO_ADDR_SIZE_IP;

@@ -159,8 +159,6 @@ void sdcallback(enum sd_event event)
 	DBG_INFO("\n");
 }
 
-char buffer[512];
-
 int main(void)
 {
 	/* constants */
@@ -260,7 +258,6 @@ int main(void)
 
 ISR(TIMER0_COMP_vect)
 {
-	//1ms
 	timer_tick();
 }
 

@@ -9,24 +9,37 @@
 #ifndef _ECHOD_H
 #define _ECHOD_H
 
+/**
+ * @addtogroup app
+ * @{
+ * @addtogroup echo
+ * @{
+ * @file echod.h
+ * @author Pawel Lebioda <pawel.lebioda89@gmail.com>
+ * @brief This file contains declarations of functions used for echo server
+ * maintanance
+ */ 
+
 #include "echod_config.h"
 #include <stdint.h>
 
-enum echo_event
-{
-	echo_event_error,
-	echo_event_established,
-	echo_event_data_rcv,
-	echo_event_buffer,
-	echo_event_closed
-};
+#define ECHO_ERR_SOCKET		1
 
-typedef void (*echo_callback)(enum echo_event event);
+/**
+ * Initializes echo server
+ * @param [in] callback Echo server callback function
+ * @return One for success, zero for failure
+ */  
+uint8_t echod_start(void);
 
-uint8_t echod_start(echo_callback callback);
+/**
+ * Stops echo server
+ * @return One for success, zero for failure
+ */ 
 uint8_t echod_stop(void);
 
-#define ECHO_ERR_CALLBACK	1
-#define ECHO_ERR_SOCKET		2
-
+/**
+ * @}
+ * @}
+ */ 
 #endif //_ECHOD_H

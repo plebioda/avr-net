@@ -162,14 +162,11 @@ uint16_t udp_get_checksum(const ip_address * ip_addr,const struct udp_header * u
 
 uint8_t udp_handle_packet(const ip_address * ip_remote,const struct udp_header * udp,uint16_t packet_len)
 {	
-	DBG_INFO("udp handle\n");
 	if(packet_len < sizeof(struct udp_header))
 		return 0;
-	DBG_INFO("length ok\n");
 	/*check checksum */
 	if(udp_get_checksum(ip_remote,udp,packet_len) != ntoh16(udp->checksum))
 		return 0;
-	DBG_INFO("checksum ok\n");
 	/* get local port number */
 	uint16_t port_local = ntoh16(udp->port_destination);
 	/* get remote port number */
@@ -177,10 +174,8 @@ uint8_t udp_handle_packet(const ip_address * ip_remote,const struct udp_header *
 	/* check port and remote ports*/
 	if(port_local == 0 || port_remote == 0)
 		return 0;
-	DBG_INFO("ports ok\n");
 	struct udp_socket * socket;
 	udp_socket_t socket_num = -1;
-	DBG_INFO("udp handle remote %d local %d\n",port_remote,port_local);
 	FOREACH_UDP_SOCKET(socket)
 	{
 		/* check if socket is used and if whether packet is directed to this one*/
@@ -251,7 +246,6 @@ uint16_t udp_get_free_local_port(void)
 }
 uint8_t udp_send(udp_socket_t socket_num,uint16_t length)
 {
-	DBG_INFO("udp send %d socket %d\n",length,socket_num);
 	if(length < 0 || !udp_socket_is_valid(socket_num))
 		return 0;
 	struct udp_socket * socket = &udp_sockets[socket_num];

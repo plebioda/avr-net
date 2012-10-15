@@ -5,16 +5,26 @@
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
-
+/**
+ * @addtogroup app
+ * @{ 
+ * @addtogroup tp
+ * @{
+ * @file tp.c
+ * @author Pawel Lebioda <pawel.lebioda89@gmail.com>
+ * @brief This file contains impelentation of Time Protocol client according
+ * to RFC 868
+ */ 
 #include "tp.h"
+
+#include <string.h>
 
 #include "../net/udp.h"
 #include "../net/tcp.h"
 #include "../net/arp.h"
 
 #include "../sys/timer.h"
-
-#include <string.h>
+#include "../sys/rtc.h"
 
 #include "../debug.h"
 
@@ -85,30 +95,80 @@ GMT, such that the time 1 is 12:00:01 am on 1 January 1900 GMT; this
 base will serve until the year 2036.
 */
 
+/**
+ * Time Protocol client state
+ */ 
 enum tp_state
 {
+	/**
+	 * Idle state
+	 */  
 	tp_state_idle=0,
+	
+	/**
+	 * Waiting for reply from TP server
+	 */ 
 	tp_state_wait_for_reply,
+	
+	/**
+	 * Waiting for connection
+	 */ 
 	tp_state_wait_for_conn,
+	
+	/**
+	 * Waiting for data
+	 */
 	tp_state_wait_for_data,
+	
+	/**
+	 * Closing connection
+	 */ 
 	tp_state_wait_closing
 };
 
+/**
+ * Time Protocol client structure
+ */ 
 static struct
 {
 #if TP_USE_TCP
+	/**
+	 * TCP Socket
+	 */  
 	tcp_socket_t socket;
  #else
+	/**
+	 * UDP Socket 
+	 */
 	udp_socket_t socket;
 	uint8_t rtx;
  #endif
+	/**
+	 * Timer
+	 */
 	timer_t timer;
+	
+	/**
+	 * Callback function
+	 */
 	tp_callback callback;
+	
+	/**
+	 * Client state
+	 */
 	enum tp_state state;
 } tpc;
 
+/**
+ * Time Protocol server address
+ */ 
 static ip_address tp_server_ip = TP_SERVER_IP;
  
+/**
+ * Timer callback
+ * @param [in] timer Timer handle
+ * @param [in] arg Pointer to timer's argument
+ */ 
 static void tp_timer_callback(timer_t timer,void * arg);
 static void tp_reset(void);
 #if TP_USE_TCP
@@ -284,3 +344,7 @@ void tp_reset(void)
 	tpc.socket=-1;
 }
 
+/**
+ * @}
+ * @}
+ */ 

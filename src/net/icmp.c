@@ -19,8 +19,6 @@
 #include "ethernet.h"
 #include "ip.h"
 
-// #include "../util/memory.h"
-
 #define ICMP_TYPE_ECHO_REPLY			0x00
 #define ICMP_TYPE_ECHO_REQUEST			0x08
 #define ICMP_TYPE_DESTINATION_UNREACHABLE	0x03
