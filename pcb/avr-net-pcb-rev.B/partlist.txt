@@ -1,0 +1,71 @@
+Partlist
+
+Exported from avr-net-pcb-rev.B.brd at 3/19/12 10:29 PM
+
+EAGLE Version 5.10.0 Copyright (c) 1988-2010 CadSoft
+
+Part       Value          Package         Library                       Position (mil)        Orientation
+
+C1         100nF          C0805           rcl                           (2345 1230)           MR0
+C2         100nF          C0805           rcl                           (2136 766)            MR90
+C3         47pF           C0805           rcl                           (1898 836)            MR0
+C4         22pF           C0805           rcl                           (2501 1006)           MR270
+C5         22pF           C0805           rcl                           (2526 798)            MR270
+C6         10nF           C0805           rcl                           (460 1150)            MR270
+C7         10nF           C0805           rcl                           (666 1386)            MR270
+C8         100nF          C0805           rcl                           (120 1230)            R270
+C9         100nF          C0805           rcl                           (140 790)             R90
+C10        100nF          C0805           rcl                           (120 1022)            R90
+C11        100nF          C0805           rcl                           (170 520)             R270
+C12        100nF          C0805           rcl                           (460 980)             MR90
+C13        22pF           C0805           rcl                           (595 415)             MR0
+C14        22pF           C0805           rcl                           (420 415)             MR180
+C15        10uF           153CLV-0505     rcl                           (875 540)             R270
+C16        470uF          153CLV-0810     rcl                           (3425 1800)           R0
+C17        100uF          153CLV-0810     rcl                           (3010 2361)           R180
+C19        100nF          C0805           rcl                           (3143 2112)           R90
+C20        100nF          C0805           rcl                           (2858 2149)           R180
+C21        100nF          C0805           rcl                           (2175 1230)           MR180
+C23        100nF          C0805           rcl                           (1941 1124)           MR180
+D1         MBRS130LT3     SMB             diode                         (3550 1710)           MR180
+D2         MBRS130LT3     SMB             diode                         (3285 1710)           MR0
+D3         MBRS130LT3     SMB             diode                         (3550 1870)           MR0
+D4         MBRS130LT3     SMB             diode                         (3285 1870)           MR180
+EXCONN                    MA08-2          con-lstb                      (1595 320)            R0
+G1         KEYS1056       CR1220          keystone-bat                  (1334.299 1788.661)   R270
+IC1        MEGA128-A      TQFP64          atmel                         (2240 1000)           R0
+IC2        74AC573D       SO20W           74xx-eu                       (2985 1355)           R270
+IC3                       SOP32L          memory                        (3270 490)            R90
+IC4        DS1307         SOIC-8          dallas                        (2237 1912)           R180
+ISP                       ML10            con-harting-ml                (2368 2361)           R180
+L1         10uH, 100mA    L1210W          rcl-2                         (391.811 1370.315)    R0
+L2         10uH           L1210W          rcl-2                         (1970 975.622)        MR0
+LED_PWR    RED            CHIPLED_1206    led                           (1673 2403)           R180
+LED_SD_DET                CHIPLED_1206    led                           (1080 2400)           R180
+LED_SD_IO                 CHIPLED_1206    led                           (1280 2400)           R180
+LED_SD_WP                 CHIPLED_1206    led                           (910 2400)            R180
+PORTF                     MA05-2          con-lstb                      (2235 1655)           R180
+Q1                        HC49UP          crystal                       (2327 802)            MR90
+Q2         25MHz          HC49UP          crystal                       (507 262)             R0
+Q3         32.768kHz      91SMX           my_crystal                    (2629 1891)           R270
+R1         47k            R0805           rcl                           (1871 696)            MR90
+R2         50R, 1%        R0805           rcl                           (677 1753)            MR0
+R3         50R, 1%        R0805           rcl                           (545 1946)            MR180
+R4         50R, 1%        R0805           rcl                           (396 1988)            MR0
+R5         50R, 1%        R0805           rcl                           (227 1930)            MR90
+R6         130R           R0805           rcl                           (171 1400)            MR90
+R7         130R           R0805           rcl                           (50 870)              R90
+R8         2k7, 1%        M0805           rcl                           (545 1150)            MR90
+R9         130R           R0805           rcl                           (1675 2220)           R90
+R10        4k7            R0805           rcl                           (1908 102)            R0
+R11        4k7            R0805           rcl                           (1908 180)            R0
+R12        130R           R0805           rcl                           (910 2215)            R90
+R13        130R           R0805           rcl                           (1080 2215)           R90
+R14        130R           R0805           rcl                           (1280 2215)           R90
+S1                        B3F-10XX        switch-omron                  (2913 1917)           R90
+STAB_5V    REG1117        SOT223          burr-brown                    (3020 2401)           MR90
+TTY                       MA04-1          con-lstb                      (2345 95)             R0
+U$1        RJ45-TRAFO-L   RJ45-TRAFO-L    con-amphenol-rj45-ld          (429 2103)            R180
+U$2                       SDCMF-10915W010 kingfont_sdcmf10915w010_covek (1380 2068.976)       MR180
+U1         ENC28J60-SO    SO28W           microchip-enc28j60            (500 890)             R90
+X2                        SCD-014-A       con-shiua-chyuan              (3388 2560)           R180
