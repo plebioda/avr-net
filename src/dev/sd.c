@@ -9,7 +9,6 @@
 #include "sd.h"
 #include "../arch/spi.h"
 
-//
 #include "../debug.h"
 
 #include <string.h>
@@ -266,6 +265,7 @@ uint8_t sd_init(sd_callback callback)
 	
 	/* Init sd struct */
 	sd.callback = callback;
+
 	return 0;	
 }
 
@@ -307,7 +307,9 @@ uint8_t sd_init_card(void)
 	uint8_t ret=0;
 	sd_unselect();
 	if(!sd_card_inserted())
+	{
 		return sderr_CardNotInserted;
+	}
 	/* wait for the card being powered */
 	_delay_ms(SD_POWERON_DELAY);
 	/* set low freq of spi bus */
@@ -374,7 +376,7 @@ static uint8_t sd_read_block(uint32_t addr)
 	else
 		sd.block_state = SD_BLOCK_STATE_INVALID;
 #ifdef DEBUG_MODE
-	//print_block(sd.block,sizeof(sd.block));
+	print_block(sd.block,sizeof(sd.block));
 #endif
 	DBG_INFO("ret=0x%x\n",ret);
 	return ret;
@@ -405,7 +407,7 @@ out:
 
 uint32_t sd_read(uint32_t addr,uint8_t * buff,uint32_t length)
 {
-	DBG_INFO("addr=0x%08x(%d) len=0x%08x(%d)\n",addr,addr,length,length);
+	DBG_INFO("addr=0x%08x len=0x%08x\n",addr,length);
 	uint32_t read_len=length;
 	uint32_t tmp;
 	uint32_t offset;
@@ -445,6 +447,7 @@ uint32_t sd_read(uint32_t addr,uint8_t * buff,uint32_t length)
 
 void sd_interrupt(void)
 {
+	DBG_INFO("\n");
 	if(!sd.callback)
 		return;
 	sd.errno=0;
@@ -475,8 +478,8 @@ void sd_interrupt(void)
 		else
 		{
 #ifdef DEBUG_MODE
-			print_cid();
-			print_csd();
+			//print_cid();
+			//print_csd();
 #endif
 			sd.callback(sd_event_initialized);
 		}

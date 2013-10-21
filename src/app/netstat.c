@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 by Paweł Lebioda <pawel.lebioda89@gmail.com>
+ * Copyright (c) 2012 by Pawel Lebioda <pawel.lebioda89@gmail.com>
  *
  * This file is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -34,7 +34,7 @@ uint8_t netstat(FILE * fh,uint8_t args)
 		const struct ethernet_stats * eth_stat = ethernet_get_stats();
 		fprintf_P(fh,PSTR("HW addr: "));
 		fprintf(fh,"%s\n",ethernet_addr_str(ethernet_get_mac()));
-		fprintf_P(fh,PSTR("MTU		: "));
+		fprintf_P(fh,PSTR("MTU    : "));
 		fprintf(fh,"%d\n",ETHERNET_MAX_PACKET_SIZE);
 		fprintf_P(fh,PSTR("RX pack: "));
 		fprintf(fh,"%u\n",(unsigned int)eth_stat->rx_packets);
@@ -46,9 +46,9 @@ uint8_t netstat(FILE * fh,uint8_t args)
 	{ 
 		fprintf_P(fh,PSTR("IP addr: "));
 		fprintf(fh,"%s\n",ip_addr_str(ip_get_addr()));
-		fprintf_P(fh,PSTR("Bcast	: "));
+		fprintf_P(fh,PSTR("Bcast  : "));
 		fprintf(fh,"%s\n",ip_addr_str(ip_get_broadcast()));
-		fprintf_P(fh,PSTR("Mask	 : "));
+		fprintf_P(fh,PSTR("Mask   : "));
 		fprintf(fh,"%s\n",ip_addr_str(ip_get_netmask()));
 		fprintf_P(fh,PSTR("Gateway: "));
 		fprintf(fh,"%s\n",ip_addr_str(ip_get_gateway()));

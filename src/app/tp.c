@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 by Paweł Lebioda <pawel.lebioda89@gmail.com>
+ * Copyright (c) 2012 by Pawel Lebioda <pawel.lebioda89@gmail.com>
  *
  * This file is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -207,12 +207,12 @@ uint8_t tp_get_time(tp_callback callback)
 #if TP_USE_TCP
 	tcp_connect(tpc.socket,&tp_server_ip,TP_REMOTE_PORT);
 	tpc.state = tp_state_wait_for_conn;
-	timer_set(timer,TP_CONN_TIMEOUT);
+	timer_set(timer,TP_CONN_TIMEOUT, TIMER_MODE_ONE_SHOT);
 #else
 	udp_bind_remote(tpc.socket,TP_REMOTE_PORT,(const ip_address*)&tp_server_ip);
 	udp_send(tpc.socket,0);
 	tpc.state = tp_state_wait_for_reply;
-	timer_set(timer,TP_ARP_TIMEOUT);
+	timer_set(timer,TP_ARP_TIMEOUT, TIMER_MODE_ONE_SHOT);
 #endif
 	return 0;
 }
@@ -289,7 +289,7 @@ static void tp_socket_callback(tcp_socket_t socket,enum tcp_event event)
 	{
 		case tcp_event_connection_established:
 			DBG_INFO("tp con established\n",event);
-			timer_set(tpc.timer,TP_RTX_TIMEOUT);
+			timer_set(tpc.timer,TP_RTX_TIMEOUT, TIMER_MODE_ONE_SHOT);
 			break;
 		case tcp_event_data_received:
 		{
@@ -300,7 +300,7 @@ static void tp_socket_callback(tcp_socket_t socket,enum tcp_event event)
 			tpc.callback(0,timeval);
 			tcp_close(socket);
 			tpc.state = tp_state_wait_closing;
-			timer_set(tpc.timer,TP_RTX_TIMEOUT);
+			timer_set(tpc.timer,TP_RTX_TIMEOUT, TIMER_MODE_ONE_SHOT);
 			break;
 		}
 		case tcp_event_connection_closed:

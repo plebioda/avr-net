@@ -9,7 +9,7 @@
 #include "arp.h"
 #include "../arch/exmem.h"
 #include "../sys/timer.h"
-// 
+
 #include "../debug.h"
 
 #include <string.h>
@@ -45,7 +45,6 @@ static struct arp_table_entry 	arp_table[ARP_TABLE_SIZE]; //EXMEM
 static timer_t arp_timer;
 
 #define FOREACH_ARP_ENTRY(entry) for(entry = &arp_table[0] ; entry < &arp_table[ARP_TABLE_SIZE] ; entry++)
-
 
 uint8_t arp_send_reply(const struct arp_header * header);
 void arp_timer_tick(timer_t timer,void * arg);
@@ -114,9 +113,12 @@ uint8_t arp_init(void)
 	arp_timer = timer_alloc(arp_timer_tick);
 	/* Check timer */
 	if(arp_timer < 0)
+	{
 		return 0;
+	}
 	/* Set timer */
-	timer_set(arp_timer,ARP_TIMER_TICK_MS);
+	timer_set(arp_timer,ARP_TIMER_TICK_MS, TIMER_MODE_ONE_SHOT);
+	
 	return 1;
 }
 
@@ -124,29 +126,48 @@ uint8_t arp_handle_packet(struct arp_header * header,uint16_t packet_length)
 {
 	/* Check packet length */
 	if(packet_length < sizeof(struct arp_header))
+	{
 		return 0;
+	}
 	/* Check hardware address size */
 	if(header->hardware_addr_len != ARP_HW_ADDR_SIZE_ETHERNET)
+	{
 		return 0;
+	}
 	/* Check protocol address size */
 	if(header->protocol_addr_len != ARP_PROTO_ADDR_SIZE_IP)
+	{
 		return 0;
+	}
 	/* Check hardware address type */
 	if(header->hardware_type != HTON16(ARP_HW_ADDR_TYPE_ETHERNET))
+	{
 		return 0;
+	}
 	/* Check protocol address type */
 	if(header->protocol_type != HTON16(ARP_PROTO_ADDR_TYPE_IP))
+	{
 		return 0;		
+	}
 	/* Check whether target protocol address is our's */
 	if(memcmp(header->target_protocol_addr,ip_get_addr(),sizeof(ip_address)))
+	{
 		return 0;
+	}
 	/* Parse operation code of packet */
 	if(header->operation_code != HTON16(ARP_OPERATION_REQUEST) && header->operation_code != HTON16(ARP_OPERATION_REPLY))
+	{
 		return 0;
+	}
 	arp_table_insert((const ip_address*)&header->sender_protocol_addr,(const ethernet_address*)&header->sender_hardware_addr);
 	if(header->operation_code == HTON16(ARP_OPERATION_REQUEST))
+	{
 		return arp_send_reply(header);
-	return 1;
+	}
+	else
+	{
+		return 1;
+	}
 }
 
 uint8_t arp_send_reply(const struct arp_header * header)
@@ -229,7 +250,9 @@ arp_table_insert_out:
 void arp_timer_tick(timer_t timer,void * arg)
 {
 		if(timer != arp_timer)
+		{
 			return;
+		}
 		struct arp_table_entry * entry;
 		FOREACH_ARP_ENTRY(entry)
 		{
@@ -245,16 +268,20 @@ void arp_timer_tick(timer_t timer,void * arg)
 				}
 			}
 		}
-		timer_set(arp_timer,ARP_TIMER_TICK_MS);
+		timer_set(arp_timer,ARP_TIMER_TICK_MS, TIMER_MODE_ONE_SHOT);
 }
 
 
 uint8_t arp_get_mac(const ip_address * ip_addr,ethernet_address * ethernet_addr)
 {
 	if(ip_addr == 0)
+	{
 		return 0;
+	}
+
 	struct arp_table_entry * entry;
 	struct arp_table_entry * empty = 0;
+	
 	FOREACH_ARP_ENTRY(entry)
 	{
 		if(entry->status == ARP_TABLE_ENTRY_STATUS_EMPTY)
@@ -287,6 +314,7 @@ uint8_t arp_get_mac(const ip_address * ip_addr,ethernet_address * ethernet_addr)
 		empty->timeout = ARP_TABLE_ENTRY_REQ_TIME;
 	}
 	arp_send_request(ip_addr);
+	
 	return 0;
 }
 

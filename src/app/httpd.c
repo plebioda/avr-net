@@ -17,9 +17,24 @@
 
 #include "httpd.h"
 
+#include <avr/pgmspace.h>
+
 #include "../net/tcp.h"
 
 #include "../debug.h"
+
+static const char httpd_error404[] PROGMEM = "\
+HTTP/1.1 200 OK\r\n\
+<html>\
+<head>\
+<title>Error 404 - Not Found</title>\
+</head>\
+<body>\
+<h1>Error 404 - Not Found</h1>\
+<p>The requested URL was not found on this server</p>\
+</body>\
+</html>\r\n\
+";
 
 struct
 {
@@ -32,11 +47,17 @@ struct
 	 * Root directory
 	 */ 
 	struct fat_dir_entry * root_dir;
+	
+	/**
+	 * Buffer
+	 */
+	uint8_t buffer[HTTP_BUFFER_SIZE];
 } httpd;
+
 
 static void httpd_socket_callback(tcp_socket_t socket,enum tcp_event event);
 
-uint8_t httpd_start(struct fat_dir_entry * root_dir)
+uint8_t httpd_chroot(struct fat_dir_entry * root_dir)
 {
 	if(!root_dir)
 	{
@@ -44,6 +65,11 @@ uint8_t httpd_start(struct fat_dir_entry * root_dir)
 		return 0;
 	}
 	httpd.root_dir = root_dir;
+	return 1;
+}
+
+uint8_t httpd_start(void)
+{
 	httpd.socket = tcp_socket_alloc(httpd_socket_callback);
 	if(httpd.socket < 0)
 	{
@@ -81,6 +107,7 @@ void httpd_socket_callback(tcp_socket_t socket,enum tcp_event event)
 	{
 	case tcp_event_connection_incoming:
 		DBG_INFO("incomming connection\n");
+		tcp_accept(socket);
 	break;
 	case tcp_event_error:	
 		DBG_ERROR("error\n");
@@ -94,6 +121,12 @@ void httpd_socket_callback(tcp_socket_t socket,enum tcp_event event)
 		DBG_ERROR("reset\n");
 	break;
 	case tcp_event_data_received:
+	{
+		int16_t len = tcp_read(socket, httpd.buffer, HTTP_BUFFER_SIZE);
+		httpd.buffer[len] = '\0';
+		printf("%s",httpd.buffer);
+		tcp_write_string_P(socket, httpd_error404);
+	}
 	break;
 	case tcp_event_connection_closed:
 	break;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 by Paweł Lebioda <pawel.lebioda89@gmail.com>
+ * Copyright (c) 2012 by Pawel Lebioda <pawel.lebioda89@gmail.com>
  *
  * This file is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -14,7 +14,6 @@
 
 #include <string.h>
 
-//
 #include "../debug.h"
 
 /*
@@ -292,7 +291,7 @@ enum dhcp_state
 static struct 
 {
 	enum dhcp_state state;
-	dhcp_callback callback;
+	dhcp_callback_t callback;
 	udp_socket_t socket;
 	timer_t timer;
 	ip_address addr;
@@ -318,20 +317,27 @@ static uint8_t * dhcp_add_server_id(uint8_t * ptr);
 static uint8_t * dhcp_add_host_name(uint8_t * ptr);
 static uint8_t dhcp_parse_options(const struct dhcp_header * dhcp_header);
 
-uint8_t dhcp_start(dhcp_callback callback)
+uint8_t dhcp_start(dhcp_callback_t callback)
 {
 	if(dhcp_client.state != dhcp_state_init || !callback)
+	{
 		return DHCP_ERR_STATE;
+	}
 	memset(&dhcp_client,0,sizeof(dhcp_client));
 	/* allocate udp socket */
 	dhcp_client.socket = udp_socket_alloc(UDP_PORT_ANY,dhcp_udp_callback);
+	
 	if(dhcp_client.socket < 0)
+	{
 		return DHCP_ERR_SOCKET_ALLOC;
+	}
 	/* allocate timer */
 	dhcp_client.timer = timer_alloc(dhcp_timer_callback);
+	
 	if(dhcp_client.timer<0)
 	{
 		udp_socket_free(dhcp_client.socket);
+	
 		return DHCP_ERR_TIMER_ALLOC;
 	}
 	
@@ -342,7 +348,8 @@ uint8_t dhcp_start(dhcp_callback callback)
 	dhcp_client.state = dhcp_state_init;
 	dhcp_client.callback = callback;
 	/* start on the next timeout */
-	timer_set(dhcp_client.timer,1);
+	timer_set(dhcp_client.timer, 10, TIMER_MODE_ONE_SHOT);
+	
 	return 0;
 }
 
@@ -354,25 +361,36 @@ static void dhcp_udp_callback(udp_socket_t socket,uint8_t * data,uint16_t len)
 	
 	/* accept only BOOTREPLY */
 	if(dhcp_header->op != DHCP_OP_BOOTREPLY)
+	{
 		return;
+	}
+	
 	DBG_INFO("BOOTREPLY OK\n");
 	/* check our transaction id*/
 	if(dhcp_header->xid != HTON32(DHCP_XID))
+	{
 		return;
+	}
 	DBG_INFO("XID OK\n");
 	/* check our ethernet address */
 	if(memcmp(&dhcp_header->charrd,ethernet_get_mac(),sizeof(ethernet_address)))
+	{
 		return;
+	}
 	DBG_INFO("ETH ADDR OK\n");
 	/* check COOKIE*/
 	if(dhcp_header->cookie != HTON32(DHCP_COOKIE))
+	{
 		return;
+	}
 	DBG_INFO("COOKIE OK\n");
 	/* parse options */
 	uint8_t msgtype = dhcp_parse_options((const struct dhcp_header *)dhcp_header);
 	
 	if(msgtype==0)
+	{
 		return;
+	}
 	
 	switch(dhcp_client.state)
 	{
@@ -382,35 +400,45 @@ static void dhcp_udp_callback(udp_socket_t socket,uint8_t * data,uint16_t len)
 		case dhcp_state_selecting:
 			/* ignore anything except DHCPOFFER */
 			if(msgtype != DHCPOFFER)
+			{
 				return;
+			}
 			
 			/* change state to REQUESTING */
 			dhcp_client.state = dhcp_state_requesting;
 			/* set timer to send dhcp response */
-			timer_set(dhcp_client.timer,1);
+			timer_set(dhcp_client.timer, 1, TIMER_MODE_ONE_SHOT);
 			dhcp_client.rtx=0xff;
 			break;
 		case dhcp_state_requesting:
 		case dhcp_state_rebinding:
 			/* ignore offers from other servers */
 			if(msgtype == DHCPOFFER)
+			{
 				return;
+			}
 			if(msgtype != DHCPACK)
 			{
 				if(dhcp_client.state == dhcp_state_requesting)
+				{
 					dhcp_client.callback(dhcp_event_lease_denied);
+				}
 				else
+				{
 					dhcp_client.callback(dhcp_event_lease_expired);
+				}
 				dhcp_free();
+				
 				return;
 			}
 			/* set ip configuration */
 			ip_init((const ip_address*)&dhcp_client.addr,
 				(const ip_address*)&dhcp_client.netmask,
 				(const ip_address*)&dhcp_client.gateway);
-			timer_set(dhcp_client.timer,(dhcp_client.time_rebind*1000));
+			timer_set(dhcp_client.timer,(dhcp_client.time_rebind*1000), TIMER_MODE_ONE_SHOT);
 			dhcp_client.state = dhcp_state_bound;
 			dhcp_client.callback(dhcp_event_lease_acquired);
+			//udp_unbind_remote(dhcp_client.socket);
 			break;
 		default:
 			DBG_INFO("WRONG STATE!!!!\n");
@@ -424,29 +452,34 @@ static void dhcp_timer_callback(timer_t timer,void * arg)
 {
 	if(timer != dhcp_client.timer)
 	{
+		DBG_ERROR("dhcp_timer_callback wrong timer id\n");
 		dhcp_client.callback(dhcp_event_error);
 		dhcp_free();
 	}
-	DBG_INFO("dhcp_timer_callback state %d\n",dhcp_client.state);
+//	DBG_INFO("dhcp_timer_callback state %d\n",dhcp_client.state);
 	switch(dhcp_client.state)
 	{
 		case dhcp_state_init:
 		{
+//			DBG_INFO("dhcp_state_init\n");
 			dhcp_client.state = dhcp_state_selecting;
 			dhcp_client.rtx = 0xff;
 		}
 		case dhcp_state_selecting:
 		{
+//			DBG_INFO("dhcp_state_selecting\n");
 			/* resend DHCPDISCOVER */
 			if(++dhcp_client.rtx > DHCP_RTX)
 			{
+//				DBG_INFO("dhcp_timer_callback: timeout event\n");
 				/* if max number of retransissions exceeds send timeout	event to user*/
 				dhcp_client.callback(dhcp_event_timeout);
 				dhcp_free();
 				return;
 			}
+//			DBG_INFO("dhcp_timer_callback: sending message and setting timer\n");
 			dhcp_send();
-			timer_set(dhcp_client.timer,DHCP_TIMEOUT);
+			timer_set(dhcp_client.timer, DHCP_TIMEOUT, TIMER_MODE_ONE_SHOT);
 			break;
 		}
 		case dhcp_state_bound:
@@ -461,14 +494,18 @@ static void dhcp_timer_callback(timer_t timer,void * arg)
 			{
 				/* if max number of retransissions exceeds send timeout	event to user*/
 				if(dhcp_client.state == dhcp_state_requesting)
+				{
 					dhcp_client.callback(dhcp_event_timeout);
+				}
 				else
+				{
 					dhcp_client.callback(dhcp_event_lease_expiring);
+				}
 				dhcp_free();
 			}
 			/* send DHCPREQUEST */
 			dhcp_send();
-			timer_set(dhcp_client.timer,DHCP_TIMEOUT);
+			timer_set(dhcp_client.timer, DHCP_TIMEOUT, TIMER_MODE_ONE_SHOT);
 			break;
 		}
 		default:
@@ -479,7 +516,9 @@ static void dhcp_timer_callback(timer_t timer,void * arg)
 uint8_t dhcp_parse_options(const struct dhcp_header * dhcp_header)
 {
 	if(!dhcp_header)
+	{
 		return 0;
+	}
 	
 	/* store ip address proposed by dhcp server */
 	memcpy(&dhcp_client.addr,&dhcp_header->yiaddr,sizeof(ip_address));
@@ -598,12 +637,15 @@ uint8_t dhcp_send(void)
 	/* bind remote to bootps */
 	const ip_address * ip_remote = 0;
 	if(dhcp_client.state == dhcp_state_rebinding)
+	{
 		ip_remote = (const ip_address *)&dhcp_client.server;
+	}
 	if(!udp_bind_remote(dhcp_client.socket,UDP_PORT_BOOTPS,ip_remote))
 	{
 		DBG_ERROR("dhcp send: can't bind remote\n");
 		return 1;
 	}
+	DBG_INFO("dhcp: sending udp packet\n");
 	/* send udp packet */
 	return udp_send(dhcp_client.socket,len);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 by Paweł Lebioda <pawel.lebioda89@gmail.com>
+ * Copyright (c) 2012 by Pawel Lebioda <pawel.lebioda89@gmail.com>
  *
  * This file is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -10,7 +10,7 @@
 #define _TIMER_CONFIG_H
 
 
-#define TIMER_MAX		8
+#define TIMER_MAX		10
 #define TIMER_MS_PER_TICK	1
 
 #endif //_TIMER_CONFIG_H

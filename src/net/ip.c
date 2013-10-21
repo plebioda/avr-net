@@ -207,18 +207,19 @@ uint8_t ip_is_broadcast(const ip_address * ip)
 void ip_init(const ip_address * addr,const ip_address * netmask,const ip_address * gateway)
 {
 	if(addr)
+	{
 		memcpy(&ip_addr,addr,sizeof(ip_address));
+	}
 	if(netmask)
+	{
 		memcpy(&ip_netmask,netmask,sizeof(ip_address));
+	}
 	if(gateway)
+	{
 		memcpy(&ip_gateway,gateway,sizeof(ip_address));
+	}
+	
 	ip_set_broadcast();
-#ifdef DEBUG_MODE
-	DBG_INFO("ip addr  : %s\n",ip_addr_str((const ip_address*)&ip_addr));	
-	DBG_INFO("netmask  : %s\n",ip_addr_str((const ip_address*)&ip_netmask));	
-	DBG_INFO("gateway  : %s\n",ip_addr_str((const ip_address*)&ip_gateway));	
-	DBG_INFO("broadcast: %s\n",ip_addr_str(ip_get_broadcast()));	
-#endif //DEBUG_MODE
 }
 
 
@@ -241,18 +242,25 @@ uint8_t ip_send_packet(const ip_address * ip_dst,uint8_t protocol,uint16_t lengt
 		const ip_address * arp_target;
 		/* check if remote host is in the same subnet */
 		if(ip_in_subnet(ip_dst))
+		{
 			/* if so we will request for remote's host mac address */
 			arp_target=ip_dst;
+		}
 		else
+		{
 			/* otherwise request for gateway's	mac address */
 			arp_target=(const ip_address*)&ip_gateway;
+		}
+
 		if(!arp_get_mac(arp_target,&mac))
+		{
 			/* if there is no mac in arp table
 			 the request for this mac is send
 			 but we can't send this packet at this time
 			 so we return 0 which means that packet was not send
 			*/
-		return 0;
+			return 0;
+		}
 	}
 	struct ip_header * ip = (struct ip_header*)ethernet_get_buffer();
 	
@@ -295,11 +303,15 @@ uint8_t ip_send_packet(const ip_address * ip_dst,uint8_t protocol,uint16_t lengt
 uint8_t ip_handle_packet(struct ip_header * header, uint16_t packet_len,const ethernet_address * mac )
 {	
 	if(packet_len < sizeof(struct ip_header))
+	{
 		return 0;
+	}
 
 	/* Check IP version */
 	if((header->vihl.version>>4) != IP_V4)
+	{
 		return 0;
+	}
 
 	/* get header length */
 	uint8_t header_length = (header->vihl.header_length & IP_VIHL_HL_MASK)*4;
@@ -309,11 +321,15 @@ uint8_t ip_handle_packet(struct ip_header * header, uint16_t packet_len,const et
 	
 	/* check packet length */
 	if(packet_length > packet_len)
+	{		
 		return 0;
+	}
 
 	/* do not support fragmentation */
 	if(ntoh16(header->ffo.flags) & (IP_FLAGS_MORE_FRAGMENTS << 13) || ntoh16(header->ffo.fragment_offset) & 0x1fff)
+	{
 		return 0;
+	}
 
 	/* check destination ip address */
 	if(memcmp(&header->dst,ip_get_addr(),sizeof(ip_address)))
@@ -323,12 +339,16 @@ uint8_t ip_handle_packet(struct ip_header * header, uint16_t packet_len,const et
 			header->dst[1] != 0xff ||
 			header->dst[2] != 0xff ||
 			header->dst[3] != 0xff)
+		{
 			return 0;
+		}
 	}
 
 	/* check checksum */
 	if(ntoh16(header->checksum) != (~net_get_checksum(0,(const uint8_t*)header,header_length,10)))
+	{
 		return 0;
+	}
 
 	/* add to arp table if ip does not exist */
 	arp_table_insert((const ip_address*)&header->src,mac);
@@ -361,6 +381,7 @@ uint8_t ip_handle_packet(struct ip_header * header, uint16_t packet_len,const et
 		default:
 			break;
 	}
+
 	return 0;
 }
 
@@ -389,6 +410,7 @@ uint8_t ip_in_subnet(const ip_address * ip_remote)
 			return 0;
 		}
 	}
+
 	return 1;
 }
 
@@ -399,11 +421,15 @@ void ip_set_broadcast(void)
 {
 	uint8_t i;
 	if((ip_netmask[0] | ip_netmask[1] | ip_netmask[2] | ip_netmask[3]) == 0)
+	{
 		memset(&ip_broadcast,0,sizeof(ip_broadcast));
+	}
 	else
 	{
 		for(i=0;i<sizeof(ip_address);i++)
+		{
 			ip_broadcast[i] = (ip_addr[i] | ~ip_netmask[i]);
+		}
 	}
 }
 

@@ -15,7 +15,7 @@
 #define _HTTPD_CONF_H
 
 #define HTTP_LISTEN_PORT	80
-
+#define HTTP_BUFFER_SIZE	512
 #endif //_HTTPD_CONF_H
 
 /**

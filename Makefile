@@ -48,7 +48,7 @@ MCU = atmega128
 #     processor frequency. You can then use this symbol in your source code to 
 #     calculate timings. Do NOT tack on a 'UL' at the end, this will be done
 #     automatically to create a 32-bit value in your source code.
-F_CPU = 1000000
+F_CPU = 16000000
 
 
 # Output format. (can be srec, ihex, binary)
@@ -59,13 +59,33 @@ FORMAT = ihex
 TARGET = main
 
 # List C source files here. (C dependencies are automatically generated.)
-SRC =  $(wildcard src/*.c) 
-SRC += $(wildcard src/dev/*.c) 
-SRC += $(wildcard src/arch/*.c) 
-SRC += $(wildcard src/sys/*.c) 
-SRC += $(wildcard src/util/*.c) 
-SRC += $(wildcard src/net/*.c) 
-SRC += $(wildcard src/app/*.c) 
+SRC += src/main.c
+SRC += src/debug.c
+SRC += src/app/tp.c
+SRC += src/app/httpd.c
+SRC += src/app/tftp.c
+SRC += src/app/netstat.c
+SRC += src/app/dhcp.c
+SRC += src/app/echod.c
+SRC += src/util/fifo.c
+SRC += src/net/tcp.c
+SRC += src/net/ip.c
+SRC += src/net/net.c
+SRC += src/net/icmp.c
+SRC += src/net/udp.c
+SRC += src/net/ethernet.c
+SRC += src/net/arp.c
+SRC += src/sys/partition.c
+SRC += src/sys/fat.c
+SRC += src/sys/rtc.c
+SRC += src/sys/timer.c
+SRC += src/arch/spi.c
+SRC += src/arch/uart.c
+SRC += src/arch/exmem.c
+SRC += src/arch/i2c.c
+SRC += src/dev/ds1338.c
+SRC += src/dev/enc28j60.c
+SRC += src/dev/sd.c
 
 
 # List Assembler source files here.
@@ -105,7 +125,8 @@ EXTRAINCDIRS = include
 #     gnu99 = c99 plus GCC extensions
 CSTANDARD = -std=gnu99
 
-CDEFS_DBG = -DDEBUG_MODE
+CDEFS_DBG = 
+#-DDEBUG_MODE
 
 # Place -D or -U options here
 CDEFS = -DF_CPU=$(F_CPU)UL $(CDEFS_DBG)
@@ -211,11 +232,11 @@ AVRDUDE_PROGRAMMER = stk200
 AVRDUDE_PORT = /dev/parport0
 
 # LFUSE   CKDIV8 CKOUT SUT1 SUT0 CKSEL3210
-#         1     1     0    1     0010 => 0x5f
+#         1     1     0    1     0001 => 0x5f
 LFUSE = 0xe1
-# HFUSE  OCDEN JTAGEN SPIEN WDTON EESAVE BOOTSZ10 BOOTRST
-#         1     1     0     1      0      00       1 => 0xd1
-HFUSE = 0xd1
+# HFUSE  OCDEN JTAGEN SPIEN CKOPT EESAVE BOOTSZ10 BOOTRST
+#         1     0     0     1      1      00       1 => 0x99
+HFUSE = 0x99
 # EFUSE X X X M161C BODLEVEL210 X
 #      1 1 1   1      110      1 => 0xfd
 EFUSE = 0xff
@@ -226,10 +247,10 @@ LOCK = 0x03
 
 AVRDUDE_WRITE_FLASH = -U flash:w:$(TARGET).hex
 #AVRDUDE_WRITE_EEPROM = -U eeprom:w:$(TARGET).eep
-# AVRDUDE_WRITE_EFUSE = -U efuse:w:$(EFUSE):m
+#AVRDUDE_WRITE_EFUSE = -U efuse:w:$(EFUSE):m
 #AVRDUDE_WRITE_FUSE = -U fuse:w:$(FUSE)
 #AVRDUDE_WRITE_HFUSE = -U hfuse:w:$(HFUSE):m
-# AVRDUDE_WRITE_LFUSE = -U lfuse:w:$(LFUSE):m
+#AVRDUDE_WRITE_LFUSE = -U lfuse:w:$(LFUSE):m
 #AVRDUDE_WRITE_LOCK = -U lock:w:$(LOCK):m
 
 # Uncomment the following if you want avrdude's erase cycle counter.
@@ -239,7 +260,7 @@ AVRDUDE_WRITE_FLASH = -U flash:w:$(TARGET).hex
 
 # Uncomment the following if you do /not/ wish a verification to be
 # performed after programming the device.
-#AVRDUDE_NO_VERIFY = -V
+AVRDUDE_NO_VERIFY = -V
 
 # Increase verbosity level.  Please use this when submitting bug
 # reports about avrdude. See <http://savannah.nongnu.org/projects/avrdude> 
@@ -339,8 +360,8 @@ ALL_ASFLAGS = -mmcu=$(MCU) -I. -x assembler-with-cpp $(ASFLAGS)
 
 
 
-dbg: 
-	make CDEFS_DBG=-DDEBUG_MODE build
+#dbg: 
+#	make CDEFS_DBG=-DDEBUG_MODE build
 
 # Default target.
 all: begin gccversion sizebefore build sizeafter end

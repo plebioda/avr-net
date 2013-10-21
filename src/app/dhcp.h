@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 by Paweł Lebioda <pawel.lebioda89@gmail.com>
+ * Copyright (c) 2012 by Pawel Lebioda <pawel.lebioda89@gmail.com>
  *
  * This file is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -23,9 +23,9 @@ enum dhcp_event
 	dhcp_event_lease_denied
 };
 
-typedef void (*dhcp_callback)(enum dhcp_event event);
+typedef void (*dhcp_callback_t)(enum dhcp_event event);
 
-uint8_t dhcp_start(dhcp_callback callback);
+uint8_t dhcp_start(dhcp_callback_t callback);
 void dhcp_stop(void);
 
 #define DHCP_ERR_STATE			1

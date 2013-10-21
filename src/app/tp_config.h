@@ -14,7 +14,7 @@
 /* local and remote UDP ports */
 #define TP_REMOTE_PORT		37
 /* ip address of time server */
-#define TP_SERVER_IP		/*{192,168,1,12}*/{192,53,103,108}
+#define TP_SERVER_IP		{192,168,2,1}/*{192,53,103,108}*/
 /* waiting for connection an */
 #define TP_CONN_TIMEOUT		500
 /* data timeout */

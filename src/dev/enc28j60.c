@@ -8,23 +8,25 @@
 
 #include "enc28j60.h"
 
-//
 #include "../debug.h"
 #include <avr/io.h>
 #include <avr/interrupt.h>
+
 static uint8_t	enc28j60_bank;
 static uint16_t enc28j60_next_packet_ptr;
 
 uint8_t enc28j60_read_op(uint8_t op,uint8_t addr)
 {
-//	 SPI_ENABLE();
 	ENC28J60_CS_ACTIVE();
+	
 	//write command
 	SPI_DATA = (op | (addr & ENC28J60_ADDR_MASK));
 	SPI_WAIT();
+	
 	//read data
 	SPI_DATA = 0x00;
 	SPI_WAIT();
+	
 	// do dummy read if needed (for mac and mii, see datasheet page 29)
 	if(addr & 0x80)
 	{
@@ -32,30 +34,29 @@ uint8_t enc28j60_read_op(uint8_t op,uint8_t addr)
 		SPI_WAIT();
 	}
 	ENC28J60_CS_INACTIVE();
-//		 SPI_DISABLE();
 	return (SPI_DATA);
 }
 
 
 void enc28j60_write_op(uint8_t op,uint8_t addr,uint8_t data)
 {
-//	 SPI_ENABLE();
 	ENC28J60_CS_ACTIVE();
+	
 	//write command
 	SPI_DATA = (op | (addr & ENC28J60_ADDR_MASK));
 	SPI_WAIT();
+	
 	//write data
 	SPI_DATA = data;
 	SPI_WAIT();
 	
 	ENC28J60_CS_INACTIVE();
-//	 SPI_DISABLE();
 }
 
 void enc28j60_read_buffer(uint16_t len,uint8_t * data)
 {
-//	 SPI_ENABLE();
 	ENC28J60_CS_ACTIVE();
+	
 	//read buffer memory
 	SPI_DATA = ENC28J60_OPC_RBM;
 	SPI_WAIT();
@@ -72,12 +73,10 @@ void enc28j60_read_buffer(uint16_t len,uint8_t * data)
 	*data = '\0';
 	
 	ENC28J60_CS_INACTIVE();
-//	 SPI_DISABLE();
 }
 
 void enc28j60_write_buffer(uint16_t len,uint8_t * data)
 {			 
-//	 SPI_ENABLE();
 	ENC28J60_CS_ACTIVE();
 	
 	SPI_DATA = ENC28J60_OPC_WBM;
@@ -86,6 +85,7 @@ void enc28j60_write_buffer(uint16_t len,uint8_t * data)
 	while(len)
 	{
 			len--;
+			
 			//write data
 			SPI_DATA = *data;
 			SPI_WAIT();
@@ -93,7 +93,6 @@ void enc28j60_write_buffer(uint16_t len,uint8_t * data)
 	}
 	
 	ENC28J60_CS_INACTIVE();
-//	 SPI_DISABLE();
 }
 
 void enc28j60_set_bank(uint8_t addr)
@@ -123,126 +122,33 @@ void enc28j60_phy_write(uint8_t addr,uint16_t data)
 {
 	//set the PHY register address
 	enc28j60_write(MIREGADR,addr);
+	
 	//write the PHY data
 	enc28j60_write(MIWRL,data);
 	enc28j60_write(MIWRH,data>>8);
+	
 	//wait until the PHY write completes
 	while(enc28j60_read(MISTAT) & MISTAT_BUSY)
+	{
 		_delay_us(15);
+	}
 }
 
-// void enc28j60_init(const uint8_t * mac)
-// {
-//	 /* init I/O */
-//	 enc28j60_io_init();
-//	 /* device reset */
-//	 enc28j60_reset();
-//	 
-//	 enc28j60_next_packet_ptr = ENC28J60_RXSTART_INIT;
-//	 //Rx start
-//	 enc28j60_write(ERXSTL,ENC28J60_RXSTART_INIT&0xff);
-//	 enc28j60_write(ERXSTH,ENC28J60_RXSTART_INIT>>8);
-//	 //set receive pointer address
-//	 enc28j60_write(ERXRDPTL,ENC28J60_RXSTART_INIT&0xff);
-//	 enc28j60_write(ERXRDPTH,ENC28J60_RXSTART_INIT>>8);
-//	 //Rx end
-//	 enc28j60_write(ERXNDL,ENC28J60_RXSTOP_INIT&0xff);
-//	 enc28j60_write(ERXNDH,ENC28J60_RXSTOP_INIT>>8);
-//	 //Tx start
-//	 enc28j60_write(ETXSTL,ENC28J60_TXSTART_INIT&0xff);
-//	 enc28j60_write(ETXSTH,ENC28J60_TXSTART_INIT>>8);
-//	 //Tx end
-//	 enc28j60_write(ETXNDL,ENC28J60_TXSTOP_INIT&0xff);
-//	 enc28j60_write(ETXNDH,ENC28J60_TXSTOP_INIT>>8);
-//	 
-//	 /* configure frame filters */
-//	 enc28j60_write(ERXFCON, (1 << ERXFCON_UCEN)	| /* accept unicast packets */
-// 				(1 << ERXFCON_CRCEN) | /* accept packets with valid CRC only */
-// 				(0 << ERXFCON_PMEN)	| /* no pattern matching */
-// 				(0 << ERXFCON_MPEN)	| /* ignore magic packets */
-// 				(0 << ERXFCON_HTEN)	| /* disable hash table filter */
-// 				(0 << ERXFCON_MCEN)	| /* ignore multicast packets */
-// 				(1 << ERXFCON_BCEN)	| /* accept broadcast packets */
-// 				(0 << ERXFCON_ANDOR)	 /* packets must meet at least one criteria */
-//									 );
-//		 /* configure MAC */
-//		 enc28j60_clear_bits(MACON2, (1<<MACON2_MARST));
-//		 enc28j60_write(MACON1, (0 << MACON1_LOOPBK) |
-// #if ENC28J60_FULL_DUPLEX 
-//														(1 << MACON1_TXPAUS) |
-//														(1 << MACON1_RXPAUS) |
-// #else
-//														(0 << MACON1_TXPAUS) |
-//														(0 << MACON1_RXPAUS) |
-// #endif
-//														(0 << MACON1_PASSALL) |
-//														(1 << MACON1_MARXEN)
-//									 );
-//		 enc28j60_write(MACON3, (1 << MACON3_PADCFG2) |
-//														(1 << MACON3_PADCFG1) |
-//														(1 << MACON3_PADCFG0) |
-//														(1 << MACON3_TXCRCEN) |
-//														(0 << MACON3_PHDRLEN) |
-//														(0 << MACON3_HFRMLEN) |
-//														(1 << MACON3_FRMLNEN) |
-// #if ENC28J60_FULL_DUPLEX 
-//														(1 << MACON3_FULDPX)
-// #else
-//														(0 << MACON3_FULDPX)
-// #endif
-//									 );
-//		 enc28j60_write(MAMXFLL, 0xee);
-//		 enc28j60_write(MAMXFLH, 0x05);
-// #if ENC28J60_FULL_DUPLEX 
-//		 enc28j60_write(MABBIPG, 0x15);
-// #else
-//		 enc28j60_write(MABBIPG, 0x12);
-// #endif
-//		 enc28j60_write(MAIPGL, 0x12);
-// #if !ENC28J60_FULL_DUPLEX 
-//		 enc28j60_write(MAIPGH, 0x0c);
-// #endif
-//		 enc28j60_write(MAADR0, mac[5]);
-//		 enc28j60_write(MAADR1, mac[4]);
-//		 enc28j60_write(MAADR2, mac[3]);
-//		 enc28j60_write(MAADR3, mac[2]);
-//		 enc28j60_write(MAADR4, mac[1]);
-//		 enc28j60_write(MAADR5, mac[0]);
-// 
-//		 /* configure PHY */
-//		 enc28j60_phy_write(PHLCON, 	(PHLCON_LED_TRA<<PHLCON_LEDB) |
-// 				(PHLCON_LED_LS<<PHLCON_LEDA)
-// 					);
-//		 enc28j60_phy_write(PHCON1, (0 << PHCON1_PRST) |
-//																(0 << PHCON1_PLOOPBK) |
-//																(0 << PHCON1_PPWRSV) |
-// #if ENC28J60_FULL_DUPLEX 
-//																(1 << PHCON1_PDPXMD)
-// #else
-//																(0 << PHCON1_PDPXMD)
-// #endif
-//											 );
-//		 enc28j60_phy_write(PHCON2, (0 << PHCON2_FRCLINK) |
-//																(0 << PHCON2_TXDIS) |
-//																(0 << PHCON2_JABBER) |
-//																(1 << PHCON2_HDLDIS)
-//											 );
-// 
-//		 /* start receiving packets */
-//		 enc28j60_set_bits(ECON2, (1 << ECON2_AUTOINC));
-//		 enc28j60_set_bits(ECON1, (1 << ECON1_RXEN));
-// }
 void enc28j60_clear_bits(uint8_t address,uint8_t bits)
 {
 	uint8_t reg = enc28j60_read(address);
+
 	reg &= ~bits;
+	
 	enc28j60_write(address,reg);
 }
 
 void enc28j60_set_bits(uint8_t address,uint8_t bits)
 {
 	uint8_t reg = enc28j60_read(address);
+	
 	reg |= bits;
+	
 	enc28j60_write(address,reg);	
 }
 void enc28j60_io_init(void)
@@ -261,9 +167,15 @@ void enc28j60_reset(void)
 }
 void enc28j60_init(const uint8_t * macaddr)
 {		
-	DBG_INFO("enc28j60t init:\n");
-	DBG_INFO("%c:%c:%c:%c:%c:%c\n",(macaddr)[0],(macaddr)[1],(macaddr)[2],(macaddr)[3],(macaddr)[4],(macaddr)[5]);
-	DBG_INFO("\n");
+	DBG_INFO("enc28j60t init: mac=%c:%c:%c:%c:%c:%c\n",
+		(macaddr)[0],
+		(macaddr)[1],
+		(macaddr)[2],
+		(macaddr)[3],
+		(macaddr)[4],
+		(macaddr)[5]
+	);
+	
 	enc28j60_io_init();
 	enc28j60_reset();
 	ENC28J60_CS_INACTIVE();
@@ -359,6 +271,7 @@ void enc28j60_init(const uint8_t * macaddr)
 	enc28j60_write_op(ENC28J60_OPC_BFS, EIE, EIE_INTIE|EIE_PKTIE/*|EIE_LINKIE*/);
 	// enable packet reception
 	enc28j60_write_op(ENC28J60_OPC_BFS, ECON1, ECON1_RXEN);
+	_delay_ms(100);
 }
 
 uint8_t	enc28j60_get_revision(void)
@@ -369,7 +282,7 @@ uint8_t	enc28j60_get_revision(void)
 uint8_t	enc28j60_send_packet(uint8_t * packet,uint16_t len)
 {
 	/* wait until previous packet was sent */
-//	 while(enc28j60_read(ECON1) & (1 << ECON1_TXRTS));
+	// while(enc28j60_read(ECON1) & (1 << ECON1_TXRTS));
 	// Set the write pointer to start of transmit buffer area
 	enc28j60_write(EWRPTL,ENC28J60_TXSTART_INIT&0xff);
 	enc28j60_write(EWRPTH,ENC28J60_TXSTART_INIT>>8);
@@ -386,6 +299,7 @@ uint8_t	enc28j60_send_packet(uint8_t * packet,uint16_t len)
 	if( (enc28j60_read(EIR) & EIR_TXERIF) ){
 		enc28j60_write_op(ENC28J60_OPC_BFC, ECON1, ECON1_TXRTS);
 	}
+	
 	return 1;
 }
 
@@ -446,6 +360,6 @@ uint16_t enc28j60_receive_packet(uint8_t * packet,uint16_t maxlen)
 	}
 	// decrement the packet counter indicate we are done with this packet
 	enc28j60_write_op(ENC28J60_OPC_BFS, ECON2, ECON2_PKTDEC);
-	enc28j60_receive_packet_no_packet:
+enc28j60_receive_packet_no_packet:
 	return rxlen;	
 }

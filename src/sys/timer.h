@@ -13,12 +13,18 @@
 
 #include "timer_config.h"
 
+typedef enum 
+{
+	TIMER_MODE_ONE_SHOT,
+	TIMER_MODE_PERIODIC
+} timer_mode_t;
+
 typedef int8_t timer_t;
 typedef void (*timer_callback_t)(timer_t timer,void * arg);
 
 void timer_init(void);
 void timer_tick(void);
-uint8_t timer_set(timer_t timer,int32_t ms);
+uint8_t timer_set(timer_t timer,int32_t ms, timer_mode_t);
 uint8_t timer_stop(timer_t timer);
 int32_t timer_get_time(timer_t timer);
 

@@ -322,7 +322,7 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
 				return 0;
 			}
 			/* if packet sent then set the timer and wait for reply */
-			timer_set(new_tcb->timer,TCP_TIMEOUT_GENERIC);
+			timer_set(new_tcb->timer, TCP_TIMEOUT_GENERIC, TIMER_MODE_ONE_SHOT);
 			/* change state to SYN_RECEIVED */
 			new_tcb->state = tcp_state_syn_received;
 			/* set number off allowed retransmissions */
@@ -375,7 +375,7 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
 					/* send event to user */
 					tcb->callback(socket,tcp_event_connection_established);
 					/* set timer to IDLE timeout */
-					timer_set(tcb->timer,TCP_TIMEOUT_IDLE);
+					timer_set(tcb->timer,TCP_TIMEOUT_IDLE, TIMER_MODE_ONE_SHOT);
 					return 1;
 				}
 				/* ACK is not set so it means that there was simultaneous connecton request
@@ -388,7 +388,7 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
 				/* change state to SYN-RECEIVED*/
 				tcb->state = tcp_state_syn_received;
 				tcb->rtx = TCP_RTX_SYN_ACK;
-				timer_set(tcb->timer,TCP_TIMEOUT_GENERIC);
+				timer_set(tcb->timer,TCP_TIMEOUT_GENERIC, TIMER_MODE_ONE_SHOT);
 				return 1;
 			}
 			return 0;
@@ -445,7 +445,7 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
 			tcb->seq++;
 			tcb->state = tcp_state_established;
 			tcb->callback(socket,tcp_event_connection_established);
-			timer_set(tcb->timer,TCP_TIMEOUT_IDLE);
+			timer_set(tcb->timer,TCP_TIMEOUT_IDLE, TIMER_MODE_ONE_SHOT);
 			break;
 		}
 		case tcp_state_established:
@@ -488,7 +488,8 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
 				tcb->callback(socket,tcp_event_data_acked);
 				/* if there is data in tx buffer send it to keep data flowing */
 				DBG_INFO("fifo len %d seq_next %d\n",fifo_length(tcb->fifo_tx),tcb->seq_next);
-				if((fifo_length(tcb->fifo_tx) - tcb->seq_next > 0) || (tcb->state == tcp_state_start_close && fifo_length(tcb->fifo_tx)))
+				if((fifo_length(tcb->fifo_tx) - tcb->seq_next > 0) 
+				|| (tcb->state == tcp_state_start_close && fifo_length(tcb->fifo_tx)))
 				{
 					DBG_INFO("HERE\n");
 					if(!tcp_send_packet(tcb,TCP_FLAG_ACK,1))
@@ -496,19 +497,19 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
 						tcp_tcb_close(tcb,socket,tcp_event_error);
 					}
 					/* reset timer to avoid uneccessary retransmissions */
-					timer_set(tcb->timer,TCP_TIMEOUT_GENERIC);
+					timer_set(tcb->timer,TCP_TIMEOUT_GENERIC, TIMER_MODE_ONE_SHOT);
 				}
 				else if(tcb->state == tcp_state_start_close)
 				{			
 					/* if we are in start close state and all data was send 
 					set timer to 1 and continue processing in this state in tcp_timeout*/
-					timer_set(tcb->timer,1);
+					timer_set(tcb->timer,1, TIMER_MODE_ONE_SHOT);
 				}
 				else
 				{
 					/* if there is nothing to send and we are not in start close state 
 					set timer to IDLE timeout */
-					timer_set(tcb->timer,TCP_TIMEOUT_IDLE);
+					timer_set(tcb->timer,TCP_TIMEOUT_IDLE, TIMER_MODE_ONE_SHOT);
 				}
 				break;
 			}
@@ -526,7 +527,7 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
 					/* our FIN has been acked */
 					DBG_INFO("state fin-wait-1 fin acked\n");
 					tcb->state = tcp_state_fin_wait_2;
-					timer_set(tcb->timer,1000);
+					timer_set(tcb->timer,1000, TIMER_MODE_ONE_SHOT);
 					++tcb->seq;
 					break;
 				}
@@ -539,7 +540,7 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
 				{
 					DBG_INFO("state closing fin acked\n");
 					tcb->state = tcp_state_time_wait;
-					timer_set(tcb->timer,TCP_TIMEOUT_TIME_WAIT);
+					timer_set(tcb->timer,TCP_TIMEOUT_TIME_WAIT, TIMER_MODE_ONE_SHOT);
 					return 1;		
 				}
 			}
@@ -568,7 +569,8 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
 // 	tcp_tcb_close(tcb,socket,tcp_event_error);
 // 	return 0;
 //			 }
-//			 timer_set(tcb->timer,TCP_TIMEOUT_GENERIC);
+//			 timer_set(tcb->timer,TCP_TIMEOUT_GENERIC,
+//			 TIMER_MODE_ONE_SHOT);
 			/*
 			RFC 793:
 			The only thing that can arrive in this state is a
@@ -611,7 +613,7 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
 					DBG_INFO("sending ack = %lx, f=%x\n",tcb->ack,tcp->flags);
 					/* start idle timeout */
 					if(tcb->state == tcp_state_established && fifo_length(tcb->fifo_tx)<1)
-						timer_set(tcb->timer,TCP_TIMEOUT_IDLE);
+						timer_set(tcb->timer,TCP_TIMEOUT_IDLE, TIMER_MODE_ONE_SHOT);
 					/* send information to user that some data have been received */
 					tcb->callback(socket,tcp_event_data_received);
 					DBG_INFO("rcv %d bytes\n",buffered_data);
@@ -654,12 +656,12 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
 			case tcp_state_syn_received:
 			case tcp_state_established:
 				tcb->state = tcp_state_close_wait;
-				timer_set(tcb->timer,1);
+				timer_set(tcb->timer,1, TIMER_MODE_ONE_SHOT);
 				break;
 //			 case tcp_state_fin_wait_1:
 // 	 DBG_INFO("FIN: 1\n");
 // 	tcb->state = tcp_state_closing;
-// 	timer_set(tcb->timer,TCP_TIMEOUT_GENERIC);
+// 	timer_set(tcb->timer,TCP_TIMEOUT_GENERIC, TIMER_MODE_ONE_SHOT);
 // 	tcb->rtx = 5;
 // 	break;
 			case tcp_state_fin_wait_2:
@@ -667,7 +669,7 @@ uint8_t tcp_state_machine(struct tcp_tcb * tcb,const ip_address * ip_remote,cons
 				tcb->state = tcp_state_time_wait;
 			case tcp_state_time_wait:
 				DBG_INFO("FIN: time wait\n");
-				timer_set(tcb->timer,TCP_TIMEOUT_TIME_WAIT);
+				timer_set(tcb->timer,TCP_TIMEOUT_TIME_WAIT, TIMER_MODE_ONE_SHOT);
 			default:
 				break;
 		}
@@ -821,7 +823,7 @@ void tcp_timeout(timer_t timer,void * arg)
 		default:
 			break;
 		}
-		timer_set(tcb->timer,tset);
+		timer_set(tcb->timer,tset, TIMER_MODE_ONE_SHOT);
 }
 
 uint8_t tcp_send_packet(struct tcp_tcb * tcb,uint8_t flags,uint8_t send_data)
@@ -928,7 +930,8 @@ uint8_t tcp_close(tcp_socket_t socket)
 			case tcp_state_established:
 				tcb->state = tcp_state_start_close;
 			// 	if(timer_get_time(tcb->timer) < 1)
-			// 		timer_set(tcb->timer,1);
+			// 		timer_set(tcb->timer,1,
+			// 		TIMER_MODE_ONE_SHOT);
 				tcp_timeout(tcb->timer,(void*)tcb);
 				return 1;
 			case tcp_state_listen:
@@ -1126,7 +1129,7 @@ uint8_t tcp_connect(tcp_socket_t socket,ip_address * ip,uint16_t port)
 	tcb->rtx = TCP_RTX_SYN;
 	/* set timer to 1 so tcp_timeout will be called in a moment 
 		the rest part of processing connect user's call is in tcp_timeout function*/
-	timer_set(tcb->timer,1);
+	timer_set(tcb->timer,1, TIMER_MODE_ONE_SHOT);
 	return 1;
 }
 
@@ -1292,7 +1295,7 @@ int16_t tcp_write(tcp_socket_t socket,const uint8_t * data,uint16_t len)
 	if(fifo_length(tcb->fifo_tx) > 0)
 	{
 		tcb->rtx = TCP_RTX_DATA;
-		timer_set(tcb->timer,1);
+		timer_set(tcb->timer,1, TIMER_MODE_ONE_SHOT);
 //		 tcp_timeout(tcb->timer,(void*)tcb);
 	}
 	return ret;
@@ -1311,7 +1314,7 @@ int16_t tcp_write_P(tcp_socket_t socket,const prog_uint8_t * data,uint16_t len)
 	if(fifo_length(tcb->fifo_tx) > 0)
 	{
 		tcb->rtx = TCP_RTX_DATA;
-		timer_set(tcb->timer,1);
+		timer_set(tcb->timer,1, TIMER_MODE_ONE_SHOT);
 	}
 	return ret;
 }

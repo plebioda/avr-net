@@ -25,7 +25,7 @@
 void spi_low_frequency(void)
 {
 	SPCR = 	(0 << SPIE) | /* SPI interrupt enable */
-	 	(1 << SPE)	| /* SPI enable */
+	 	(1 << SPE)  | /* SPI enable */
 		(0 << DORD) | /* Data order: 0 = MSB first, 1 = LSB first */
 		(1 << MSTR) | /* Master mode */
 		(0 << CPOL) | /* Clock polarity: 0 = SKC low when idle, 1 = SCK high when idle*/
@@ -37,7 +37,7 @@ void spi_low_frequency(void)
 void spi_high_frequency(void)
 {
 	SPCR = 	(0 << SPIE) | /* SPI interrupt enable */
-		(1 << SPE)	| /* SPI enable */
+		(1 << SPE)  | /* SPI enable */
 		(0 << DORD) | /* Data order: 0 = MSB first, 1 = LSB first */
 		(1 << MSTR) | /* Master mode */
 		(0 << CPOL) | /* Clock polarity: 0 = SKC low when idle, 1 = SCK high when idle*/

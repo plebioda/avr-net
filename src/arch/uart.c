@@ -20,7 +20,7 @@
 */
 #include "uart.h"
 
-#define UBRRVAL  0//(F_CPU/(UART_BAUD_RATE*16)-1)
+#define UBRRVAL  16//(F_CPU/(UART_BAUD_RATE*16)-1)
 
 /**
 * Initializes UART interface

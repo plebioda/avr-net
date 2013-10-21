@@ -20,7 +20,8 @@
 
 #include "../sys/fat.h"
 
-uint8_t httpd_start(struct fat_dir_entry * root_dir);
+uint8_t httpd_start(void);
+uint8_t httpd_chroot(struct fat_dir_entry * root_dir);
 uint8_t httpd_restart(void);
 uint8_t httpd_stop(void);
 
